@@ -31,7 +31,6 @@ namespace InnoWerks.Emulators.AppleIIe
         private bool disposed;
 
         private readonly HiresMemoryReader hiresMemoryReader;
-        private readonly DhiresMemoryReader dhiresMemoryReader;
 
         public HiresRenderer(
             GraphicsDevice graphicsDevice,
@@ -59,7 +58,6 @@ namespace InnoWerks.Emulators.AppleIIe
             whitePixel.SetData([Color.White]);
 
             hiresMemoryReader = new(memoryBlocks, machineState);
-            dhiresMemoryReader = new(memoryBlocks, machineState);
         }
 
         public void Draw(SpriteBatch spriteBatch, int start, int count)
