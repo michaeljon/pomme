@@ -20,7 +20,7 @@ namespace InnoWerks.Simulators
     public record OpCodeDefinition(
         byte OpCodeValue,
         OpCode OpCode,
-        Action<MosTechnologiesCpu, ushort, byte> Execute,
+        Action<Cpu6502Core, ushort, byte> Execute,
         Func<ushort, IBus, DecodedOperation> DecodeOperand,
         AddressingMode AddressingMode,
         int Bytes = 0,
@@ -44,7 +44,7 @@ namespace InnoWerks.Simulators
         /// <summary>
         ///
         /// </summary>
-        public Action<MosTechnologiesCpu, ushort, byte> Execute { get; init; } = Execute;
+        public Action<Cpu6502Core, ushort, byte> Execute { get; init; } = Execute;
 
         /// <summary>
         ///

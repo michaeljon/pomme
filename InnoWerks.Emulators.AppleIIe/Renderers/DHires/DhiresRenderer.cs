@@ -24,7 +24,7 @@ namespace InnoWerks.Emulators.AppleIIe
         //
         private readonly Texture2D whitePixel;
 
-        private readonly MosTechnologiesCpu cpu;
+        private readonly Cpu6502Core cpu;
         private readonly IBus bus;
         private readonly MachineState machineState;
 
@@ -34,7 +34,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
         public DhiresRenderer(
             GraphicsDevice graphicsDevice,
-            MosTechnologiesCpu cpu,
+            Cpu6502Core cpu,
             IBus bus,
             Memory128k memoryBlocks,
             MachineState machineState,

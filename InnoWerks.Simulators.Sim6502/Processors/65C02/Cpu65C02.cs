@@ -10,7 +10,7 @@ using InnoWerks.Processors;
 
 namespace InnoWerks.Simulators
 {
-    public class Cpu65C02 : MosTechnologiesCpu
+    public class Cpu65C02 : Cpu6502Core
     {
         public override CpuClass CpuClass => CpuClass.WDC65C02;
 

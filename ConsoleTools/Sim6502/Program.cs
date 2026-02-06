@@ -88,8 +88,8 @@ namespace Sim6502
             Console.WriteLine("? for help");
 
             // power up initialization
-            bus.Poke(MosTechnologiesCpu.RstVectorH, (byte)((options.Origin & 0xff00) >> 8));
-            bus.Poke(MosTechnologiesCpu.RstVectorL, (byte)(options.Origin & 0xff));
+            bus.Poke(Cpu6502Core.RstVectorH, (byte)((options.Origin & 0xff00) >> 8));
+            bus.Poke(Cpu6502Core.RstVectorL, (byte)(options.Origin & 0xff));
 
             ICpu cpu = options.CpuClass == CpuClass.WDC6502 ?
                 new Cpu6502(

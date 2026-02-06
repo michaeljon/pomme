@@ -27,7 +27,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
         private Color textColor;
 
-        private readonly MosTechnologiesCpu cpu;
+        private readonly Cpu6502Core cpu;
         private readonly IBus bus;
         private readonly MachineState machineState;
 
@@ -37,7 +37,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
         public TextModeRenderer(
             GraphicsDevice graphicsDevice,
-            MosTechnologiesCpu cpu,
+            Cpu6502Core cpu,
             IBus bus,
             Memory128k memoryBlocks,
             MachineState machineState,

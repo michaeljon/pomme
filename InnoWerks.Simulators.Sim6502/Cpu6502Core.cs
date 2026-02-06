@@ -13,7 +13,7 @@ using Microsoft.VisualBasic;
 
 namespace InnoWerks.Simulators
 {
-    public abstract class MosTechnologiesCpu : ICpu
+    public abstract class Cpu6502Core : ICpu
     {
         // IRQ, reset, NMI vectors
         public const ushort IrqVectorH = 0xFFFF;
@@ -41,7 +41,7 @@ namespace InnoWerks.Simulators
 
         protected bool illegalInstructionEncountered { get; set; }
 
-        protected MosTechnologiesCpu(IBus bus,
+        protected Cpu6502Core(IBus bus,
                                      Action<ICpu, ushort> preExecutionCallback,
                                      Action<ICpu> postExecutionCallback)
         {

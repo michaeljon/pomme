@@ -23,7 +23,7 @@ namespace InnoWerks.Emulators.AppleIIe
         private readonly GraphicsDevice graphicsDevice;
         private SpriteBatch spriteBatch;
         private Texture2D whitePixel;
-        private readonly MosTechnologiesCpu cpu;
+        private readonly Cpu6502Core cpu;
         private readonly IBus bus;
         private readonly Memory128k memoryBlocks;
         private readonly MachineState machineState;
@@ -38,7 +38,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
         public Display(
             GraphicsDevice graphicsDevice,
-            MosTechnologiesCpu cpu,
+            Cpu6502Core cpu,
             IBus bus,
             Memory128k memoryBlocks,
             MachineState machineState)

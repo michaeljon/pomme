@@ -68,8 +68,8 @@ namespace InnoWerks.Simulators.Tests
             ArgumentNullException.ThrowIfNull(bus);
 
             // power up initialization
-            bus.Poke(MosTechnologiesCpu.RstVectorH, 0x00);
-            bus.Poke(MosTechnologiesCpu.RstVectorL, 0x00);
+            bus.Poke(Cpu6502Core.RstVectorH, 0x00);
+            bus.Poke(Cpu6502Core.RstVectorL, 0x00);
 
             ICpu cpu = cpuClass == CpuClass.WDC6502 ?
                 new Cpu6502(
