@@ -84,19 +84,37 @@ namespace InnoWerks.Emulators.AppleIIe
             Color top = cell.Top(col, eightyColMode);
             Color bottom = cell.Bottom(col, eightyColMode);
 
-            var topRect = new Rectangle(
-                col * DisplayCharacteristics.AppleBlockWidth,
-                row * 2 * DisplayCharacteristics.AppleBlockHeight,
-                DisplayCharacteristics.AppleBlockWidth,
-                DisplayCharacteristics.AppleBlockHeight);
-            spriteBatch.Draw(whitePixel, topRect, top);
+            var basex = col * DisplayCharacteristics.AppleBlockWidth;
+            var basey = row * 2 * DisplayCharacteristics.AppleBlockHeight;
 
-            var bottomRect = new Rectangle(
-                col * DisplayCharacteristics.AppleBlockWidth,
-                ((row * 2) + 1) * DisplayCharacteristics.AppleBlockHeight,
-                DisplayCharacteristics.AppleBlockWidth,
-                DisplayCharacteristics.AppleBlockHeight);
-            spriteBatch.Draw(whitePixel, bottomRect, bottom);
+            var pos = new Vector2();
+            for (var y = 0; y < 4; y++)
+            {
+                pos.X = basex;
+                pos.Y = basey + y;
+
+                spriteBatch.Draw(whitePixel, pos, top); pos.X++;
+                spriteBatch.Draw(whitePixel, pos, top); pos.X++;
+                spriteBatch.Draw(whitePixel, pos, top); pos.X++;
+                spriteBatch.Draw(whitePixel, pos, top); pos.X++;
+                spriteBatch.Draw(whitePixel, pos, top); pos.X++;
+                spriteBatch.Draw(whitePixel, pos, top); pos.X++;
+                spriteBatch.Draw(whitePixel, pos, top); pos.X++;
+            }
+
+            for (var y = 4; y < 8; y++)
+            {
+                pos.X = basex;
+                pos.Y = basey + y;
+
+                spriteBatch.Draw(whitePixel, pos, bottom); pos.X++;
+                spriteBatch.Draw(whitePixel, pos, bottom); pos.X++;
+                spriteBatch.Draw(whitePixel, pos, bottom); pos.X++;
+                spriteBatch.Draw(whitePixel, pos, bottom); pos.X++;
+                spriteBatch.Draw(whitePixel, pos, bottom); pos.X++;
+                spriteBatch.Draw(whitePixel, pos, bottom); pos.X++;
+                spriteBatch.Draw(whitePixel, pos, bottom); pos.X++;
+            }
         }
 
         public void Dispose()

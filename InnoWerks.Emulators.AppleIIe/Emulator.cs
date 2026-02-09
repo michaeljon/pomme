@@ -1,4 +1,4 @@
-// #define RENDER_DHIRES_PAGE
+#define RENDER_DHIRES_PAGE
 
 using System;
 using System.Collections.Generic;

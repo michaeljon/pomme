@@ -33,16 +33,14 @@ namespace InnoWerks.Emulators.AppleIIe
 
         private void ReadLores40(LoresBuffer loresBuffer)
         {
-            // might want to keep this in the loop so
-            // switcing mid-render would work
-            bool page2 = machineState.State[SoftSwitch.Page2];
+            var memory = ram.Read((byte)(machineState.State[SoftSwitch.Page2] ? 0x08 : 0x04), 4);
 
             for (int row = 0; row < 24; row++)
             {
                 for (int col = 0; col < 40; col++)
                 {
-                    ushort addr = GetBlockAddress(row, col, page2);
-                    byte value = ram.Read(addr);
+                    ushort addr = (ushort)(blockRowBase[row & 0x07] + (row >> 3) * 40 + col);
+                    byte value = memory[addr];
 
                     loresBuffer.Put(row, col, ConstructLoresCell(value));
                 }
@@ -51,31 +49,19 @@ namespace InnoWerks.Emulators.AppleIIe
 
         private void ReadLores80(LoresBuffer loresBuffer)
         {
+            var main = ram.GetMain(0x04, 4);
+            var aux = ram.GetAux(0x04, 4);
+
             for (int row = 0; row < 24; row++)
             {
                 for (int col = 0; col < 40; col++)
                 {
-                    ushort addr = GetBlockAddress(row, col, false);
+                    ushort addr = (ushort)(blockRowBase[row & 0x07] + (row >> 3) * 40 + col);
 
-                    byte value = ram.GetAux(addr);
-                    loresBuffer.Put(row, col * 2, ConstructLoresCell(value));
-
-                    value = ram.GetMain(addr);
-                    loresBuffer.Put(row, (col * 2) + 1, ConstructLoresCell(value));
+                    loresBuffer.Put(row, col * 2, ConstructLoresCell(aux[addr]));
+                    loresBuffer.Put(row, (col * 2) + 1, ConstructLoresCell(main[addr]));
                 }
             }
-        }
-
-        private static ushort GetBlockAddress(int row, int col, bool page2)
-        {
-            int pageOffset = page2 ? 0x800 : 0x400;
-
-            return (ushort)(
-                pageOffset +
-                blockRowBase[row & 0x07] +
-                (row >> 3) * 40 +
-                col
-            );
         }
 
         private static readonly int[] blockRowBase =

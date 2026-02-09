@@ -125,31 +125,33 @@ namespace InnoWerks.Emulators.AppleIIe
                 sortMode: SpriteSortMode.Deferred,
                 samplerState: SamplerState.PointClamp);
 
-            // draw a panel around the apple target
-            spriteBatch.Draw(whitePixel, hostLayout.AppleDisplay, Color.White);
-            spriteBatch.Draw(whitePixel, new Rectangle(hostLayout.AppleDisplay.X + 1, hostLayout.AppleDisplay.Y + 1, hostLayout.AppleDisplay.Width - 2, hostLayout.AppleDisplay.Height - 2), new Color(20, 20, 20));
-
             if (machineState.State[SoftSwitch.DoubleHiRes])
             {
                 dhiresRenderer.Draw(spriteBatch, 0, 192);
             }
-            else if (machineState.State[SoftSwitch.HiRes] && machineState.State[SoftSwitch.MixedMode] == false)
+            else if (machineState.State[SoftSwitch.HiRes])
             {
-                hiresRenderer.Draw(spriteBatch, 0, 192);
+                if (machineState.State[SoftSwitch.MixedMode] == false)
+                {
+                    hiresRenderer.Draw(spriteBatch, 0, 192);
+                }
+                else
+                {
+                    hiresRenderer.Draw(spriteBatch, 0, 192 - 4 * DisplayCharacteristics.AppleCellHeight);
+                    textModeRenderer.Draw(spriteBatch, 20, 4, flashOn);
+                }
             }
-            else if (machineState.State[SoftSwitch.HiRes] && machineState.State[SoftSwitch.MixedMode] == true)
+            else if (machineState.State[SoftSwitch.TextMode] == false)
             {
-                hiresRenderer.Draw(spriteBatch, 0, 192 - 4 * DisplayCharacteristics.AppleCellHeight);
-                textModeRenderer.Draw(spriteBatch, 20, 4, flashOn);
-            }
-            else if (machineState.State[SoftSwitch.TextMode] == false && machineState.State[SoftSwitch.MixedMode] == false)
-            {
-                loresRenderer.Draw(spriteBatch, 0, 24);
-            }
-            else if (machineState.State[SoftSwitch.TextMode] == false && machineState.State[SoftSwitch.MixedMode] == true)
-            {
-                loresRenderer.Draw(spriteBatch, 0, 20);
-                textModeRenderer.Draw(spriteBatch, 20, 4, flashOn);
+                if (machineState.State[SoftSwitch.MixedMode] == false)
+                {
+                    loresRenderer.Draw(spriteBatch, 0, 24);
+                }
+                else
+                {
+                    loresRenderer.Draw(spriteBatch, 0, 20);
+                    textModeRenderer.Draw(spriteBatch, 20, 4, flashOn);
+                }
             }
             else if (machineState.State[SoftSwitch.TextMode] == true)
             {

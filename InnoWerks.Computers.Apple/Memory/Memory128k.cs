@@ -451,40 +451,6 @@ namespace InnoWerks.Computers.Apple
             }
         }
 
-        /// <summary>
-        /// Main READ entry point into activeMemory
-        /// </summary>
-        /// <param name="address">Virtual 64k address mapped onto backing store</param>
-        /// <returns>Value at address</returns>
-        public byte Read(ushort address)
-        {
-            var page = GetPage(address);
-            var offset = GetOffset(address);
-
-            if (activeRead[page] != null)
-            {
-                return activeRead[page].Block[offset];
-            }
-
-            return 0xFF;
-        }
-
-        /// <summary>
-        /// Main WRITE entry point into activeMemory
-        /// </summary>
-        /// <param name="address">Virtual 64k address mapped onto backing store</param>
-        /// <param name="value">Value to write</param>
-        public void Write(ushort address, byte value)
-        {
-            var page = GetPage(address);
-            var offset = GetOffset(address);
-
-            if (activeWrite[page] != null)
-            {
-                activeWrite[page].Block[offset] = value;
-            }
-        }
-
         public void LoadProgramToRom(byte[] objectCode)
         {
             ArgumentNullException.ThrowIfNull(objectCode);
@@ -612,6 +578,54 @@ namespace InnoWerks.Computers.Apple
         }
 
         /// <summary>
+        /// Main READ entry point into activeMemory
+        /// </summary>
+        /// <param name="address">Virtual 64k address mapped onto backing store</param>
+        /// <returns>Value at address</returns>
+        public byte Read(ushort address)
+        {
+            var page = GetPage(address);
+            var offset = GetOffset(address);
+
+            if (activeRead[page] != null)
+            {
+                return activeRead[page].Block[offset];
+            }
+
+            return 0xFF;
+        }
+
+        /// <summary>
+        /// Main READ entry point into activeMemory. Allows for bulk
+        /// read to make consumers faster.
+        /// </summary>
+        /// <param name="page"></param>
+        /// <param name="pageCount"></param>
+        /// <returns></returns>
+        public byte[] Read(byte page, int pageCount)
+        {
+            var bytes = new byte[pageCount * MemoryPage.PageSize];
+            for (var p = 0; p < pageCount; p++)
+            {
+                Array.Copy(activeRead[page + p].Block, 0, bytes, p * MemoryPage.PageSize, MemoryPage.PageSize);
+            }
+            return bytes;
+        }
+
+        /// <summary>
+        /// Main WRITE entry point into activeMemory
+        /// </summary>
+        /// <param name="address">Virtual 64k address mapped onto backing store</param>
+        /// <param name="value">Value to write</param>
+        public void Write(ushort address, byte value)
+        {
+            var page = GetPage(address);
+            var offset = GetOffset(address);
+
+            activeWrite[page]?.Block[offset] = value;
+        }
+
+        /// <summary>
         /// Allows for bus-tied devices to directly access the
         /// main 64k of RAM. Used primarily by the video system.
         /// </summary>
@@ -623,6 +637,22 @@ namespace InnoWerks.Computers.Apple
             var offset = GetOffset(address);
 
             return mainMemory[page].Block[offset];
+        }
+
+        /// <summary>
+        /// Bulk direct-access READ into mainMemory (bypassing mapping)
+        /// </summary>
+        /// <param name="page"></param>
+        /// <param name="pageCount"></param>
+        /// <returns></returns>
+        public byte[] GetMain(byte page, int pageCount)
+        {
+            var bytes = new byte[pageCount * MemoryPage.PageSize];
+            for (var p = 0; p < pageCount; p++)
+            {
+                Array.Copy(mainMemory[page + p].Block, 0, bytes, p * MemoryPage.PageSize, MemoryPage.PageSize);
+            }
+            return bytes;
         }
 
         public void SetMain(ushort address, byte value)
@@ -645,6 +675,22 @@ namespace InnoWerks.Computers.Apple
             var offset = GetOffset(address);
 
             return auxMemory[page].Block[offset];
+        }
+
+        /// <summary>
+        /// Bulk direct-access READ into auxMemory (bypassing mapping)
+        /// </summary>
+        /// <param name="page"></param>
+        /// <param name="pageCount"></param>
+        /// <returns></returns>
+        public byte[] GetAux(byte page, int pageCount)
+        {
+            var bytes = new byte[pageCount * MemoryPage.PageSize];
+            for (var p = 0; p < pageCount; p++)
+            {
+                Array.Copy(auxMemory[page + p].Block, 0, bytes, p * MemoryPage.PageSize, MemoryPage.PageSize);
+            }
+            return bytes;
         }
 
         public void SetAux(ushort address, byte value)

@@ -24,59 +24,45 @@ namespace InnoWerks.Emulators.AppleIIe
 
             if (machineState.State[SoftSwitch.EightyColumnMode] == false)
             {
-                Render40Column(textBuffer);
+                Read40Column(textBuffer);
             }
             else
             {
-                Render80Column(textBuffer);
+                Read80Column(textBuffer);
             }
         }
 
-        private void Render40Column(TextBuffer textBuffer)
+        private void Read40Column(TextBuffer textBuffer)
         {
-            // might want to keep this in the loop so
-            // switcing mid-render would work
-            bool page2 = machineState.State[SoftSwitch.Page2];
+            var memory = ram.Read((byte)(machineState.State[SoftSwitch.Page2] ? 0x08 : 0x04), 4);
 
             for (int row = 0; row < 24; row++)
             {
                 for (int col = 0; col < 40; col++)
                 {
-                    ushort addr = GetTextAddress(row, col, page2);
-                    byte value = ram.Read(addr);
+                    ushort addr = (ushort)(textRowBase[row & 0x07] + (row >> 3) * 40 + col);
+                    byte value = memory[addr];
 
                     textBuffer.Put(row, col, ConstructTextCell(value));
                 }
             }
         }
 
-        private void Render80Column(TextBuffer textBuffer)
+        private void Read80Column(TextBuffer textBuffer)
         {
+            var main = ram.GetMain(0x04, 4);
+            var aux = ram.GetAux(0x04, 4);
+
             for (int row = 0; row < 24; row++)
             {
                 for (int col = 0; col < 40; col++)
                 {
-                    ushort addr = GetTextAddress(row, col, false);
+                    ushort addr = (ushort)(textRowBase[row & 0x07] + (row >> 3) * 40 + col);
 
-                    byte value = ram.GetAux(addr);
-                    textBuffer.Put(row, col * 2, ConstructTextCell(value));
-
-                    value = ram.GetMain(addr);
-                    textBuffer.Put(row, (col * 2) + 1, ConstructTextCell(value));
+                    textBuffer.Put(row, col * 2, ConstructTextCell(aux[addr]));
+                    textBuffer.Put(row, (col * 2) + 1, ConstructTextCell(main[addr]));
                 }
             }
-        }
-
-        private static ushort GetTextAddress(int row, int col, bool page2)
-        {
-            int pageOffset = page2 ? 0x800 : 0x400;
-
-            return (ushort)(
-                pageOffset +
-                textRowBase[row & 0x07] +
-                (row >> 3) * 40 +
-                col
-            );
         }
 
         private static readonly int[] textRowBase =
@@ -113,6 +99,16 @@ namespace InnoWerks.Emulators.AppleIIe
         private TextCell ConstructTextCell(byte value)
         {
             var attr = TextAttributes.None;
+
+            // if ((value & 0xC0) == 0x00)
+            // {
+            //     attr |= TextAttributes.Inverse;
+            // }
+
+            // if ((value & 0x40) == 0x00)
+            // {
+            //     attr |= TextAttributes.Flash;
+            // }
 
             if (value <= 0x3F)
             {
