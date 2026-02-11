@@ -7,9 +7,11 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
+#pragma warning disable CA2213 // Disposable fields should be disposed
+
 namespace InnoWerks.Emulators.AppleIIe
 {
-    public class TextModeRenderer : IDisposable
+    public class TextModeRenderer : Renderer
     {
         private const int GlyphWidth = 8;
         private const int GlyphHeight = 8;
@@ -30,8 +32,6 @@ namespace InnoWerks.Emulators.AppleIIe
         private readonly Cpu6502Core cpu;
         private readonly IBus bus;
         private readonly MachineState machineState;
-
-        private bool disposed;
 
         private readonly TextMemoryReader textMemoryReader;
 
@@ -67,6 +67,10 @@ namespace InnoWerks.Emulators.AppleIIe
 
             textMemoryReader = new(memoryBlocks, machineState);
         }
+
+        public override ushort GetYOffset(int y) => throw new NotImplementedException();
+
+        public override void RenderByte(SpriteBatch spriteBatch, int x, int y) => throw new NotImplementedException();
 
         public void Draw(SpriteBatch spriteBatch, int start, int count, bool flashOn)
         {
@@ -164,27 +168,13 @@ namespace InnoWerks.Emulators.AppleIIe
                 fg);
         }
 
-        public void Dispose()
+        protected override void DoDispose(bool disposing)
         {
-            Dispose(true);
-
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposed == true)
-            {
-                return;
-            }
-
             if (disposing)
             {
                 whitePixel?.Dispose();
                 charTexture?.Dispose();
             }
-
-            disposed = true;
         }
     }
 }

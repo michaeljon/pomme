@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net.NetworkInformation;
 using System.Reflection.PortableExecutable;
@@ -504,6 +505,8 @@ namespace InnoWerks.Emulators.AppleIIe
 
             graphicsDeviceManager.PreferredBackBufferWidth = Window.ClientBounds.Width;
             graphicsDeviceManager.PreferredBackBufferHeight = Window.ClientBounds.Height;
+
+            Debug.WriteLine($"{Window.ClientBounds.Width} x {Window.ClientBounds.Height}");
 
             hostLayout = HostLayout.ComputeLayout(
                 Window.ClientBounds.Width,

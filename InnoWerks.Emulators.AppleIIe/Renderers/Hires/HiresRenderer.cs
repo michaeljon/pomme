@@ -7,15 +7,17 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
+#pragma warning disable CA2213 // Disposable fields should be disposed
+
 namespace InnoWerks.Emulators.AppleIIe
 {
-    public class HiresRenderer : IDisposable
+    public class HiresRenderer : Renderer
     {
-        // private static readonly Color HiresBlack = new(0, 0, 0);
-        private static readonly Color HiresPurple = new(128, 0, 255);
-        private static readonly Color HiresGreen = new(0, 192, 0);
+        private static readonly Color HiresBlack = new(0, 0, 0);
+        // private static readonly Color HiresPurple = new(128, 0, 255);
+        // private static readonly Color HiresGreen = new(0, 192, 0);
 
-        // private static readonly Color HiresWhite = new(255, 255, 255);
+        private static readonly Color HiresWhite = new(255, 255, 255);
         // private static readonly Color HiresOrange = new(255, 128, 0);
         // private static readonly Color HiresBlue = new(0, 0, 255);
 
@@ -27,8 +29,6 @@ namespace InnoWerks.Emulators.AppleIIe
         private readonly Cpu6502Core cpu;
         private readonly IBus bus;
         private readonly MachineState machineState;
-
-        private bool disposed;
 
         private readonly HiresMemoryReader hiresMemoryReader;
 
@@ -60,6 +60,19 @@ namespace InnoWerks.Emulators.AppleIIe
             hiresMemoryReader = new(memoryBlocks, machineState);
         }
 
+        public override ushort GetYOffset(int y) => throw new NotImplementedException();
+
+        public override void RenderByte(SpriteBatch spriteBatch, int x, int y) => throw new NotImplementedException();
+
+        // HGR mono is easy: To generate pixels from left to right, you look at the pixels
+        // from the LSB to bit 6, and generate 560 pixels on the screen (so 14 pixels per byte).
+        //
+        // If the MSB is 0, each set bit is white for two 560-resolution pixels, and each
+        // clear bit is black for two pixels.
+        //
+        // If the MSB is 1, the first pixel is the previous pixel to the left, then you you do the
+        // next 12 pixels from LSB to MSB.  Bit 6 of the byte is a single pixel (but if the next
+        // byte MSB is set, then it is repeated one more time).
         public void Draw(SpriteBatch spriteBatch, int start, int count)
         {
             ArgumentNullException.ThrowIfNull(spriteBatch);
@@ -67,55 +80,41 @@ namespace InnoWerks.Emulators.AppleIIe
             var hiresBuffer = new HiresBuffer();
             hiresMemoryReader.ReadHiresPage(hiresBuffer);
 
-            int pixelWidth = DisplayCharacteristics.AppleBlockWidth / 2;
-            int pixelHeight = DisplayCharacteristics.AppleBlockHeight;
-
             for (int y = start; y < start + count; y++)
             {
-                for (int x = 0; x < 280; x++)
+                Color[] pixels = new Color[280];
+
+                // build the pixels in the line
+                for (int x = 0; x < 40; x++)
                 {
-                    if (!hiresBuffer.GetPixel(y, x))
-                        continue; // Off pixel → nothing to draw
+                    for (var bit = 0; bit < 7; bit++)
+                    {
+                        if ((hiresBuffer.GetByte(y, x) & (1 << bit)) != 0)
+                        {
+                            pixels[(x * 7) + bit] = HiresWhite;
+                        }
+                        else
+                        {
+                            pixels[(x * 7) + bit] = HiresBlack;
+                        }
+                    }
+                }
 
-                    byte sourceByte = hiresBuffer.GetSourceByte(y, x);
-
-                    // Phase calculation: bit7 of byte + horizontal position
-                    bool phaseBit = (sourceByte & 0x80) != 0;
-                    bool phase = ((x & 1) == 1) ^ phaseBit;
-
-                    Color color = phase ? HiresGreen : HiresPurple;
-
-                    var rect = new Rectangle(
-                        x * pixelWidth,
-                        y * pixelHeight,
-                        pixelWidth,
-                        pixelHeight);
-
-                    spriteBatch.Draw(whitePixel, rect, color);
+                // render the pixels on the row
+                for (int x = 0; x < 280; x += 2)
+                {
+                    spriteBatch.Draw(whitePixel, new Rectangle(x, y, 1, 1), pixels[x]);
+                    spriteBatch.Draw(whitePixel, new Rectangle(x + 1, y, 1, 1), pixels[x + 1]);
                 }
             }
         }
 
-        public void Dispose()
+        protected override void DoDispose(bool disposing)
         {
-            Dispose(true);
-
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposed == true)
-            {
-                return;
-            }
-
             if (disposing)
             {
                 whitePixel?.Dispose();
             }
-
-            disposed = true;
         }
     }
 }

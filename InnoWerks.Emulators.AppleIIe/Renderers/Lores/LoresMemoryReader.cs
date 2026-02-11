@@ -11,10 +11,32 @@ namespace InnoWerks.Emulators.AppleIIe
         private readonly Memory128k ram;
         private readonly MachineState machineState;
 
+        private ushort[] rowOffsets;
+
         public LoresMemoryReader(Memory128k ram, MachineState machineState)
         {
             this.ram = ram;
             this.machineState = machineState;
+        }
+
+        private ushort[] RowOffsets
+        {
+            get
+            {
+                if (rowOffsets == null)
+                {
+                    // initialize
+                    int[] blockRowBase = [0x000, 0x080, 0x100, 0x180, 0x200, 0x280, 0x300, 0x380];
+
+                    rowOffsets = new ushort[24];
+                    for (var y = 0; y < 24; y++)
+                    {
+                        rowOffsets[y] = (ushort)(blockRowBase[y & 0x07] + (y >> 3) * 40);
+                    }
+                }
+
+                return rowOffsets;
+            }
         }
 
         public void ReadLoresPage(LoresBuffer loresBuffer)
@@ -35,14 +57,13 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             var memory = ram.Read((byte)(machineState.State[SoftSwitch.Page2] ? 0x08 : 0x04), 4);
 
-            for (int row = 0; row < 24; row++)
+            for (var row = 0; row < 24; row++)
             {
-                for (int col = 0; col < 40; col++)
+                for (var col = 0; col < 40; col++)
                 {
-                    ushort addr = (ushort)(blockRowBase[row & 0x07] + (row >> 3) * 40 + col);
-                    byte value = memory[addr];
+                    var addr = RowOffsets[row] + col;
 
-                    loresBuffer.Put(row, col, ConstructLoresCell(value));
+                    loresBuffer.Put(row, col, ConstructLoresCell(memory[addr]));
                 }
             }
         }
@@ -52,23 +73,17 @@ namespace InnoWerks.Emulators.AppleIIe
             var main = ram.GetMain(0x04, 4);
             var aux = ram.GetAux(0x04, 4);
 
-            for (int row = 0; row < 24; row++)
+            for (var row = 0; row < 24; row++)
             {
-                for (int col = 0; col < 40; col++)
+                for (var col = 0; col < 40; col++)
                 {
-                    ushort addr = (ushort)(blockRowBase[row & 0x07] + (row >> 3) * 40 + col);
+                    var addr = RowOffsets[row] + col;
 
                     loresBuffer.Put(row, col * 2, ConstructLoresCell(aux[addr]));
                     loresBuffer.Put(row, (col * 2) + 1, ConstructLoresCell(main[addr]));
                 }
             }
         }
-
-        private static readonly int[] blockRowBase =
-        [
-            0x000, 0x080, 0x100, 0x180,
-            0x200, 0x280, 0x300, 0x380
-        ];
 
         private static LoresCell ConstructLoresCell(byte value)
         {

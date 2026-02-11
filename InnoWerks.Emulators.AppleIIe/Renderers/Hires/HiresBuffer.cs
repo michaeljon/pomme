@@ -6,16 +6,13 @@ namespace InnoWerks.Emulators.AppleIIe
 {
     public sealed class HiresBuffer
     {
-        private readonly bool[,] pixels = new bool[192, 280];
-        private readonly byte[,] sourceBytes = new byte[192, 280];
+        private readonly byte[,] bytes = new byte[192, 40];
 
-        public bool GetPixel(int y, int x) => pixels[y, x];
-        public byte GetSourceByte(int y, int x) => sourceBytes[y, x];
+        public byte GetByte(int y, int x) => bytes[y, x];
 
-        public void SetPixel(int y, int x, bool on, byte sourceByte)
+        public void SetByte(int y, int x, byte sourceByte)
         {
-            pixels[y, x] = on;
-            sourceBytes[y, x] = sourceByte;
+            bytes[y, x] = sourceByte;
         }
     }
 }

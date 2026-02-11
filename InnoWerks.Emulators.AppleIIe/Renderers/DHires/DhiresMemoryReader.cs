@@ -8,10 +8,32 @@ namespace InnoWerks.Emulators.AppleIIe
         private readonly Memory128k ram;
         private readonly MachineState machineState;
 
+        private ushort[] rowOffsets;
+
         public DhiresMemoryReader(Memory128k ram, MachineState machineState)
         {
             this.ram = ram;
             this.machineState = machineState;
+        }
+
+        private ushort[] RowOffsets
+        {
+            get
+            {
+                if (rowOffsets == null)
+                {
+                    rowOffsets = new ushort[192];
+
+                    for (var y = 0; y < 192; y++)
+                    {
+                        rowOffsets[y] = (ushort)(((y & 0x07) << 10) +
+                                                 (((y >> 3) & 0x07) << 7) +
+                                                 ((y >> 6) * 40));
+                    }
+                }
+
+                return rowOffsets;
+            }
         }
 
         public void ReadDhiresPage(DhiresBuffer buffer)
@@ -23,15 +45,11 @@ namespace InnoWerks.Emulators.AppleIIe
 
             for (int y = 0; y < 192; y++)
             {
-                int rowAddr = ((y & 0x07) << 10) +       // (y % 8) * 0x400
-                               (((y >> 3) & 0x07) << 7) + // ((y / 8) % 8) * 0x80
-                               ((y >> 6) * 40);           // (y / 64) * 40
-
                 for (int byteCol = 0; byteCol < 40; byteCol++)
                 {
                     // AUX = "even" pixel, MAIN = "odd" pixel
-                    byte mainByte = main[rowAddr + byteCol];
-                    byte auxByte = aux[rowAddr + byteCol];
+                    byte mainByte = main[RowOffsets[y] + byteCol];
+                    byte auxByte = aux[RowOffsets[y] + byteCol];
 
                     for (int bit = 0; bit < 7; bit++)
                     {
@@ -41,7 +59,7 @@ namespace InnoWerks.Emulators.AppleIIe
                         int x = byteCol * 14 + bit * 2;
                         bool msb = (auxByte & 0x80) != 0 || (mainByte & 0x80) != 0;
 
-                        buffer.SetPixel(y, x, auxBit, mainBit, msb);   // left
+                        buffer.SetPixel(y, x, auxBit, mainBit, msb);     // left
                         buffer.SetPixel(y, x + 1, auxBit, mainBit, msb); // right
                     }
                 }
