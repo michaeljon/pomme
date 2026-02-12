@@ -133,11 +133,11 @@ namespace InnoWerks.Emulators.AppleIIe
             {
                 if (machineState.State[SoftSwitch.MixedMode] == false)
                 {
-                    hiresRenderer.Draw(spriteBatch, 0, 192);
+                    hiresRenderer.Draw(spriteBatch, false, 0, 192);
                 }
                 else
                 {
-                    hiresRenderer.Draw(spriteBatch, 0, 192 - 4 * DisplayCharacteristics.AppleCellHeight);
+                    hiresRenderer.Draw(spriteBatch, false, 0, 192 - 4 * DisplayCharacteristics.AppleCellHeight);
                     textModeRenderer.Draw(spriteBatch, 20, 4, flashOn);
                 }
             }
