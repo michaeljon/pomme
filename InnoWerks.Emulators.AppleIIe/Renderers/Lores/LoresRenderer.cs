@@ -13,16 +13,11 @@ namespace InnoWerks.Emulators.AppleIIe
 {
     public class LoresRenderer : Renderer
     {
-        //
-        // MonoGame stuff
-        //
-        private readonly Texture2D whitePixel;
-
-        private readonly Cpu6502Core cpu;
-        private readonly IBus bus;
-        private readonly MachineState machineState;
-
         private readonly LoresMemoryReader loresMemoryReader;
+        private readonly LoresBuffer loresBuffer;
+
+        private readonly bool eightyColumnMode;
+        private readonly int page;
 
         public LoresRenderer(
             GraphicsDevice graphicsDevice,
@@ -31,40 +26,34 @@ namespace InnoWerks.Emulators.AppleIIe
             Memory128k memoryBlocks,
             MachineState machineState,
 
-            ContentManager contentManager
-            )
+            bool eightyColumnMode,
+            int page)
+            : base(graphicsDevice, cpu, bus, memoryBlocks, machineState)
         {
-            ArgumentNullException.ThrowIfNull(graphicsDevice);
-            ArgumentNullException.ThrowIfNull(cpu);
-            ArgumentNullException.ThrowIfNull(bus);
-            ArgumentNullException.ThrowIfNull(memoryBlocks);
-            ArgumentNullException.ThrowIfNull(machineState);
+            this.eightyColumnMode = eightyColumnMode;
+            this.page = page;
 
-            ArgumentNullException.ThrowIfNull(contentManager);
-
-            this.machineState = machineState;
-            this.cpu = cpu;
-            this.bus = bus;
-
-            whitePixel = new Texture2D(graphicsDevice, 1, 1);
-            whitePixel.SetData([Color.White]);
-
-            loresMemoryReader = new(memoryBlocks, machineState);
+            loresBuffer = new LoresBuffer(eightyColumnMode ? 80 : 40);
+            loresMemoryReader = new(memoryBlocks, machineState, eightyColumnMode, page);
         }
 
-        public override ushort GetYOffset(int y) => throw new NotImplementedException();
+        public override ushort GetYOffsetAddress(int y)
+        {
+            return (ushort)(LoresMemoryReader.RowOffsets[y & 0x07] + (y >> 3) * 40);
+        }
 
         public override void RenderByte(SpriteBatch spriteBatch, int x, int y) => throw new NotImplementedException();
 
-        public void Draw(SpriteBatch spriteBatch, int start, int count)
+        public override void Draw(SpriteBatch spriteBatch, int start, int count)
         {
             ArgumentNullException.ThrowIfNull(spriteBatch);
 
-            var cols = machineState.State[SoftSwitch.EightyColumnMode] ? 80 : 40;
-            var dhires = machineState.State[SoftSwitch.DoubleHiRes];
-
-            var loresBuffer = new LoresBuffer(cols);
+            var cols = eightyColumnMode ? 80 : 40;
             loresMemoryReader.ReadLoresPage(loresBuffer);
+
+            // todo: convert this back to scanlines instead of cells
+            start /= DisplayCharacteristics.AppleCellHeight;
+            count /= DisplayCharacteristics.AppleCellHeight;
 
             for (var row = start; row < start + count; row++)
             {
@@ -76,13 +65,33 @@ namespace InnoWerks.Emulators.AppleIIe
                         spriteBatch,
                         cell,
                         col,
-                        row,
-                        dhires
+                        row
                     );
                 }
             }
         }
 
+        private void DrawBlocks(SpriteBatch spriteBatch, LoresCell cell, int col, int row)
+        {
+            Color top = cell.Top(col, eightyColumnMode);
+            Color bottom = cell.Bottom(col, eightyColumnMode);
+
+            var topRect = new Rectangle(
+                col * (eightyColumnMode ? DisplayCharacteristics.AppleCellWidth : DisplayCharacteristics.AppleCellWidth * 2),
+                row * 2 * DisplayCharacteristics.AppleBlockHeight,
+                eightyColumnMode ? DisplayCharacteristics.AppleCellWidth : DisplayCharacteristics.AppleCellWidth * 2,
+                DisplayCharacteristics.AppleBlockHeight);
+            spriteBatch.Draw(WhitePixel, topRect, top);
+
+            var bottomRect = new Rectangle(
+                col * (eightyColumnMode ? DisplayCharacteristics.AppleCellWidth : DisplayCharacteristics.AppleCellWidth * 2),
+                ((row * 2) + 1) * DisplayCharacteristics.AppleBlockHeight,
+                eightyColumnMode ? DisplayCharacteristics.AppleCellWidth : DisplayCharacteristics.AppleCellWidth * 2,
+                DisplayCharacteristics.AppleBlockHeight);
+            spriteBatch.Draw(WhitePixel, bottomRect, bottom);
+        }
+
+#if false
         private void DrawBlocks(SpriteBatch spriteBatch, LoresCell cell, int col, int row, bool eightyColMode)
         {
             Color top = cell.Top(col, eightyColMode);
@@ -120,12 +129,12 @@ namespace InnoWerks.Emulators.AppleIIe
                 spriteBatch.Draw(whitePixel, pos, bottom); pos.X++;
             }
         }
+#endif
 
         protected override void DoDispose(bool disposing)
         {
             if (disposing)
             {
-                whitePixel?.Dispose();
             }
         }
     }

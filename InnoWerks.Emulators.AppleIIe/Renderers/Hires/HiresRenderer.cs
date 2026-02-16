@@ -21,16 +21,10 @@ namespace InnoWerks.Emulators.AppleIIe
         private static readonly Color HiresOrange = new(255, 128, 0);
         private static readonly Color HiresBlue = new(0, 0, 255);
 
-        //
-        // MonoGame stuff
-        //
-        private readonly Texture2D whitePixel;
-
-        private readonly Cpu6502Core cpu;
-        private readonly IBus bus;
-        private readonly MachineState machineState;
-
         private readonly HiresMemoryReader hiresMemoryReader;
+        private readonly HiresBuffer hiresBuffer;
+
+        private readonly int page;
 
         public HiresRenderer(
             GraphicsDevice graphicsDevice,
@@ -38,28 +32,20 @@ namespace InnoWerks.Emulators.AppleIIe
             IBus bus,
             Memory128k memoryBlocks,
             MachineState machineState,
-            ContentManager contentManager
-            )
+
+            int page)
+            : base(graphicsDevice, cpu, bus, memoryBlocks, machineState)
         {
-            ArgumentNullException.ThrowIfNull(graphicsDevice);
-            ArgumentNullException.ThrowIfNull(cpu);
-            ArgumentNullException.ThrowIfNull(bus);
-            ArgumentNullException.ThrowIfNull(memoryBlocks);
-            ArgumentNullException.ThrowIfNull(machineState);
+            this.page = page;
 
-            ArgumentNullException.ThrowIfNull(contentManager);
-
-            this.machineState = machineState;
-            this.cpu = cpu;
-            this.bus = bus;
-
-            whitePixel = new Texture2D(graphicsDevice, 1, 1);
-            whitePixel.SetData([Color.White]);
-
-            hiresMemoryReader = new(memoryBlocks, machineState);
+            hiresBuffer = new HiresBuffer();
+            hiresMemoryReader = new(memoryBlocks, machineState, page);
         }
 
-        public override ushort GetYOffset(int y) => throw new NotImplementedException();
+        public override ushort GetYOffsetAddress(int y)
+        {
+            return HiresMemoryReader.RowOffsets[y];
+        }
 
         public override void RenderByte(SpriteBatch spriteBatch, int x, int y) => throw new NotImplementedException();
 
@@ -84,11 +70,10 @@ namespace InnoWerks.Emulators.AppleIIe
         // If the MSB is 1, the first pixel is the previous pixel to the left, then you you do the
         // next 12 pixels from LSB to MSB.  Bit 6 of the byte is a single pixel (but if the next
         // byte MSB is set, then it is repeated one more time).
-        public void Draw(SpriteBatch spriteBatch, bool monochrome, int start, int count)
+        public override void Draw(SpriteBatch spriteBatch, int start, int count)
         {
             ArgumentNullException.ThrowIfNull(spriteBatch);
 
-            var hiresBuffer = new HiresBuffer();
             hiresMemoryReader.ReadHiresPage(hiresBuffer);
 
             for (int row = start; row < start + count; row++)
@@ -120,7 +105,6 @@ namespace InnoWerks.Emulators.AppleIIe
                             ? (currByte & (1 << (bit + 1))) != 0
                             : (nextByte & (1 << 0)) != 0;
 
-
                         var appleX = column * 7 + bit;
                         var evenPixel = (appleX & 1) == 0;
 
@@ -134,10 +118,10 @@ namespace InnoWerks.Emulators.AppleIIe
                         {
                             color = HiresWhite;
                         }
-                        else if (monochrome)
-                        {
-                            color = HiresWhite;
-                        }
+                        // else if (monochrome)
+                        // {
+                        //     color = HiresWhite;
+                        // }
                         else
                         {
                             color = LookupColor(palette, evenPixel);
@@ -148,10 +132,9 @@ namespace InnoWerks.Emulators.AppleIIe
                 }
 
                 // render the pixels on the row
-                for (int x = 0; x < 280; x += 2)
+                for (int x = 0; x < 280; x++)
                 {
-                    spriteBatch.Draw(whitePixel, new Rectangle(x, row, 1, 1), pixels[x]);
-                    spriteBatch.Draw(whitePixel, new Rectangle(x + 1, row, 1, 1), pixels[x + 1]);
+                    spriteBatch.Draw(WhitePixel, new Rectangle(x, row, 1, 1), pixels[x]);
                 }
             }
         }
@@ -160,7 +143,6 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             if (disposing)
             {
-                whitePixel?.Dispose();
             }
         }
     }

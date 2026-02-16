@@ -1,6 +1,8 @@
 using System;
 using InnoWerks.Computers.Apple;
 
+#pragma warning disable CA1819 // Properties should not return arrays
+
 namespace InnoWerks.Emulators.AppleIIe
 {
     public sealed class HiresMemoryReader
@@ -8,31 +10,32 @@ namespace InnoWerks.Emulators.AppleIIe
         private readonly Memory128k ram;
         private readonly MachineState machineState;
 
-        private ushort[] rowOffsets;
+        private readonly int page;
 
-        public HiresMemoryReader(Memory128k ram, MachineState machineState)
+        public HiresMemoryReader(Memory128k ram, MachineState machineState, int page)
         {
             this.ram = ram;
             this.machineState = machineState;
+            this.page = page;
         }
 
-        private ushort[] RowOffsets
+        public static ushort[] RowOffsets
         {
             get
             {
-                if (rowOffsets == null)
+                if (field == null)
                 {
-                    rowOffsets = new ushort[192];
+                    field = new ushort[192];
 
                     for (var y = 0; y < 192; y++)
                     {
-                        rowOffsets[y] = (ushort)(((y & 0x07) << 10) +
+                        field[y] = (ushort)(((y & 0x07) << 10) +
                                                  (((y >> 3) & 0x07) << 7) +
                                                  ((y >> 6) * 40));
                     }
                 }
 
-                return rowOffsets;
+                return field;
             }
         }
 
@@ -40,7 +43,7 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             ArgumentNullException.ThrowIfNull(buffer);
 
-            var memory = ram.Read((byte)(machineState.State[SoftSwitch.Page2] ? 0x40 : 0x20), 32);
+            var memory = ram.Read((byte)(page == 2 ? 0x40 : 0x20), 32);
 
             for (int y = 0; y < 192; y++)
             {

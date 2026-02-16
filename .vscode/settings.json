@@ -16,5 +16,6 @@
   "csharp.debug.requireExactSource": false,
   "csharp.preview.improvedLaunchExperience": true,
 
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  "nextflow.telemetry.enabled": false
 }

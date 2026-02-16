@@ -1,6 +1,8 @@
 using System;
 using InnoWerks.Computers.Apple;
 
+#pragma warning disable CA1819 // Properties should not return arrays
+
 namespace InnoWerks.Emulators.AppleIIe
 {
     public sealed class DhiresMemoryReader
@@ -8,60 +10,96 @@ namespace InnoWerks.Emulators.AppleIIe
         private readonly Memory128k ram;
         private readonly MachineState machineState;
 
-        private ushort[] rowOffsets;
+        private readonly int page;
 
-        public DhiresMemoryReader(Memory128k ram, MachineState machineState)
+        public DhiresMemoryReader(Memory128k ram, MachineState machineState, int page)
         {
             this.ram = ram;
             this.machineState = machineState;
+            this.page = page;
         }
 
-        private ushort[] RowOffsets
+        public static ushort[] RowOffsets
         {
             get
             {
-                if (rowOffsets == null)
+                if (field == null)
                 {
-                    rowOffsets = new ushort[192];
+                    field = new ushort[192];
 
                     for (var y = 0; y < 192; y++)
                     {
-                        rowOffsets[y] = (ushort)(((y & 0x07) << 10) +
+                        field[y] = (ushort)(((y & 0x07) << 10) +
                                                  (((y >> 3) & 0x07) << 7) +
                                                  ((y >> 6) * 40));
                     }
                 }
 
-                return rowOffsets;
+                return field;
             }
+        }
+
+        private static readonly byte[] flipped =
+        [
+            0b0000, // 0000 black
+            0b1000, // 0001 magenta
+            0b0100, // 0010 brown
+            0b1100, // 0011 orange
+            0b0010, // 0100 dark green
+            0b1010, // 0101 grey1
+            0b0110, // 0110 green
+            0b1110, // 0111 yellow
+
+            0b0001, // 1000 dark blue
+            0b1001, // 1001 violet
+            0b0101, // 1010 grey2
+            0b1101, // 1011 pink
+            0b0011, // 1100 medium blue
+            0b1011, // 1101 light blue
+            0b0111, // 1110 aqua
+            0b1111, // 1111 white
+        ];
+
+        private static byte[] GetPixels(byte b0, byte b1, byte b2, byte b3)
+        {
+            uint word = (uint)(b3 << 21 |
+                              (b2 & 0x7f) << 14 |
+                              (b1 & 0x7f) << 7 |
+                              (b0 & 0x7f));
+
+            var pixels = new byte[7];
+            for (var p = 0; p < 7; p++)
+            {
+                pixels[p] = flipped[(byte)(word >> (p * 4) & 0x0F)];
+            }
+
+            return pixels;
         }
 
         public void ReadDhiresPage(DhiresBuffer buffer)
         {
             ArgumentNullException.ThrowIfNull(buffer);
 
-            var main = ram.GetMain((byte)(machineState.State[SoftSwitch.Page2] ? 0x40 : 0x20), 32);
-            var aux = ram.GetAux((byte)(machineState.State[SoftSwitch.Page2] ? 0x40 : 0x20), 32);
+            var main = ram.GetMain((byte)(page == 2 ? 0x40 : 0x20), 32);
+            var aux = ram.GetAux((byte)(page == 2 ? 0x40 : 0x20), 32);
 
             for (int y = 0; y < 192; y++)
             {
-                for (int byteCol = 0; byteCol < 40; byteCol++)
+                var rawBytes = new byte[80];
+                for (var x = 0; x < 40; x++)
                 {
-                    // AUX = "even" pixel, MAIN = "odd" pixel
-                    byte mainByte = main[RowOffsets[y] + byteCol];
-                    byte auxByte = aux[RowOffsets[y] + byteCol];
+                    rawBytes[(x * 2) + 0] = aux[RowOffsets[y] + x];
+                    rawBytes[(x * 2) + 1] = main[RowOffsets[y] + x];
+                }
 
-                    for (int bit = 0; bit < 7; bit++)
-                    {
-                        bool auxBit = ((auxByte >> bit) & 1) != 0;
-                        bool mainBit = ((mainByte >> bit) & 1) != 0;
+                for (var x = 0; x < 40; x += 4)
+                {
+                    var pixels = GetPixels(rawBytes[x + 0], rawBytes[x + 1], rawBytes[x + 2], rawBytes[x + 3]);
 
-                        int x = byteCol * 14 + bit * 2;
-                        bool msb = (auxByte & 0x80) != 0 || (mainByte & 0x80) != 0;
-
-                        buffer.SetPixel(y, x, auxBit, mainBit, msb);     // left
-                        buffer.SetPixel(y, x + 1, auxBit, mainBit, msb); // right
-                    }
+                    buffer.SetPixel(y, x + 0, pixels[0]);
+                    buffer.SetPixel(y, x + 1, pixels[1]);
+                    buffer.SetPixel(y, x + 2, pixels[2]);
+                    buffer.SetPixel(y, x + 3, pixels[3]);
                 }
             }
         }

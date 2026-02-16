@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using InnoWerks.Computers.Apple;
 
-#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+#pragma warning disable CA1819 // Properties should not return arrays
 
 namespace InnoWerks.Emulators.AppleIIe
 {
@@ -12,31 +12,34 @@ namespace InnoWerks.Emulators.AppleIIe
         private readonly Memory128k ram;
         private readonly MachineState machineState;
 
-        private ushort[] rowOffsets;
+        private readonly bool eightyColumnMode;
+        private readonly int page;
 
-        public TextMemoryReader(Memory128k ram, MachineState machineState)
+        public TextMemoryReader(Memory128k ram, MachineState machineState, bool eightyColumnMode, int page)
         {
             this.ram = ram;
             this.machineState = machineState;
+            this.eightyColumnMode = eightyColumnMode;
+            this.page = page;
         }
 
-        private ushort[] RowOffsets
+        public static ushort[] RowOffsets
         {
             get
             {
-                if (rowOffsets == null)
+                if (field == null)
                 {
                     // initialize
                     int[] textRowBase = [0x000, 0x080, 0x100, 0x180, 0x200, 0x280, 0x300, 0x380];
 
-                    rowOffsets = new ushort[24];
+                    field = new ushort[24];
                     for (var y = 0; y < 24; y++)
                     {
-                        rowOffsets[y] = (ushort)(textRowBase[y & 0x07] + (y >> 3) * 40);
+                        field[y] = (ushort)(textRowBase[y & 0x07] + (y >> 3) * 40);
                     }
                 }
 
-                return rowOffsets;
+                return field;
             }
         }
 
@@ -44,7 +47,7 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             ArgumentNullException.ThrowIfNull(textBuffer);
 
-            if (machineState.State[SoftSwitch.EightyColumnMode] == false)
+            if (eightyColumnMode == false)
             {
                 Read40Column(textBuffer);
             }
@@ -56,7 +59,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
         private void Read40Column(TextBuffer textBuffer)
         {
-            var memory = ram.Read((byte)(machineState.State[SoftSwitch.Page2] ? 0x08 : 0x04), 4);
+            var memory = ram.Read((byte)(page == 2 ? 0x08 : 0x04), 4);
 
             for (var row = 0; row < 24; row++)
             {
