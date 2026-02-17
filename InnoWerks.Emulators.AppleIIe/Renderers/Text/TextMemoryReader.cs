@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using InnoWerks.Computers.Apple;
 
-#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+#pragma warning disable CA1819 // Properties should not return arrays
 
 namespace InnoWerks.Emulators.AppleIIe
 {
@@ -12,17 +12,42 @@ namespace InnoWerks.Emulators.AppleIIe
         private readonly Memory128k ram;
         private readonly MachineState machineState;
 
-        public TextMemoryReader(Memory128k ram, MachineState machineState)
+        private readonly bool eightyColumnMode;
+        private readonly int page;
+
+        public TextMemoryReader(Memory128k ram, MachineState machineState, bool eightyColumnMode, int page)
         {
             this.ram = ram;
             this.machineState = machineState;
+            this.eightyColumnMode = eightyColumnMode;
+            this.page = page;
+        }
+
+        public static ushort[] RowOffsets
+        {
+            get
+            {
+                if (field == null)
+                {
+                    // initialize
+                    int[] textRowBase = [0x000, 0x080, 0x100, 0x180, 0x200, 0x280, 0x300, 0x380];
+
+                    field = new ushort[24];
+                    for (var y = 0; y < 24; y++)
+                    {
+                        field[y] = (ushort)(textRowBase[y & 0x07] + (y >> 3) * 40);
+                    }
+                }
+
+                return field;
+            }
         }
 
         public void ReadTextPage(TextBuffer textBuffer)
         {
             ArgumentNullException.ThrowIfNull(textBuffer);
 
-            if (machineState.State[SoftSwitch.EightyColumnMode] == false)
+            if (eightyColumnMode == false)
             {
                 Read40Column(textBuffer);
             }
@@ -34,16 +59,15 @@ namespace InnoWerks.Emulators.AppleIIe
 
         private void Read40Column(TextBuffer textBuffer)
         {
-            var memory = ram.Read((byte)(machineState.State[SoftSwitch.Page2] ? 0x08 : 0x04), 4);
+            var memory = ram.Read((byte)(page == 2 ? 0x08 : 0x04), 4);
 
-            for (int row = 0; row < 24; row++)
+            for (var row = 0; row < 24; row++)
             {
-                for (int col = 0; col < 40; col++)
+                for (var col = 0; col < 40; col++)
                 {
-                    ushort addr = (ushort)(textRowBase[row & 0x07] + (row >> 3) * 40 + col);
-                    byte value = memory[addr];
+                    var addr = RowOffsets[row] + col;
 
-                    textBuffer.Put(row, col, ConstructTextCell(value));
+                    textBuffer.Put(row, col, ConstructTextCell(memory[addr]));
                 }
             }
         }
@@ -53,23 +77,17 @@ namespace InnoWerks.Emulators.AppleIIe
             var main = ram.GetMain(0x04, 4);
             var aux = ram.GetAux(0x04, 4);
 
-            for (int row = 0; row < 24; row++)
+            for (var row = 0; row < 24; row++)
             {
-                for (int col = 0; col < 40; col++)
+                for (var col = 0; col < 40; col++)
                 {
-                    ushort addr = (ushort)(textRowBase[row & 0x07] + (row >> 3) * 40 + col);
+                    var addr = RowOffsets[row] + col;
 
                     textBuffer.Put(row, col * 2, ConstructTextCell(aux[addr]));
                     textBuffer.Put(row, (col * 2) + 1, ConstructTextCell(main[addr]));
                 }
             }
         }
-
-        private static readonly int[] textRowBase =
-        [
-            0x000, 0x080, 0x100, 0x180,
-            0x200, 0x280, 0x300, 0x380
-        ];
 
         // normal character set
         // | screen code | mode     | characters        | Pos in Char Rom |
@@ -94,7 +112,6 @@ namespace InnoWerks.Emulators.AppleIIe
         // | $A0 - $BF   | Normal  | Symbols/Numbers                  | A0 - BF         |
         // | $C0 - $DF   | Normal  | Uppercase Letters                | C0 - DF         |
         // | $E0 - $FF   | Normal  | Symbols/Numbers                  | E0 - FF         |
-
 
         private TextCell ConstructTextCell(byte value)
         {

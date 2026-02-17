@@ -1,36 +1,28 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using InnoWerks.Computers.Apple;
 using InnoWerks.Simulators;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
+#pragma warning disable CA2213 // Disposable fields should be disposed
+#pragma warning disable CA1823 // Avoid unused private fields
+
 namespace InnoWerks.Emulators.AppleIIe
 {
-    public class HiresRenderer : IDisposable
+    public class HiresRenderer : Renderer
     {
-        // private static readonly Color HiresBlack = new(0, 0, 0);
-        private static readonly Color HiresPurple = new(128, 0, 255);
-        private static readonly Color HiresGreen = new(0, 192, 0);
-
-        // private static readonly Color HiresWhite = new(255, 255, 255);
-        // private static readonly Color HiresOrange = new(255, 128, 0);
-        // private static readonly Color HiresBlue = new(0, 0, 255);
-
-        //
-        // MonoGame stuff
-        //
-        private readonly Texture2D whitePixel;
-
-        private readonly Cpu6502Core cpu;
-        private readonly IBus bus;
-        private readonly MachineState machineState;
-
-        private bool disposed;
-
         private readonly HiresMemoryReader hiresMemoryReader;
+        private readonly HiresBuffer hiresBuffer;
+
+        private readonly Texture2D screenTexture;
+        private readonly Color[] screenPixels = new Color[DisplayCharacteristics.HiresAppleWidth * DisplayCharacteristics.AppleDisplayHeight];
+
+        private readonly int page;
+        private readonly bool monochrome;
 
         public HiresRenderer(
             GraphicsDevice graphicsDevice,
@@ -39,83 +31,192 @@ namespace InnoWerks.Emulators.AppleIIe
             Memory128k memoryBlocks,
             MachineState machineState,
 
-            ContentManager contentManager
-            )
+            int page,
+            bool monochrome)
+            : base(graphicsDevice, cpu, bus, memoryBlocks, machineState)
         {
-            ArgumentNullException.ThrowIfNull(graphicsDevice);
-            ArgumentNullException.ThrowIfNull(cpu);
-            ArgumentNullException.ThrowIfNull(bus);
-            ArgumentNullException.ThrowIfNull(memoryBlocks);
-            ArgumentNullException.ThrowIfNull(machineState);
+            this.page = page;
+            this.monochrome = monochrome;
 
-            ArgumentNullException.ThrowIfNull(contentManager);
+            hiresBuffer = new HiresBuffer();
+            hiresMemoryReader = new(memoryBlocks, machineState, page);
 
-            this.machineState = machineState;
-            this.cpu = cpu;
-            this.bus = bus;
-
-            whitePixel = new Texture2D(graphicsDevice, 1, 1);
-            whitePixel.SetData([Color.White]);
-
-            hiresMemoryReader = new(memoryBlocks, machineState);
+            screenTexture = new Texture2D(graphicsDevice, DisplayCharacteristics.HiresAppleWidth, DisplayCharacteristics.AppleDisplayHeight);
         }
 
-        public void Draw(SpriteBatch spriteBatch, int start, int count)
+        public override ushort GetYOffsetAddress(int y)
+        {
+            return HiresMemoryReader.RowOffsets[y];
+        }
+
+        public override void RenderByte(SpriteBatch spriteBatch, int x, int y) => throw new NotImplementedException();
+
+        public override string WhoAmiI => $"{nameof(HiresRenderer)} page={page}";
+
+        /*
+            // --- Step 3: Horizontal Blur (The "CRT" Look) ---
+            for (int x = 0; x < DisplayCharacteristics.HiresAppleWidth; x++)
+            {
+                // Simple 3-tap box filter: 25% Left, 50% Center, 25% Right
+                Color leftC = (x > 0) ? rowColors[x - 1] : DisplayCharacteristics.HiresBlack1;
+                Color centerC = rowColors[x];
+                Color rightC = (x < 559) ? rowColors[x + 1] : DisplayCharacteristics.HiresBlack1;
+
+                float r = (leftC.R * 0.25f) + (centerC.R * 0.5f) + (rightC.R * 0.25f);
+                float g = (leftC.G * 0.25f) + (centerC.G * 0.5f) + (rightC.G * 0.25f);
+                float b = (leftC.B * 0.25f) + (centerC.B * 0.5f) + (rightC.B * 0.25f);
+
+                screenPixels[y * DisplayCharacteristics.HiresAppleWidth + x] = new Color((int)r, (int)g, (int)b);
+            }
+        */
+
+        public override void Draw(SpriteBatch spriteBatch, Rectangle rectangle, int start, int count)
         {
             ArgumentNullException.ThrowIfNull(spriteBatch);
 
-            var hiresBuffer = new HiresBuffer();
             hiresMemoryReader.ReadHiresPage(hiresBuffer);
 
-            int pixelWidth = DisplayCharacteristics.AppleBlockWidth / 2;
-            int pixelHeight = DisplayCharacteristics.AppleBlockHeight;
+            // Temp buffers for the current scanline
+            // bitStarts: 1 = A dot starts here. 0 = No dot starts here.
+            byte[] bitStarts = new byte[DisplayCharacteristics.HiresAppleWidth];
+            bool[] msbFlags = new bool[DisplayCharacteristics.HiresAppleWidth];
 
             for (int y = start; y < start + count; y++)
             {
-                for (int x = 0; x < 280; x++)
+                Array.Clear(bitStarts, 0, DisplayCharacteristics.HiresAppleWidth);
+                Array.Clear(msbFlags, 0, DisplayCharacteristics.HiresAppleWidth);
+
+                // --- Step 1: Map the "Dots" (Sparse Population) ---
+                for (var x = 0; x < 40; x++)
                 {
-                    if (!hiresBuffer.GetPixel(y, x))
-                        continue; // Off pixel → nothing to draw
+                    var p = x * 14;
+                    var b = hiresBuffer.GetByte(y, x);
+                    bool hasShift = (b & 0x80) != 0;
+                    int offset = hasShift ? 1 : 0;
 
-                    byte sourceByte = hiresBuffer.GetSourceByte(y, x);
+                    // Mark the Palette for this byte range
+                    int endP = Math.Min(p + 14, DisplayCharacteristics.HiresAppleWidth);
+                    for (int k = p; k < endP; k++) msbFlags[k] = hasShift;
 
-                    // Phase calculation: bit7 of byte + horizontal position
-                    bool phaseBit = (sourceByte & 0x80) != 0;
-                    bool phase = ((x & 1) == 1) ^ phaseBit;
+                    for (var bit = 0; bit < 7; bit++)
+                    {
+                        if (((b >> bit) & 0x01) == 0x01)
+                        {
+                            // Mark the START of the dot only
+                            int idx = p + (bit * 2) + offset;
+                            if (idx < 559)
+                            {
+                                bitStarts[idx] = 1;
+                            }
+                        }
+                    }
+                }
 
-                    Color color = phase ? HiresGreen : HiresPurple;
+                // --- Step 2: Render Colors (Per Dot, not Per Pixel) ---
+                int rowOffset = y * DisplayCharacteristics.HiresAppleWidth;
 
-                    var rect = new Rectangle(
-                        x * pixelWidth,
-                        y * pixelHeight,
-                        pixelWidth,
-                        pixelHeight);
+                // Initialize row to Black first
+                for (int i = 0; i < DisplayCharacteristics.HiresAppleWidth; i++) screenPixels[rowOffset + i] = DisplayCharacteristics.HiresBlack1;
 
-                    spriteBatch.Draw(whitePixel, rect, color);
+                for (var x = 0; x < DisplayCharacteristics.HiresAppleWidth; x++)
+                {
+                    bool isDot = bitStarts[x] == 1;
+                    bool isGap = false;
+
+                    // --- Gap Detection ---
+                    // A gap is a missing dot sandwiched between two existing dots.
+                    // Check logical neighbors (Distance 2)
+                    if (!isDot)
+                    {
+                        bool prevDot = (x >= 2) && (bitStarts[x - 2] == 1);
+                        bool nextDot = (x < 558) && (bitStarts[x + 2] == 1);
+
+                        // Only fill gap if neighbors are on the SAME palette (avoids clashing colors filling gaps)
+                        if (prevDot && nextDot)
+                        {
+                            if (msbFlags[x] == msbFlags[x - 2]) // Simple check to ensure continuity
+                            {
+                                isGap = true;
+                            }
+                        }
+                    }
+
+                    if (!isDot && !isGap) continue;
+
+                    // --- Determine Color ---
+                    Color drawColor;
+                    bool isWhite = false;
+
+                    // Check for White Collision
+                    // If this dot touches a neighbor dot (Distance 2), it's white.
+                    // Note: Gaps effectively "connect" dots, but pure white usually comes from
+                    // raw adjacent bits. Let's strictly check raw bits for White.
+                    if (isDot)
+                    {
+                        bool prevRaw = (x >= 2) && (bitStarts[x - 2] == 1);
+                        bool nextRaw = (x < 558) && (bitStarts[x + 2] == 1);
+                        if (prevRaw || nextRaw) isWhite = true;
+                    }
+
+                    if (isWhite)
+                    {
+                        drawColor = DisplayCharacteristics.HiresWhite1;
+
+                        // Back-propagate White to the previous dot if it touched us
+                        if (x >= 2 && bitStarts[x - 2] == 1)
+                        {
+                            screenPixels[rowOffset + x - 2] = DisplayCharacteristics.HiresWhite1;
+                            screenPixels[rowOffset + x - 1] = DisplayCharacteristics.HiresWhite1;
+                        }
+                    }
+                    else
+                    {
+                        // [FIX] Determine the "Effective X" for phase calculation
+                        // If this is a Gap, we are effectively extending the previous dot (x-2).
+                        // If we use 'x' for a gap, we will pick the OPPOSITE color (the stripe color).
+                        int effectiveX = isGap ? (x - 2) : x;
+
+                        // Now calculate phase using the corrected position
+                        bool isEvenPhase = ((effectiveX / 2) % 2) == 0;
+                        bool isHighPalette = msbFlags[x];
+
+                        if (!isHighPalette) // Group A
+                        {
+                            drawColor = isEvenPhase ?
+                                DisplayCharacteristics.HiresViolet : // Violet
+                                DisplayCharacteristics.HiresGreen;   // Green
+                        }
+                        else // Group B
+                        {
+                            drawColor = isEvenPhase ?
+                                DisplayCharacteristics.HiresBlue : // Blue
+                                DisplayCharacteristics.HiresOrange;  // Orange
+                        }
+                    }
+
+                    // --- Paint the Dot (2 Pixels) ---
+                    screenPixels[rowOffset + x] = drawColor;
+                    if (x + 1 < DisplayCharacteristics.HiresAppleWidth)
+                    {
+                        screenPixels[rowOffset + x + 1] = drawColor;
+                    }
                 }
             }
-        }
 
-        public void Dispose()
-        {
-            Dispose(true);
-
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposed == true)
+            // --- Step 3: Upload ---
+            if (count > 0)
             {
-                return;
+                screenTexture.SetData(screenPixels);
+                spriteBatch.Draw(screenTexture, rectangle, DisplayCharacteristics.HiresWhite1);
             }
+        }
 
+        protected override void DoDispose(bool disposing)
+        {
             if (disposing)
             {
-                whitePixel?.Dispose();
+                screenTexture?.Dispose();
             }
-
-            disposed = true;
         }
     }
 }

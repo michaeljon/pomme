@@ -6,8 +6,16 @@
     "65x02/**": true
   },
 
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bower_components": true,
+    "**/*.code-search": true,
+    "65x02/**/*.json": true
+  },
+
   "csharp.debug.requireExactSource": false,
   "csharp.preview.improvedLaunchExperience": true,
 
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  "nextflow.telemetry.enabled": false
 }

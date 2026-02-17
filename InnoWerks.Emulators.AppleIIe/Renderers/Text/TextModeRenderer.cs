@@ -7,33 +7,31 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
+#pragma warning disable CA2213 // Disposable fields should be disposed
+
 namespace InnoWerks.Emulators.AppleIIe
 {
-    public class TextModeRenderer : IDisposable
+    public class TextModeRenderer : Renderer
     {
         private const int GlyphWidth = 8;
         private const int GlyphHeight = 8;
         private const int GlyphsPerRow = 16;
         private const int GlyphCount = 512;
 
-        private const int TexWidth = GlyphsPerRow * GlyphWidth;   // 128
+        private const int TexWidth = GlyphsPerRow * GlyphWidth;                  // 128
         private const int TexHeight = (GlyphCount / GlyphsPerRow) * GlyphHeight; // 256
 
         //
         // MonoGame stuff
         //
-        private readonly Texture2D whitePixel;
         private Texture2D charTexture;
 
         private Color textColor;
 
-        private readonly Cpu6502Core cpu;
-        private readonly IBus bus;
-        private readonly MachineState machineState;
-
-        private bool disposed;
-
         private readonly TextMemoryReader textMemoryReader;
+
+        private readonly bool eightyColumnMode;
+        private readonly int page;
 
         public TextModeRenderer(
             GraphicsDevice graphicsDevice,
@@ -41,41 +39,40 @@ namespace InnoWerks.Emulators.AppleIIe
             IBus bus,
             Memory128k memoryBlocks,
             MachineState machineState,
-
-            ContentManager contentManager,
-            Color textColor
-            )
+            bool eightyColumnMode,
+            int page,
+            Color textColor)
+            : base(graphicsDevice, cpu, bus, memoryBlocks, machineState)
         {
-            ArgumentNullException.ThrowIfNull(graphicsDevice);
-            ArgumentNullException.ThrowIfNull(cpu);
-            ArgumentNullException.ThrowIfNull(bus);
-            ArgumentNullException.ThrowIfNull(memoryBlocks);
-            ArgumentNullException.ThrowIfNull(machineState);
-
-            ArgumentNullException.ThrowIfNull(contentManager);
-
-            this.machineState = machineState;
-            this.cpu = cpu;
-            this.bus = bus;
-
+            this.eightyColumnMode = eightyColumnMode;
+            this.page = page;
             this.textColor = textColor;
 
-            whitePixel = new Texture2D(graphicsDevice, 1, 1);
-            whitePixel.SetData([Color.White]);
-
             LoadCharacterRom(graphicsDevice);
-
-            textMemoryReader = new(memoryBlocks, machineState);
+            textMemoryReader = new(memoryBlocks, machineState, eightyColumnMode, page);
         }
 
-        public void Draw(SpriteBatch spriteBatch, int start, int count, bool flashOn)
+        public override ushort GetYOffsetAddress(int y)
+        {
+            return (ushort)(TextMemoryReader.RowOffsets[y & 0x07] + (y >> 3) * 40);
+        }
+
+        public override void RenderByte(SpriteBatch spriteBatch, int x, int y) => throw new NotImplementedException();
+
+        public override string WhoAmiI => $"{nameof(TextModeRenderer)} page={page} eightyColumnMode={eightyColumnMode}";
+
+        public override void Draw(SpriteBatch spriteBatch, Rectangle rectangle, int start, int count)
         {
             ArgumentNullException.ThrowIfNull(spriteBatch);
 
-            var cols = machineState.State[SoftSwitch.EightyColumnMode] ? 80 : 40;
+            var cols = eightyColumnMode ? 80 : 40;
 
             var textBuffer = new TextBuffer(cols);
             textMemoryReader.ReadTextPage(textBuffer);
+
+            // todo: convert this back to scanlines instead of cells
+            start /= DisplayCharacteristics.AppleCellHeight;
+            count /= DisplayCharacteristics.AppleCellHeight;
 
             for (var row = start; row < start + count; row++)
             {
@@ -83,7 +80,7 @@ namespace InnoWerks.Emulators.AppleIIe
                 {
                     var cell = textBuffer.Get(row, col);
 
-                    DrawChar(spriteBatch, cell, col, row, flashOn);
+                    DrawChar(spriteBatch, cell, col, row);
                 }
             }
         }
@@ -109,6 +106,7 @@ namespace InnoWerks.Emulators.AppleIIe
                     for (int col = 0; col < 7; col++)
                     {
                         bool on = (bits & (1 << col)) != 0;
+
                         pixels[(gy + row) * TexWidth + (gx + col)] =
                             on ? Color.White : Color.Transparent;
                     }
@@ -118,7 +116,7 @@ namespace InnoWerks.Emulators.AppleIIe
             charTexture.SetData(pixels);
         }
 
-        private void DrawChar(SpriteBatch spriteBatch, TextCell cell, int col, int row, bool flashOn)
+        private void DrawChar(SpriteBatch spriteBatch, TextCell cell, int col, int row)
         {
             var glyph = cell.Ascii;
 
@@ -130,7 +128,7 @@ namespace InnoWerks.Emulators.AppleIIe
                 fg = Color.Black;
                 bg = textColor;
 
-                if (cell.Attr.HasFlag(TextAttributes.Flash) && flashOn)
+                if (cell.Attr.HasFlag(TextAttributes.Flash))
                 {
                     fg = textColor;
                     bg = Color.Black;
@@ -138,7 +136,7 @@ namespace InnoWerks.Emulators.AppleIIe
             }
             else
             {
-                if (cell.Attr.HasFlag(TextAttributes.Flash) && flashOn)
+                if (cell.Attr.HasFlag(TextAttributes.Flash))
                 {
                     fg = Color.Black;
                     bg = textColor;
@@ -149,12 +147,16 @@ namespace InnoWerks.Emulators.AppleIIe
             var srcY = glyph / 16 * 8;
 
             var src = new Rectangle(srcX, srcY, DisplayCharacteristics.AppleCellWidth, DisplayCharacteristics.AppleCellHeight);
-            var dst = new Rectangle(col * DisplayCharacteristics.AppleCellWidth, row * DisplayCharacteristics.AppleCellHeight, DisplayCharacteristics.AppleCellWidth, DisplayCharacteristics.AppleCellHeight);
+            var dst = new Rectangle(
+                col * (eightyColumnMode ? DisplayCharacteristics.AppleCellWidth : DisplayCharacteristics.AppleCellWidth * 2),
+                row * DisplayCharacteristics.AppleCellHeight,
+                eightyColumnMode ? DisplayCharacteristics.AppleCellWidth : DisplayCharacteristics.AppleCellWidth * 2,
+                DisplayCharacteristics.AppleCellHeight);
 
             // Background
             if (fg != textColor)
             {
-                spriteBatch.Draw(whitePixel, dst, bg);
+                spriteBatch.Draw(WhitePixel, dst, bg);
             }
 
             spriteBatch.Draw(
@@ -164,27 +166,12 @@ namespace InnoWerks.Emulators.AppleIIe
                 fg);
         }
 
-        public void Dispose()
+        protected override void DoDispose(bool disposing)
         {
-            Dispose(true);
-
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposed == true)
-            {
-                return;
-            }
-
             if (disposing)
             {
-                whitePixel?.Dispose();
                 charTexture?.Dispose();
             }
-
-            disposed = true;
         }
     }
 }

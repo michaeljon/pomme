@@ -97,7 +97,7 @@
       "preLaunchTask": "build",
       "program": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe/bin/Debug/net10.0/InnoWerks.Emulators.AppleIIe.dll",
       "cwd": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe",
-      "args": ["--disk2", "/home/michaeljon/tmp/PROGRAMS - UTA2E.dsk"],
+      "args": ["--disk2", "disks/blank.dsk"],
       "stopAtEntry": false,
       "requireExactSource": false
     },

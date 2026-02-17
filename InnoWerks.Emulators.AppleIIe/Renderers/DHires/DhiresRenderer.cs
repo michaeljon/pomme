@@ -7,30 +7,19 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
+#pragma warning disable CA2213 // Disposable fields should be disposed
+
 namespace InnoWerks.Emulators.AppleIIe
 {
-    public class DhiresRenderer : IDisposable
+    public class DhiresRenderer : Renderer
     {
-        private static readonly Color HiresBlack = new(0, 0, 0);
-        private static readonly Color HiresPurple = new(128, 0, 255);
-        private static readonly Color HiresGreen = new(0, 192, 0);
-
-        // private static readonly Color HiresWhite = new(255, 255, 255);
-        private static readonly Color HiresOrange = new(255, 128, 0);
-        private static readonly Color HiresBlue = new(0, 0, 255);
-
-        //
-        // MonoGame stuff
-        //
-        private readonly Texture2D whitePixel;
-
-        private readonly Cpu6502Core cpu;
-        private readonly IBus bus;
-        private readonly MachineState machineState;
-
-        private bool disposed;
-
         private readonly DhiresMemoryReader dhiresMemoryReader;
+        private readonly DhiresBuffer dhiresBuffer;
+
+        private readonly Texture2D screenTexture;
+        private readonly Color[] screenPixels = new Color[DisplayCharacteristics.HiresAppleWidth * DisplayCharacteristics.AppleDisplayHeight];
+
+        private readonly int page;
 
         public DhiresRenderer(
             GraphicsDevice graphicsDevice,
@@ -38,103 +27,60 @@ namespace InnoWerks.Emulators.AppleIIe
             IBus bus,
             Memory128k memoryBlocks,
             MachineState machineState,
-
-            ContentManager contentManager
-            )
+            int page)
+            : base(graphicsDevice, cpu, bus, memoryBlocks, machineState)
         {
-            ArgumentNullException.ThrowIfNull(graphicsDevice);
-            ArgumentNullException.ThrowIfNull(cpu);
-            ArgumentNullException.ThrowIfNull(bus);
-            ArgumentNullException.ThrowIfNull(memoryBlocks);
-            ArgumentNullException.ThrowIfNull(machineState);
+            this.page = page;
 
-            ArgumentNullException.ThrowIfNull(contentManager);
+            dhiresBuffer = new DhiresBuffer();
+            dhiresMemoryReader = new(memoryBlocks, machineState, page);
 
-            this.machineState = machineState;
-            this.cpu = cpu;
-            this.bus = bus;
-
-            whitePixel = new Texture2D(graphicsDevice, 1, 1);
-            whitePixel.SetData([Color.White]);
-
-            dhiresMemoryReader = new(memoryBlocks, machineState);
+            screenTexture = new Texture2D(graphicsDevice, DisplayCharacteristics.HiresAppleWidth, DisplayCharacteristics.AppleDisplayHeight);
         }
 
-        public void Draw(SpriteBatch spriteBatch, int start, int count)
+        public override ushort GetYOffsetAddress(int y)
+        {
+            return DhiresMemoryReader.RowOffsets[y];
+        }
+
+        public override void RenderByte(SpriteBatch spriteBatch, int x, int y) => throw new NotImplementedException();
+
+        public override string WhoAmiI => $"{nameof(DhiresRenderer)} page={page}";
+
+        public override void Draw(SpriteBatch spriteBatch, Rectangle rectangle, int start, int count)
         {
             ArgumentNullException.ThrowIfNull(spriteBatch);
 
-            var buffer = new DhiresBuffer();
-            dhiresMemoryReader.ReadDhiresPage(buffer);
+            dhiresMemoryReader.ReadDhiresPage(dhiresBuffer);
 
-            int width = DisplayCharacteristics.HiresAppleWidth;
-            int pixelWidth = DisplayCharacteristics.AppleBlockWidth / 2;
-            int pixelHeight = DisplayCharacteristics.AppleBlockHeight;
-
-            for (int y = start; y < start + count; y++)
+            for (var y = start; y < start + count; y++)
             {
-                for (int x = 0; x < width; x++)
+                int rowOffset = y * DisplayCharacteristics.HiresAppleWidth;
+
+                for (var x = 0; x < DhiresBuffer.PixelCount / 4; x++)
                 {
-                    var p = buffer.GetPixel(y, x);
+                    var p = dhiresBuffer.GetPixel(y, x);
+                    var drawColor = DisplayCharacteristics.DHiresPalette[p.Color];
 
-                    bool phase = (x % 2 == 0) ^ p.MSB;
+                    int baseIndex = rowOffset + (x * 4);
 
-                    // Neighbor check for Tier 2
-                    bool left = x > 0 ? buffer.GetPixel(y, x - 1).IsOn : false;
-                    bool right = x < width - 1 ? buffer.GetPixel(y, x + 1).IsOn : false;
-
-                    Color color;
-
-                    if (!p.IsOn)
-                    {
-                        color = HiresBlack;
-                    }
-                    else if (left ^ right) // Tier 2
-                    {
-                        color = phase ? HiresOrange : HiresBlue;
-                    }
-                    else
-                    {
-                        // Tier 1 fallback
-                        if (p.AuxBit && !p.MainBit)
-                            color = phase ? HiresGreen : HiresPurple;
-                        else if (!p.AuxBit && p.MainBit)
-                            color = phase ? HiresGreen : HiresPurple;
-                        else
-                            color = phase ? HiresGreen : HiresPurple;
-                    }
-
-                    var rect = new Rectangle(
-                        x * pixelWidth,
-                        y * pixelHeight,
-                        pixelWidth,
-                        pixelHeight);
-
-                    spriteBatch.Draw(whitePixel, rect, color);
+                    screenPixels[baseIndex] = drawColor;
+                    screenPixels[baseIndex + 1] = drawColor;
+                    screenPixels[baseIndex + 2] = drawColor;
+                    screenPixels[baseIndex + 3] = drawColor;
                 }
             }
+
+            screenTexture.SetData(screenPixels);
+            spriteBatch.Draw(screenTexture, rectangle, Color.White);
         }
 
-        public void Dispose()
+        protected override void DoDispose(bool disposing)
         {
-            Dispose(true);
-
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposed == true)
-            {
-                return;
-            }
-
             if (disposing)
             {
-                whitePixel?.Dispose();
+                screenTexture?.Dispose();
             }
-
-            disposed = true;
         }
     }
 }
