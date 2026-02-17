@@ -6,13 +6,13 @@ namespace InnoWerks.Emulators.AppleIIe
 {
     public sealed class HiresBuffer
     {
-        private readonly byte[,] bytes = new byte[192, 40];
+        private readonly byte[,] bytes = new byte[192, DisplayCharacteristics.HiresAppleWidth];
 
         public byte GetByte(int y, int x) => bytes[y, x];
 
-        public void SetByte(int y, int x, byte sourceByte)
+        public void SetByte(int y, int x, byte b)
         {
-            bytes[y, x] = sourceByte;
+            bytes[y, x] = b;
         }
     }
 }

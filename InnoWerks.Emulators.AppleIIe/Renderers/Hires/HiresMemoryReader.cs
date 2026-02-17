@@ -30,8 +30,8 @@ namespace InnoWerks.Emulators.AppleIIe
                     for (var y = 0; y < 192; y++)
                     {
                         field[y] = (ushort)(((y & 0x07) << 10) +
-                                                 (((y >> 3) & 0x07) << 7) +
-                                                 ((y >> 6) * 40));
+                                           (((y >> 3) & 0x07) << 7) +
+                                           ((y >> 6) * 40));
                     }
                 }
 

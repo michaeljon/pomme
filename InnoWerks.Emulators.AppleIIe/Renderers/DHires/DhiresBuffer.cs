@@ -41,9 +41,9 @@ namespace InnoWerks.Emulators.AppleIIe
 
     public sealed class DhiresBuffer
     {
-        private readonly DhiresPixel[,] pixels = new DhiresPixel[192, PixelCount];
+        private readonly DhiresPixel[,] pixels = new DhiresPixel[192, DisplayCharacteristics.HiresAppleWidth];
 
-        public static int PixelCount => 140;
+        public static int PixelCount => DisplayCharacteristics.HiresAppleWidth;
 
         public void SetPixel(int y, int x, byte color) => pixels[y, x] = new DhiresPixel(color);
 

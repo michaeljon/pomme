@@ -17,8 +17,6 @@ namespace InnoWerks.Emulators.AppleIIe
 
         public const int AppleDisplayHeight = 192;
 
-        public const int LoresAppleWidth = 280;
-
         public const int HiresAppleWidth = 560;
 
         public static readonly Color[] TextPalette =
@@ -91,5 +89,14 @@ namespace InnoWerks.Emulators.AppleIIe
            new Color(0x4A, 0xFD, 0xC5),    //  "#4AFDC5", aqua
            new Color(0xFF, 0xFF, 0xFF),    //  "#FFFFFF"  white
         ];
+
+        public static readonly Color HiresBlack1 = new(0x00, 0x00, 0x00);
+        public static readonly Color HiresViolet = new(0xDD, 0x22, 0xDD);
+        public static readonly Color HiresGreen = new(0x11, 0xDD, 0x00);
+        public static readonly Color HiresWhite1 = new(0xFF, 0xFF, 0xFF);
+        public static readonly Color HiresBlack2 = new(0x00, 0x00, 0x00);
+        public static readonly Color HiresBlue = new(0x66, 0xAA, 0xFF);
+        public static readonly Color HiresOrange = new(0xFF, 0x66, 0x00);
+        public static readonly Color HiresWhite2 = new(0xFF, 0xFF, 0xFF);
     }
 }

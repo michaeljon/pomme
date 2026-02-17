@@ -44,7 +44,9 @@ namespace InnoWerks.Emulators.AppleIIe
 
         public override void RenderByte(SpriteBatch spriteBatch, int x, int y) => throw new NotImplementedException();
 
-        public override void Draw(SpriteBatch spriteBatch, int start, int count)
+        public override string WhoAmiI => $"{nameof(LoresRenderer)} page={page} eightyColumnMode={eightyColumnMode}";
+
+        public override void Draw(SpriteBatch spriteBatch, Rectangle rectangle, int start, int count)
         {
             ArgumentNullException.ThrowIfNull(spriteBatch);
 

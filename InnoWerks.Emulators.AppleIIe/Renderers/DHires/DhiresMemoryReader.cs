@@ -30,8 +30,8 @@ namespace InnoWerks.Emulators.AppleIIe
                     for (var y = 0; y < 192; y++)
                     {
                         field[y] = (ushort)(((y & 0x07) << 10) +
-                                                 (((y >> 3) & 0x07) << 7) +
-                                                 ((y >> 6) * 40));
+                                           (((y >> 3) & 0x07) << 7) +
+                                           ((y >> 6) * 40));
                     }
                 }
 
@@ -86,20 +86,24 @@ namespace InnoWerks.Emulators.AppleIIe
             for (int y = 0; y < 192; y++)
             {
                 var rawBytes = new byte[80];
-                for (var x = 0; x < 40; x++)
+                for (var b = 0; b < 40; b++)
                 {
-                    rawBytes[(x * 2) + 0] = aux[RowOffsets[y] + x];
-                    rawBytes[(x * 2) + 1] = main[RowOffsets[y] + x];
+                    rawBytes[(b * 2) + 0] = aux[RowOffsets[y] + b];
+                    rawBytes[(b * 2) + 1] = main[RowOffsets[y] + b];
                 }
 
-                for (var x = 0; x < 40; x += 4)
+                var x = 0;
+                for (var b = 0; b < 80; b += 4)
                 {
-                    var pixels = GetPixels(rawBytes[x + 0], rawBytes[x + 1], rawBytes[x + 2], rawBytes[x + 3]);
+                    var pixels = GetPixels(rawBytes[b + 0], rawBytes[b + 1], rawBytes[b + 2], rawBytes[b + 3]);
 
-                    buffer.SetPixel(y, x + 0, pixels[0]);
-                    buffer.SetPixel(y, x + 1, pixels[1]);
-                    buffer.SetPixel(y, x + 2, pixels[2]);
-                    buffer.SetPixel(y, x + 3, pixels[3]);
+                    buffer.SetPixel(y, x++, pixels[0]);
+                    buffer.SetPixel(y, x++, pixels[1]);
+                    buffer.SetPixel(y, x++, pixels[2]);
+                    buffer.SetPixel(y, x++, pixels[3]);
+                    buffer.SetPixel(y, x++, pixels[4]);
+                    buffer.SetPixel(y, x++, pixels[5]);
+                    buffer.SetPixel(y, x++, pixels[6]);
                 }
             }
         }

@@ -40,7 +40,9 @@ namespace InnoWerks.Emulators.AppleIIe
 
         public override void RenderByte(SpriteBatch spriteBatch, int x, int y) => throw new NotImplementedException();
 
-        public override void Draw(SpriteBatch spriteBatch, int start, int count)
+        public override string WhoAmiI => $"{nameof(DhiresRenderer)} page={page}";
+
+        public override void Draw(SpriteBatch spriteBatch, Rectangle rectangle, int start, int count)
         {
             ArgumentNullException.ThrowIfNull(spriteBatch);
 
@@ -48,11 +50,11 @@ namespace InnoWerks.Emulators.AppleIIe
 
             for (var y = start; y < start + count; y++)
             {
-                for (var x = 0; x < 140; x++)
+                for (var x = 0; x < DhiresBuffer.PixelCount; x++)
                 {
                     var p = dhiresBuffer.GetPixel(y, x);
 
-                    spriteBatch.Draw(WhitePixel, new Rectangle((x * 4) + 0, y, 1, 1), DisplayCharacteristics.DHiresPalette[p.Color]);
+                    spriteBatch.Draw(WhitePixel, new Rectangle((x * 4), y, 1, 1), DisplayCharacteristics.DHiresPalette[p.Color]);
                     spriteBatch.Draw(WhitePixel, new Rectangle((x * 4) + 1, y, 1, 1), DisplayCharacteristics.DHiresPalette[p.Color]);
                     spriteBatch.Draw(WhitePixel, new Rectangle((x * 4) + 2, y, 1, 1), DisplayCharacteristics.DHiresPalette[p.Color]);
                     spriteBatch.Draw(WhitePixel, new Rectangle((x * 4) + 3, y, 1, 1), DisplayCharacteristics.DHiresPalette[p.Color]);

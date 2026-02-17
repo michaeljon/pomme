@@ -241,34 +241,61 @@ namespace InnoWerks.Emulators.AppleIIe
 
 #if RENDER_DHIRES_PAGE
         private int currentHiresTestPattern;
-        private List<(ushort page, bool page2, byte main, byte aux)> hiresPatterns = [
-            (0x2000, true, 0xFF, 0xFF),
-            (0x2000, true, 0x7F, 0x7F),
-            (0x2000, true, 0x55, 0xAA),
+        private List<(ushort addr, int page, string color, byte main)> hiresPatterns = [
+            (0x2000, 1, "Black1", 0x00),
+            (0x2000, 1, "Green",  0x2A),
+            (0x2000, 1, "Violet", 0x55),
+            (0x2000, 1, "White1", 0x7F),
+            (0x2000, 1, "Black2", 0x80),
+            (0x2000, 1, "Orange", 0xAA),
+            (0x2000, 1, "Blue",   0xD5),
+            (0x2000, 1, "White2", 0xFF),
 
-            (0x4000, false, 0xFF, 0xFF),
-            (0x4000, false, 0x7F, 0x7F),
-            (0x4000, false, 0x55, 0xAA),
+            (0x4000, 2, "Black1", 0x00),
+            (0x4000, 2, "Green",  0x2A),
+            (0x4000, 2, "Violet", 0x55),
+            (0x4000, 2, "White1", 0x7F),
+            (0x4000, 2, "Black2", 0x80),
+            (0x4000, 2, "Orange", 0xAA),
+            (0x4000, 2, "Blue",   0xD5),
+            (0x4000, 2, "White2", 0xFF),
         ];
 
         private int currentDHiresTestPattern;
-        private List<(ushort page, string color, byte aux1, byte main1, byte aux2, byte main2)> dhiresPatterns = [
-            (0x2000, "Black", (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00),
-            (0x2000, "Magenta", (byte)0x08, (byte)0x11, (byte)0x22, (byte)0x44),
-            (0x2000, "Brown", (byte)0x44, (byte)0x08, (byte)0x11, (byte)0x22),
-            (0x2000, "Orange", (byte)0x4C, (byte)0x19, (byte)0x33, (byte)0x66),
-            (0x2000, "Dark Green", (byte)0x22, (byte)0x44, (byte)0x08, (byte)0x11),
-            (0x2000, "Grey1", (byte)0x2A, (byte)0x55, (byte)0x2A, (byte)0x55),
-            (0x2000, "Green", (byte)0x66, (byte)0x4C, (byte)0x19, (byte)0x33),
-            (0x2000, "Yellow", (byte)0x6E, (byte)0x5D, (byte)0x3B, (byte)0x77),
-            (0x2000, "Dark Blue", (byte)0x11, (byte)0x22, (byte)0x44, (byte)0x08),
-            (0x2000, "Violet", (byte)0x19, (byte)0x33, (byte)0x66, (byte)0x4C),
-            (0x2000, "Grey2", (byte)0x55, (byte)0x2A, (byte)0x55, (byte)0x2A),
-            (0x2000, "Pink", (byte)0x5D, (byte)0x3B, (byte)0x77, (byte)0x6E),
-            (0x2000, "Medium Blue", (byte)0x33, (byte)0x66, (byte)0x4C, (byte)0x19),
-            (0x2000, "Light Blue", (byte)0x3B, (byte)0x77, (byte)0x6E, (byte)0x5D),
-            (0x2000, "Aqua", (byte)0x77, (byte)0x6E, (byte)0x5D, (byte)0x3B),
-            (0x2000, "White", (byte)0x7F, (byte)0x7F, (byte)0x7F, (byte)0x7F),
+        private List<(ushort addr, int page, string color, byte aux1, byte main1, byte aux2, byte main2)> dhiresPatterns = [
+            (0x2000, 1, "Black", (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00),
+            (0x2000, 1, "Magenta", (byte)0x08, (byte)0x11, (byte)0x22, (byte)0x44),
+            (0x2000, 1, "Brown", (byte)0x44, (byte)0x08, (byte)0x11, (byte)0x22),
+            (0x2000, 1, "Orange", (byte)0x4C, (byte)0x19, (byte)0x33, (byte)0x66),
+            (0x2000, 1, "Dark Green", (byte)0x22, (byte)0x44, (byte)0x08, (byte)0x11),
+            (0x2000, 1, "Grey1", (byte)0x2A, (byte)0x55, (byte)0x2A, (byte)0x55),
+            (0x2000, 1, "Green", (byte)0x66, (byte)0x4C, (byte)0x19, (byte)0x33),
+            (0x2000, 1, "Yellow", (byte)0x6E, (byte)0x5D, (byte)0x3B, (byte)0x77),
+            (0x2000, 1, "Dark Blue", (byte)0x11, (byte)0x22, (byte)0x44, (byte)0x08),
+            (0x2000, 1, "Violet", (byte)0x19, (byte)0x33, (byte)0x66, (byte)0x4C),
+            (0x2000, 1, "Grey2", (byte)0x55, (byte)0x2A, (byte)0x55, (byte)0x2A),
+            (0x2000, 1, "Pink", (byte)0x5D, (byte)0x3B, (byte)0x77, (byte)0x6E),
+            (0x2000, 1, "Medium Blue", (byte)0x33, (byte)0x66, (byte)0x4C, (byte)0x19),
+            (0x2000, 1, "Light Blue", (byte)0x3B, (byte)0x77, (byte)0x6E, (byte)0x5D),
+            (0x2000, 1, "Aqua", (byte)0x77, (byte)0x6E, (byte)0x5D, (byte)0x3B),
+            (0x2000, 1, "White", (byte)0x7F, (byte)0x7F, (byte)0x7F, (byte)0x7F),
+
+            (0x4000, 2, "Black", (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00),
+            (0x4000, 2, "Magenta", (byte)0x08, (byte)0x11, (byte)0x22, (byte)0x44),
+            (0x4000, 2, "Brown", (byte)0x44, (byte)0x08, (byte)0x11, (byte)0x22),
+            (0x4000, 2, "Orange", (byte)0x4C, (byte)0x19, (byte)0x33, (byte)0x66),
+            (0x4000, 2, "Dark Green", (byte)0x22, (byte)0x44, (byte)0x08, (byte)0x11),
+            (0x4000, 2, "Grey1", (byte)0x2A, (byte)0x55, (byte)0x2A, (byte)0x55),
+            (0x4000, 2, "Green", (byte)0x66, (byte)0x4C, (byte)0x19, (byte)0x33),
+            (0x4000, 2, "Yellow", (byte)0x6E, (byte)0x5D, (byte)0x3B, (byte)0x77),
+            (0x4000, 2, "Dark Blue", (byte)0x11, (byte)0x22, (byte)0x44, (byte)0x08),
+            (0x4000, 2, "Violet", (byte)0x19, (byte)0x33, (byte)0x66, (byte)0x4C),
+            (0x4000, 2, "Grey2", (byte)0x55, (byte)0x2A, (byte)0x55, (byte)0x2A),
+            (0x4000, 2, "Pink", (byte)0x5D, (byte)0x3B, (byte)0x77, (byte)0x6E),
+            (0x4000, 2, "Medium Blue", (byte)0x33, (byte)0x66, (byte)0x4C, (byte)0x19),
+            (0x4000, 2, "Light Blue", (byte)0x3B, (byte)0x77, (byte)0x6E, (byte)0x5D),
+            (0x4000, 2, "Aqua", (byte)0x77, (byte)0x6E, (byte)0x5D, (byte)0x3B),
+            (0x4000, 2, "White", (byte)0x7F, (byte)0x7F, (byte)0x7F, (byte)0x7F),
         ];
 #endif
 
@@ -314,28 +341,30 @@ namespace InnoWerks.Emulators.AppleIIe
 #if RENDER_DHIRES_PAGE
                     if (state.IsKeyDown(Keys.F9) && !prevKeyboard.IsKeyDown(Keys.F9))
                     {
-                        var (addr, page2, main, aux) = hiresPatterns[currentHiresTestPattern];
+                        var (addr, page, color, main) = hiresPatterns[currentHiresTestPattern];
 
-                        machineState.State[SoftSwitch.Page2] = !page2;
+                        machineState.State[SoftSwitch.Page2] = page == 2;
                         machineState.State[SoftSwitch.TextMode] = false;
                         machineState.State[SoftSwitch.MixedMode] = false;
                         machineState.State[SoftSwitch.HiRes] = true;
                         machineState.State[SoftSwitch.IOUDisabled] = false;
                         machineState.State[SoftSwitch.DoubleHiRes] = false;
-                        machineState.State[SoftSwitch.Store80] = true;
+                        machineState.State[SoftSwitch.EightyColumnMode] = false;
+                        machineState.State[SoftSwitch.Store80] = false;
 
                         SimDebugger.Info(
-                            "test={0} addr={1:X4} main={2:X2} aux={3:X2} page1={4} text={5} mixed={6} hires={7} ioudis={8} dhires={9} 80col={10}\n",
+                            "test={0} color={1} addr={2:X4} main={3:X2} page2={4} text={5} mixed={6} hires={7} ioudis={8} dhires={9} 80col={10} store80={11}\n",
                             currentHiresTestPattern,
+                            color,
                             addr,
                             main,
-                            aux,
                             machineState.State[SoftSwitch.Page2] ? 1 : 0,
                             machineState.State[SoftSwitch.TextMode] ? 1 : 0,
                             machineState.State[SoftSwitch.MixedMode] ? 1 : 0,
                             machineState.State[SoftSwitch.HiRes] ? 1 : 0,
                             machineState.State[SoftSwitch.IOUDisabled] ? 1 : 0,
                             machineState.State[SoftSwitch.DoubleHiRes] ? 1 : 0,
+                            machineState.State[SoftSwitch.EightyColumnMode] ? 1 : 0,
                             machineState.State[SoftSwitch.Store80] ? 1 : 0
                         );
 
@@ -343,23 +372,24 @@ namespace InnoWerks.Emulators.AppleIIe
 
                         currentHiresTestPattern++;
                         currentHiresTestPattern %= hiresPatterns.Count;
-                        DoHiresTest(addr, main, aux);
+                        DoHiresTest(addr, main);
                     }
 
                     if (state.IsKeyDown(Keys.F10) && !prevKeyboard.IsKeyDown(Keys.F10))
                     {
-                        var (addr, color, aux1, main1, aux2, main2) = dhiresPatterns[currentDHiresTestPattern];
+                        var (addr, page, color, aux1, main1, aux2, main2) = dhiresPatterns[currentDHiresTestPattern];
 
-                        machineState.State[SoftSwitch.Page2] = false;
+                        machineState.State[SoftSwitch.Page2] = page == 2;
                         machineState.State[SoftSwitch.TextMode] = false;
                         machineState.State[SoftSwitch.MixedMode] = false;
                         machineState.State[SoftSwitch.HiRes] = true;
                         machineState.State[SoftSwitch.IOUDisabled] = true;
                         machineState.State[SoftSwitch.DoubleHiRes] = true;
-                        machineState.State[SoftSwitch.Store80] = true;
+                        machineState.State[SoftSwitch.EightyColumnMode] = true;
+                        machineState.State[SoftSwitch.Store80] = false;
 
                         SimDebugger.Info(
-                            "test={0} color={1} addr={2:X4} aux1={3:X2} main1={4:X2} aux2={5:X2} main2={6:X2} page1={7} text={8} mixed={9} hires={10} ioudis={11} dhires={12} 80col={13}\n",
+                            "test={0} color={1} addr={2:X4} aux1={3:X2} main1={4:X2} aux2={5:X2} main2={6:X2} page2={7} text={8} mixed={9} hires={10} ioudis={11} dhires={12} 80col={13} store80={13}\n",
                             currentDHiresTestPattern,
                             color,
                             addr,
@@ -373,6 +403,7 @@ namespace InnoWerks.Emulators.AppleIIe
                             machineState.State[SoftSwitch.HiRes] ? 1 : 0,
                             machineState.State[SoftSwitch.IOUDisabled] ? 1 : 0,
                             machineState.State[SoftSwitch.DoubleHiRes] ? 1 : 0,
+                            machineState.State[SoftSwitch.EightyColumnMode] ? 1 : 0,
                             machineState.State[SoftSwitch.Store80] ? 1 : 0
                         );
 
@@ -400,82 +431,43 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             for (ushort addr = (ushort)pageBase; addr < pageBase + 0x2000; addr++)
             {
-                memoryBlocks.SetMain(addr, 0x00);
-                memoryBlocks.SetAux(addr, 0x00);
+                memoryBlocks.ZeroMain(addr);
+                memoryBlocks.ZeroAux(addr);
             }
 
-            for (int y = 0; y < 192; y++)
+            for (var y = 0; y < 192; y++)
             {
-                int rowAddr =
-                    pageBase +
-                    ((y & 0x07) << 10) +       // (y % 8) * 0x400
-                    (((y >> 3) & 0x07) << 7) + // ((y / 8) % 8) * 0x80
-                    ((y >> 6) * 40);           // (y / 64) * 40
+                var rowAddr = pageBase + DhiresMemoryReader.RowOffsets[y];
 
-                for (int byteCol = 0; byteCol < 20; byteCol += 2)
+                for (var x = 0; x < 40; x++)
                 {
-                    ushort addr = (ushort)(rowAddr + byteCol + 0);
-                    memoryBlocks.SetAux(addr, aux1);
+                    ushort addr = (ushort)(rowAddr + (x * 2));
+                    memoryBlocks.SetAux((addr), aux1);
                     memoryBlocks.SetMain(addr, main1);
 
-                    addr = (ushort)(rowAddr + byteCol + 1);
+                    addr = (ushort)(rowAddr + (x * 2) + 1);
                     memoryBlocks.SetAux(addr, aux2);
                     memoryBlocks.SetMain(addr, main2);
                 }
             }
         }
 
-        private void DoHiresTest(int pageBase, byte aux, byte main)
+        private void DoHiresTest(int pageBase, byte main)
         {
-            // Fill every HIRES byte with 0xFF (all pixels ON)
-            for (int y = 0; y < 192; y++)
+            for (ushort addr = (ushort)pageBase; addr < pageBase + 0x2000; addr++)
             {
-                int rowAddr =
-                    pageBase +
-                    ((y & 0x07) << 10) +       // (y % 8) * 0x400
-                    (((y >> 3) & 0x07) << 7) + // ((y / 8) % 8) * 0x80
-                    ((y >> 6) * 40);           // (y / 64) * 40
+                memoryBlocks.ZeroMain(addr);
+            }
 
-                for (int byteCol = 0; byteCol < 40; byteCol++)
+            for (var y = 0; y < 192; y++)
+            {
+                var rowAddr = pageBase + HiresMemoryReader.RowOffsets[y];
+
+                for (var x = 0; x < 40; x++)
                 {
-                    ushort addr = (ushort)(rowAddr + byteCol);
-
+                    ushort addr = (ushort)(rowAddr + x);
                     memoryBlocks.SetMain(addr, main);
-                    memoryBlocks.SetAux(addr, aux);
                 }
-            }
-        }
-
-        // Fill first few bytes with test patterns
-        void WriteDhiresTest(ushort pageBase)
-        {
-            for (ushort addr = pageBase; addr < pageBase + 0x2000; addr++)
-            {
-                memoryBlocks.SetMain(addr, 0x00);
-                memoryBlocks.SetAux(addr, 0x00);
-            }
-
-            for (ushort addr = pageBase; addr < pageBase + 0x2000; addr += 5)
-            {
-                // Byte 0 → alternating bits to produce Tier 1 stripes
-                memoryBlocks.SetMain((ushort)(addr + 0), 0x55);
-                memoryBlocks.SetAux((ushort)(addr + 0), 0xAA);
-
-                // Byte 1 → single neighbor ON → Tier 2 (orange/blue)
-                memoryBlocks.SetMain((ushort)(addr + 1), 0x0F);
-                memoryBlocks.SetAux((ushort)(addr + 1), 0xF0);
-
-                // Byte 2 → solid Aux ON → Tier 1
-                memoryBlocks.SetMain((ushort)(addr + 2), 0x00);
-                memoryBlocks.SetAux((ushort)(addr + 2), 0xFF);
-
-                // Byte 3 → solid Main ON → Tier 1
-                memoryBlocks.SetMain((ushort)(addr + 3), 0xFF);
-                memoryBlocks.SetAux((ushort)(addr + 3), 0x00);
-
-                // Byte 4 → mix for checkerboard Tier 1/2
-                memoryBlocks.SetMain((ushort)(addr + 4), 0x2A);
-                memoryBlocks.SetAux((ushort)(addr + 4), 0x55);
             }
         }
 #endif

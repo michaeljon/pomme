@@ -27,6 +27,8 @@ namespace InnoWerks.Emulators.AppleIIe
         private readonly GraphicsDevice graphicsDevice;
         private SpriteBatch spriteBatch;
         private Texture2D whitePixel;
+        private RenderTarget2D appleTarget;
+
         private readonly Cpu6502Core cpu;
         private readonly IBus bus;
         private readonly Memory128k memoryBlocks;
@@ -82,6 +84,17 @@ namespace InnoWerks.Emulators.AppleIIe
 
             spriteBatch = new SpriteBatch(graphicsDevice);
 
+            appleTarget = new RenderTarget2D(
+                            graphicsDevice,
+                            DisplayCharacteristics.HiresAppleWidth,
+                            DisplayCharacteristics.AppleDisplayHeight,
+                            false,
+                            SurfaceFormat.Color,
+                            DepthFormat.None,
+                            0,
+                            RenderTargetUsage.PreserveContents
+                        );
+
             whitePixel = new Texture2D(graphicsDevice, 1, 1);
             whitePixel.SetData([Color.White]);
 
@@ -89,8 +102,8 @@ namespace InnoWerks.Emulators.AppleIIe
             textPage2Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, false, 2, textColor);
             loresPage1Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, false, 1);
             loresPage2Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, false, 2);
-            hiresPage1Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, 1);
-            hiresPage2Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, 2);
+            hiresPage1Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, 1, false);
+            hiresPage2Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, 2, false);
 
             text80Page1Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, true, 1, textColor);
             text80Page2Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, true, 2, textColor);
@@ -116,22 +129,6 @@ namespace InnoWerks.Emulators.AppleIIe
             ArgumentNullException.ThrowIfNull(cpuTraceBuffer);
             ArgumentNullException.ThrowIfNull(breakpoints);
 
-            using var appleTarget = new RenderTarget2D(
-                graphicsDevice,
-
-                // machineState.State[SoftSwitch.EightyColumnMode] || machineState.State[SoftSwitch.DoubleHiRes] ?
-                //     DisplayCharacteristics.HiresAppleWidth :
-                //     DisplayCharacteristics.LoresAppleWidth,
-
-                DisplayCharacteristics.HiresAppleWidth,
-                DisplayCharacteristics.AppleDisplayHeight,
-                false,
-                SurfaceFormat.Color,
-                DepthFormat.None,
-                0,
-                RenderTargetUsage.PreserveContents
-            );
-
             // render the apple ii surface
             DrawAppleRegion(hostLayout, appleTarget, flashOn);
 
@@ -144,7 +141,11 @@ namespace InnoWerks.Emulators.AppleIIe
                 samplerState: SamplerState.LinearClamp);
 
             // draw the apple target onto the application surface
-            spriteBatch.Draw(appleTarget, hostLayout.AppleDisplay, Color.White);
+            spriteBatch.Draw(
+                appleTarget,
+                hostLayout.AppleDisplay,
+                new Rectangle(0, 0, DisplayCharacteristics.HiresAppleWidth, DisplayCharacteristics.AppleDisplayHeight),
+                Color.White);
 
             // draw debug windows onto the surface
             debugToolsRenderer.Draw(spriteBatch, hostLayout, cpuTraceBuffer, breakpoints);
@@ -179,7 +180,7 @@ namespace InnoWerks.Emulators.AppleIIe
                                     ? textPage2Renderer : textPage1Renderer;
 
             currentGraphicsRenderer
-                    = machineState.State[SoftSwitch.Store80] && machineState.State[SoftSwitch.DoubleHiRes]
+                    = machineState.State[SoftSwitch.EightyColumnMode] && machineState.State[SoftSwitch.DoubleHiRes]
                             ? machineState.State[SoftSwitch.HiRes]
                                     ? page2
                                             ? dhiresPage2Renderer : dhiresPage1Renderer
@@ -193,16 +194,16 @@ namespace InnoWerks.Emulators.AppleIIe
 
             if (machineState.State[SoftSwitch.TextMode])
             {
-                currentTextRenderer.Draw(spriteBatch, 0, 192);
+                currentTextRenderer.Draw(spriteBatch, new Rectangle(0, 0, 560, 192), 0, 192);
             }
             else if (machineState.State[SoftSwitch.MixedMode])
             {
-                currentGraphicsRenderer.Draw(spriteBatch, 0, 192 - 4 * DisplayCharacteristics.AppleCellHeight);
-                currentTextRenderer.Draw(spriteBatch, 192 - 4 * DisplayCharacteristics.AppleCellHeight, 4 * DisplayCharacteristics.AppleCellHeight);
+                currentGraphicsRenderer.Draw(spriteBatch, new Rectangle(0, 0, 560, 192 - 4 * DisplayCharacteristics.AppleCellHeight), 0, 192 - 4 * DisplayCharacteristics.AppleCellHeight);
+                currentTextRenderer.Draw(spriteBatch, new Rectangle(0, 0, 560, 4 * DisplayCharacteristics.AppleCellHeight), 192 - 4 * DisplayCharacteristics.AppleCellHeight, 4 * DisplayCharacteristics.AppleCellHeight);
             }
             else
             {
-                currentGraphicsRenderer.Draw(spriteBatch, 0, 192);
+                currentGraphicsRenderer.Draw(spriteBatch, new Rectangle(0, 0, 560, 192), 0, 192);
             }
 
             spriteBatch.End();
@@ -231,6 +232,7 @@ namespace InnoWerks.Emulators.AppleIIe
             {
                 spriteBatch?.Dispose();
                 whitePixel?.Dispose();
+                appleTarget?.Dispose();
 
                 textPage1Renderer?.Dispose();
                 textPage2Renderer?.Dispose();

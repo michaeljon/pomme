@@ -663,6 +663,17 @@ namespace InnoWerks.Computers.Apple
             mainMemory[page].Block[offset] = value;
         }
 
+        public void ZeroMain(ushort address)
+        {
+            var page = GetPage(address);
+            var offset = GetOffset(address);
+
+            for (var b = 0; b < MemoryPage.PageSize; b++)
+            {
+                mainMemory[page].Block[offset] = 0x00;
+            }
+        }
+
         /// <summary>
         /// Allows for bus-tied devices to directly access the
         /// aux 64k of RAM. Used primarily by the video system.
@@ -699,6 +710,17 @@ namespace InnoWerks.Computers.Apple
             var offset = GetOffset(address);
 
             auxMemory[page].Block[offset] = value;
+        }
+
+        public void ZeroAux(ushort address)
+        {
+            var page = GetPage(address);
+            var offset = GetOffset(address);
+
+            for (var b = 0; b < MemoryPage.PageSize; b++)
+            {
+                auxMemory[page].Block[offset] = 0x00;
+            }
         }
 
         internal void DumpPage(MemoryPage memoryPage)
