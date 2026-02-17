@@ -16,6 +16,9 @@ namespace InnoWerks.Emulators.AppleIIe
         private readonly DhiresMemoryReader dhiresMemoryReader;
         private readonly DhiresBuffer dhiresBuffer;
 
+        private readonly Texture2D screenTexture;
+        private readonly Color[] screenPixels = new Color[DisplayCharacteristics.HiresAppleWidth * DisplayCharacteristics.AppleDisplayHeight];
+
         private readonly int page;
 
         public DhiresRenderer(
@@ -31,6 +34,8 @@ namespace InnoWerks.Emulators.AppleIIe
 
             dhiresBuffer = new DhiresBuffer();
             dhiresMemoryReader = new(memoryBlocks, machineState, page);
+
+            screenTexture = new Texture2D(graphicsDevice, DisplayCharacteristics.HiresAppleWidth, DisplayCharacteristics.AppleDisplayHeight);
         }
 
         public override ushort GetYOffsetAddress(int y)
@@ -50,20 +55,32 @@ namespace InnoWerks.Emulators.AppleIIe
 
             for (var y = start; y < start + count; y++)
             {
-                for (var x = 0; x < DhiresBuffer.PixelCount; x++)
+                int rowOffset = y * DisplayCharacteristics.HiresAppleWidth;
+
+                for (var x = 0; x < DhiresBuffer.PixelCount / 4; x++)
                 {
                     var p = dhiresBuffer.GetPixel(y, x);
+                    var drawColor = DisplayCharacteristics.DHiresPalette[p.Color];
 
-                    spriteBatch.Draw(WhitePixel, new Rectangle((x * 4), y, 1, 1), DisplayCharacteristics.DHiresPalette[p.Color]);
-                    spriteBatch.Draw(WhitePixel, new Rectangle((x * 4) + 1, y, 1, 1), DisplayCharacteristics.DHiresPalette[p.Color]);
-                    spriteBatch.Draw(WhitePixel, new Rectangle((x * 4) + 2, y, 1, 1), DisplayCharacteristics.DHiresPalette[p.Color]);
-                    spriteBatch.Draw(WhitePixel, new Rectangle((x * 4) + 3, y, 1, 1), DisplayCharacteristics.DHiresPalette[p.Color]);
+                    int baseIndex = rowOffset + (x * 4);
+
+                    screenPixels[baseIndex] = drawColor;
+                    screenPixels[baseIndex + 1] = drawColor;
+                    screenPixels[baseIndex + 2] = drawColor;
+                    screenPixels[baseIndex + 3] = drawColor;
                 }
             }
+
+            screenTexture.SetData(screenPixels);
+            spriteBatch.Draw(screenTexture, rectangle, Color.White);
         }
 
         protected override void DoDispose(bool disposing)
         {
+            if (disposing)
+            {
+                screenTexture?.Dispose();
+            }
         }
     }
 }

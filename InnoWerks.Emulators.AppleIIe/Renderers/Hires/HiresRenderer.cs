@@ -18,10 +18,8 @@ namespace InnoWerks.Emulators.AppleIIe
         private readonly HiresMemoryReader hiresMemoryReader;
         private readonly HiresBuffer hiresBuffer;
 
-        // Define this at the class level
         private readonly Texture2D screenTexture;
-        private readonly Color[] screenPixels = new Color[560 * 192];
-
+        private readonly Color[] screenPixels = new Color[DisplayCharacteristics.HiresAppleWidth * DisplayCharacteristics.AppleDisplayHeight];
 
         private readonly int page;
         private readonly bool monochrome;
@@ -43,7 +41,7 @@ namespace InnoWerks.Emulators.AppleIIe
             hiresBuffer = new HiresBuffer();
             hiresMemoryReader = new(memoryBlocks, machineState, page);
 
-            screenTexture = new Texture2D(graphicsDevice, 560, 192);
+            screenTexture = new Texture2D(graphicsDevice, DisplayCharacteristics.HiresAppleWidth, DisplayCharacteristics.AppleDisplayHeight);
         }
 
         public override ushort GetYOffsetAddress(int y)
@@ -57,7 +55,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
         /*
             // --- Step 3: Horizontal Blur (The "CRT" Look) ---
-            for (int x = 0; x < 560; x++)
+            for (int x = 0; x < DisplayCharacteristics.HiresAppleWidth; x++)
             {
                 // Simple 3-tap box filter: 25% Left, 50% Center, 25% Right
                 Color leftC = (x > 0) ? rowColors[x - 1] : DisplayCharacteristics.HiresBlack1;
@@ -68,7 +66,7 @@ namespace InnoWerks.Emulators.AppleIIe
                 float g = (leftC.G * 0.25f) + (centerC.G * 0.5f) + (rightC.G * 0.25f);
                 float b = (leftC.B * 0.25f) + (centerC.B * 0.5f) + (rightC.B * 0.25f);
 
-                screenPixels[y * 560 + x] = new Color((int)r, (int)g, (int)b);
+                screenPixels[y * DisplayCharacteristics.HiresAppleWidth + x] = new Color((int)r, (int)g, (int)b);
             }
         */
 
@@ -80,13 +78,13 @@ namespace InnoWerks.Emulators.AppleIIe
 
             // Temp buffers for the current scanline
             // bitStarts: 1 = A dot starts here. 0 = No dot starts here.
-            byte[] bitStarts = new byte[560];
-            bool[] msbFlags = new bool[560];
+            byte[] bitStarts = new byte[DisplayCharacteristics.HiresAppleWidth];
+            bool[] msbFlags = new bool[DisplayCharacteristics.HiresAppleWidth];
 
             for (int y = start; y < start + count; y++)
             {
-                Array.Clear(bitStarts, 0, 560);
-                Array.Clear(msbFlags, 0, 560);
+                Array.Clear(bitStarts, 0, DisplayCharacteristics.HiresAppleWidth);
+                Array.Clear(msbFlags, 0, DisplayCharacteristics.HiresAppleWidth);
 
                 // --- Step 1: Map the "Dots" (Sparse Population) ---
                 for (var x = 0; x < 40; x++)
@@ -97,7 +95,7 @@ namespace InnoWerks.Emulators.AppleIIe
                     int offset = hasShift ? 1 : 0;
 
                     // Mark the Palette for this byte range
-                    int endP = Math.Min(p + 14, 560);
+                    int endP = Math.Min(p + 14, DisplayCharacteristics.HiresAppleWidth);
                     for (int k = p; k < endP; k++) msbFlags[k] = hasShift;
 
                     for (var bit = 0; bit < 7; bit++)
@@ -115,12 +113,12 @@ namespace InnoWerks.Emulators.AppleIIe
                 }
 
                 // --- Step 2: Render Colors (Per Dot, not Per Pixel) ---
-                int rowOffset = y * 560;
+                int rowOffset = y * DisplayCharacteristics.HiresAppleWidth;
 
                 // Initialize row to Black first
-                for (int i = 0; i < 560; i++) screenPixels[rowOffset + i] = DisplayCharacteristics.HiresBlack1;
+                for (int i = 0; i < DisplayCharacteristics.HiresAppleWidth; i++) screenPixels[rowOffset + i] = DisplayCharacteristics.HiresBlack1;
 
-                for (var x = 0; x < 560; x++)
+                for (var x = 0; x < DisplayCharacteristics.HiresAppleWidth; x++)
                 {
                     bool isDot = bitStarts[x] == 1;
                     bool isGap = false;
@@ -198,7 +196,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
                     // --- Paint the Dot (2 Pixels) ---
                     screenPixels[rowOffset + x] = drawColor;
-                    if (x + 1 < 560)
+                    if (x + 1 < DisplayCharacteristics.HiresAppleWidth)
                     {
                         screenPixels[rowOffset + x + 1] = drawColor;
                     }
