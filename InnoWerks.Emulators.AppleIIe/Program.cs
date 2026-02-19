@@ -37,6 +37,8 @@ namespace InnoWerks.Emulators.AppleIIe
 
         private static int Run(CliOptions options)
         {
+            Console.TreatControlCAsInput = true;
+
             using var game = new Emulator(options);
             game.Run();
 

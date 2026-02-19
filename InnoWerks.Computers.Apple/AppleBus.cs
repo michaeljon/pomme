@@ -249,9 +249,7 @@ namespace InnoWerks.Computers.Apple
             // all these addresses return the KSTRB and ASCII value
             if (address >= 0xC001 && address <= 0xC00F)
             {
-                return machineState.KeyStrobe ?
-                    machineState.KeyLatch |= 0x80 :
-                    machineState.KeyLatch;
+                return machineState.PeekKeyboard();
             }
 
             // 0xC010 is handled directly by the keyboard as the "owning" device
@@ -279,7 +277,7 @@ namespace InnoWerks.Computers.Apple
 
             if (address >= 0xC010 && address <= 0xC01F)
             {
-                machineState.KeyStrobe = false;
+                machineState.ClearKeyboardStrobe();
             }
         }
     }

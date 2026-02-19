@@ -16,6 +16,8 @@ namespace InnoWerks.Computers.Apple
     {
         private readonly Random rng = new();
 
+        private readonly Queue<byte> keyboardQueue = new();
+
         public Dictionary<SoftSwitch, bool> State { get; } = [];
 
         public MachineState()
@@ -41,27 +43,66 @@ namespace InnoWerks.Computers.Apple
         public byte KeyLatch { get; set; }
 
         /// <summary>
-        /// Used to hold the most recent keyboard entry
+        /// Used to indicate if there's a key available
         /// </summary>
-        public bool KeyStrobe
-        {
-            get
-            {
-                return State[SoftSwitch.KeyboardStrobe];
-            }
+        public bool KeyStrobe { get; set; }
 
-            set
+        public void ResetKeyboard()
+        {
+            KeyStrobe = false;
+            KeyLatch = 0x00;
+
+            keyboardQueue.Clear();
+        }
+
+        public void TryLoadNextKey()
+        {
+            if (keyboardQueue.Count > 0)
             {
-                State[SoftSwitch.KeyboardStrobe] = value;
+                KeyLatch = keyboardQueue.Dequeue();
+                KeyStrobe = true;
             }
         }
 
-        /// <summary>
-        /// Simple handler to tell whether the language card / bsr
-        /// is current read or write enabled.
-        /// </summary>
-        public bool LcActive =>
-            State[SoftSwitch.LcReadEnabled] || State[SoftSwitch.LcWriteEnabled];
+        public byte ReadKeyboardData()
+        {
+            // Bit 7 is the Strobe (1 = new key, 0 = old key)
+            byte strobeBit = (byte)(KeyStrobe ? 0x80 : 0x00);
+
+            // Return the strobe bit merged with the lower 7
+            // bits of the ASCII character
+            return (byte)(strobeBit | (KeyLatch & 0x7F));
+        }
+
+        // Called by the Emulator CPU when accessing $C010
+        public void ClearKeyboardStrobe()
+        {
+            KeyStrobe = false;
+
+            // The instant the CPU clears the strobe, check if another
+            // key is waiting in the queue
+            TryLoadNextKey();
+        }
+
+        public void EnqueueKey(byte ascii)
+        {
+            if (keyboardQueue.Count > 0)
+            {
+                keyboardQueue.Enqueue(ascii);
+            }
+            else
+            {
+                KeyLatch = ascii;
+                KeyStrobe = true;
+            }
+        }
+
+        public byte PeekKeyboard()
+        {
+            return KeyStrobe ?
+                KeyLatch |= 0x80 :
+                KeyLatch;
+        }
 
 #pragma warning disable CA5394 // Do not use insecure randomness
         public byte FloatingValue => (byte)(rng.Next() & 0xFF);

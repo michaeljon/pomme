@@ -232,12 +232,10 @@ namespace InnoWerks.Computers.Apple
                 // this looks like a keyboard here, because it is
                 // this is also known as CLR80STORE
                 case SoftSwitchAddress.KBD:
-                    return machineState.KeyStrobe
-                        ? (byte)(machineState.KeyLatch | 0x80)
-                        : machineState.KeyLatch;
+                    return machineState.ReadKeyboardData();
 
                 case SoftSwitchAddress.KBDSTRB:
-                    machineState.KeyStrobe = false;
+                    machineState.ClearKeyboardStrobe();
                     return 0x00;
 
                 case SoftSwitchAddress.OPENAPPLE: return (byte)(machineState.State[SoftSwitch.OpenApple] ? 0x80 : 0x00);
@@ -350,8 +348,7 @@ namespace InnoWerks.Computers.Apple
                 // KEYBOARD
                 //
                 case SoftSwitchAddress.KBDSTRB:
-                    machineState.KeyStrobe = false;
-                    machineState.KeyLatch &= 0x7f;  // leave the value, clear the high bit
+                    machineState.ClearKeyboardStrobe();
                     break;
 
                 //
@@ -382,8 +379,7 @@ namespace InnoWerks.Computers.Apple
 
         public void Reset()
         {
-            machineState.KeyStrobe = false;
-            machineState.KeyLatch = 0x00;
+            machineState.ResetKeyboard();
 
             machineState.State[SoftSwitch.TextMode] = true;
             machineState.State[SoftSwitch.IOUDisabled] = true;
@@ -409,23 +405,17 @@ namespace InnoWerks.Computers.Apple
         /// </summary>
         public void InjectKey(byte ascii)
         {
-            machineState.KeyStrobe = true;
-            machineState.KeyLatch = ascii;
+            machineState.EnqueueKey(ascii);
         }
 
-        public void OpenApple()
+        public void OpenApple(bool pressed)
         {
-            machineState.State[SoftSwitch.OpenApple] = true;
+            machineState.State[SoftSwitch.OpenApple] = pressed;
         }
 
-        public void SolidApple()
+        public void SolidApple(bool pressed)
         {
-            machineState.State[SoftSwitch.SolidApple] = true;
-        }
-
-        public void ShiftKey()
-        {
-            machineState.State[SoftSwitch.ShiftKey] = true;
+            machineState.State[SoftSwitch.SolidApple] = pressed;
         }
     }
 }

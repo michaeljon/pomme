@@ -1,5 +1,3 @@
-#define RENDER_DHIRES_PAGE
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -56,9 +54,6 @@ namespace InnoWerks.Emulators.AppleIIe
         private bool stepRequested;
         private readonly HashSet<ushort> breakpoints = [];
 
-        private KeyboardState prevKeyboard;
-        private MouseState prevMouse;
-
         //
         // display renderer
         //
@@ -81,6 +76,9 @@ namespace InnoWerks.Emulators.AppleIIe
         // state stuff
         //
         private KeyboardState previousKeyboardState;
+        private MouseState prevMouse;
+        private bool appleCapsLock = true;
+
         private double lastTimer;
         private bool flashOn = true;
 
@@ -94,18 +92,18 @@ namespace InnoWerks.Emulators.AppleIIe
                 PreferredBackBufferHeight = 780,   // initial height
                 IsFullScreen = false
             };
-            graphicsDeviceManager.ApplyChanges();
 
             hostLayout = HostLayout.ComputeLayout(
                 graphicsDeviceManager.PreferredBackBufferWidth,
                 graphicsDeviceManager.PreferredBackBufferHeight
             );
 
+            Content.RootDirectory = "Content";
+
             // Make window resizable
             // Window.AllowUserResizing = true;
             Window.ClientSizeChanged += HandleResize;
-
-            Content.RootDirectory = "Content";
+            Window.TextInput += OnTextInput;
 
             IsMouseVisible = true;
             IsFixedTimeStep = true;
@@ -115,6 +113,7 @@ namespace InnoWerks.Emulators.AppleIIe
             audioRenderer = new();
 
             graphicsDeviceManager.SynchronizeWithVerticalRetrace = true;
+            graphicsDeviceManager.ApplyChanges();
         }
 
         protected override void Initialize()
@@ -170,8 +169,6 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             ArgumentNullException.ThrowIfNull(gameTime);
 
-            HandleKeyboardInput();
-
             var mouse = Mouse.GetState();
             if (mouse.LeftButton == ButtonState.Pressed && prevMouse.LeftButton == ButtonState.Released)
             {
@@ -187,8 +184,11 @@ namespace InnoWerks.Emulators.AppleIIe
             }
             prevMouse = mouse;
 
-            RunEmulator();
+            // see if we want to do anything here with the emulator keys
+            KeyboardState currentState = Keyboard.GetState();
+            UpdateHostControls(currentState, previousKeyboardState);
 
+            RunEmulator();
             // Toggle flashing every 100ms - should be about 1 in 10 frames,
             // this would be much better handled by tracking number of cycles,
             // which is closer to frame count and possibly VBL state
@@ -202,7 +202,12 @@ namespace InnoWerks.Emulators.AppleIIe
                 lastTimer = gameTime.ElapsedGameTime.TotalMilliseconds;
             }
 
+            // send other keys on to the "computer"
+            UpdateKeyboard(currentState, previousKeyboardState);
             audioRenderer.UpdateAudio(appleBus.CycleCount, audioSource);
+
+            previousKeyboardState = currentState;
+
             base.Update(gameTime);
         }
 
@@ -259,244 +264,81 @@ namespace InnoWerks.Emulators.AppleIIe
             base.Draw(gameTime);
         }
 
-#if RENDER_DHIRES_PAGE
-        private int currentHiresTestPattern;
-        private List<(ushort addr, int page, string color, byte main)> hiresPatterns = [
-            (0x2000, 1, "Black1", 0x00),
-            (0x2000, 1, "Green",  0x2A),
-            (0x2000, 1, "Violet", 0x55),
-            (0x2000, 1, "White1", 0x7F),
-            (0x2000, 1, "Black2", 0x80),
-            (0x2000, 1, "Orange", 0xAA),
-            (0x2000, 1, "Blue",   0xD5),
-            (0x2000, 1, "White2", 0xFF),
-
-            (0x4000, 2, "Black1", 0x00),
-            (0x4000, 2, "Green",  0x2A),
-            (0x4000, 2, "Violet", 0x55),
-            (0x4000, 2, "White1", 0x7F),
-            (0x4000, 2, "Black2", 0x80),
-            (0x4000, 2, "Orange", 0xAA),
-            (0x4000, 2, "Blue",   0xD5),
-            (0x4000, 2, "White2", 0xFF),
-        ];
-
-        private int currentDHiresTestPattern;
-        private List<(ushort addr, int page, string color, byte aux1, byte main1, byte aux2, byte main2)> dhiresPatterns = [
-            (0x2000, 1, "Black", (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00),
-            (0x2000, 1, "Magenta", (byte)0x08, (byte)0x11, (byte)0x22, (byte)0x44),
-            (0x2000, 1, "Brown", (byte)0x44, (byte)0x08, (byte)0x11, (byte)0x22),
-            (0x2000, 1, "Orange", (byte)0x4C, (byte)0x19, (byte)0x33, (byte)0x66),
-            (0x2000, 1, "Dark Green", (byte)0x22, (byte)0x44, (byte)0x08, (byte)0x11),
-            (0x2000, 1, "Grey1", (byte)0x2A, (byte)0x55, (byte)0x2A, (byte)0x55),
-            (0x2000, 1, "Green", (byte)0x66, (byte)0x4C, (byte)0x19, (byte)0x33),
-            (0x2000, 1, "Yellow", (byte)0x6E, (byte)0x5D, (byte)0x3B, (byte)0x77),
-            (0x2000, 1, "Dark Blue", (byte)0x11, (byte)0x22, (byte)0x44, (byte)0x08),
-            (0x2000, 1, "Violet", (byte)0x19, (byte)0x33, (byte)0x66, (byte)0x4C),
-            (0x2000, 1, "Grey2", (byte)0x55, (byte)0x2A, (byte)0x55, (byte)0x2A),
-            (0x2000, 1, "Pink", (byte)0x5D, (byte)0x3B, (byte)0x77, (byte)0x6E),
-            (0x2000, 1, "Medium Blue", (byte)0x33, (byte)0x66, (byte)0x4C, (byte)0x19),
-            (0x2000, 1, "Light Blue", (byte)0x3B, (byte)0x77, (byte)0x6E, (byte)0x5D),
-            (0x2000, 1, "Aqua", (byte)0x77, (byte)0x6E, (byte)0x5D, (byte)0x3B),
-            (0x2000, 1, "White", (byte)0x7F, (byte)0x7F, (byte)0x7F, (byte)0x7F),
-
-            (0x4000, 2, "Black", (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00),
-            (0x4000, 2, "Magenta", (byte)0x08, (byte)0x11, (byte)0x22, (byte)0x44),
-            (0x4000, 2, "Brown", (byte)0x44, (byte)0x08, (byte)0x11, (byte)0x22),
-            (0x4000, 2, "Orange", (byte)0x4C, (byte)0x19, (byte)0x33, (byte)0x66),
-            (0x4000, 2, "Dark Green", (byte)0x22, (byte)0x44, (byte)0x08, (byte)0x11),
-            (0x4000, 2, "Grey1", (byte)0x2A, (byte)0x55, (byte)0x2A, (byte)0x55),
-            (0x4000, 2, "Green", (byte)0x66, (byte)0x4C, (byte)0x19, (byte)0x33),
-            (0x4000, 2, "Yellow", (byte)0x6E, (byte)0x5D, (byte)0x3B, (byte)0x77),
-            (0x4000, 2, "Dark Blue", (byte)0x11, (byte)0x22, (byte)0x44, (byte)0x08),
-            (0x4000, 2, "Violet", (byte)0x19, (byte)0x33, (byte)0x66, (byte)0x4C),
-            (0x4000, 2, "Grey2", (byte)0x55, (byte)0x2A, (byte)0x55, (byte)0x2A),
-            (0x4000, 2, "Pink", (byte)0x5D, (byte)0x3B, (byte)0x77, (byte)0x6E),
-            (0x4000, 2, "Medium Blue", (byte)0x33, (byte)0x66, (byte)0x4C, (byte)0x19),
-            (0x4000, 2, "Light Blue", (byte)0x3B, (byte)0x77, (byte)0x6E, (byte)0x5D),
-            (0x4000, 2, "Aqua", (byte)0x77, (byte)0x6E, (byte)0x5D, (byte)0x3B),
-            (0x4000, 2, "White", (byte)0x7F, (byte)0x7F, (byte)0x7F, (byte)0x7F),
-        ];
-#endif
-
-        private void HandleKeyboardInput()
+        private void UpdateHostControls(KeyboardState currentState, KeyboardState previousState)
         {
-            var state = Keyboard.GetState();
+            // Helper functions
+            bool IsJustPressed(Keys key) => currentState.IsKeyDown(key) && !previousState.IsKeyDown(key);
+            bool isCtrlDown = currentState.IsKeyDown(Keys.LeftControl) || currentState.IsKeyDown(Keys.RightControl);
+            bool isShiftDown = currentState.IsKeyDown(Keys.LeftShift) || currentState.IsKeyDown(Keys.RightShift);
 
-            foreach (var key in state.GetPressedKeys())
+            if (isCtrlDown)
             {
-                if (previousKeyboardState.IsKeyUp(key))
+                if (IsJustPressed(Keys.F1))
                 {
-                    // Toggle pause
-                    if (state.IsKeyDown(Keys.F5) && !prevKeyboard.IsKeyDown(Keys.F5))
-                    {
-                        cpuPaused = !cpuPaused;
-                    }
+                    cpuPaused = true;
+                    cpu.Reset();
 
-                    // Single-step
-                    if (state.IsKeyDown(Keys.F6) && !prevKeyboard.IsKeyDown(Keys.F6))
-                    {
-                        if (cpuPaused)
-                        {
-                            stepRequested = true;
-                        }
-                    }
+                    audioRenderer.Clear();
+                    audioSource.Clear();
+                    cpuPaused = false;
+                }
 
-                    // Rebooet
-                    if (state.IsKeyDown(Keys.F1) && !prevKeyboard.IsKeyDown(Keys.F1))
-                    {
-                        cpuPaused = true;
-                        cpu.Reset();
+                if (IsJustPressed(Keys.F2))
+                {
+                    cpuPaused = true;
+                    cpu.Reset();
+                    memoryBlocks.Reset();
 
-                        audioRenderer.Clear();
-                        audioSource.Clear();
-                        cpuPaused = false;
-                    }
-
-                    if (state.IsKeyDown(Keys.F2) && !prevKeyboard.IsKeyDown(Keys.F2))
-                    {
-                        cpuPaused = true;
-                        cpu.Reset();
-                        memoryBlocks.Reset();
-
-                        audioRenderer.Clear();
-                        audioSource.Clear();
-                        cpuPaused = false;
-                    }
-
-#if RENDER_DHIRES_PAGE
-                    if (state.IsKeyDown(Keys.F9) && !prevKeyboard.IsKeyDown(Keys.F9))
-                    {
-                        var (addr, page, color, main) = hiresPatterns[currentHiresTestPattern];
-
-                        machineState.State[SoftSwitch.Page2] = page == 2;
-                        machineState.State[SoftSwitch.TextMode] = false;
-                        machineState.State[SoftSwitch.MixedMode] = false;
-                        machineState.State[SoftSwitch.HiRes] = true;
-                        machineState.State[SoftSwitch.IOUDisabled] = false;
-                        machineState.State[SoftSwitch.DoubleHiRes] = false;
-                        machineState.State[SoftSwitch.EightyColumnMode] = false;
-                        machineState.State[SoftSwitch.Store80] = false;
-
-                        SimDebugger.Info(
-                            "test={0} color={1} addr={2:X4} main={3:X2} page2={4} text={5} mixed={6} hires={7} ioudis={8} dhires={9} 80col={10} store80={11}\n",
-                            currentHiresTestPattern,
-                            color,
-                            addr,
-                            main,
-                            machineState.State[SoftSwitch.Page2] ? 1 : 0,
-                            machineState.State[SoftSwitch.TextMode] ? 1 : 0,
-                            machineState.State[SoftSwitch.MixedMode] ? 1 : 0,
-                            machineState.State[SoftSwitch.HiRes] ? 1 : 0,
-                            machineState.State[SoftSwitch.IOUDisabled] ? 1 : 0,
-                            machineState.State[SoftSwitch.DoubleHiRes] ? 1 : 0,
-                            machineState.State[SoftSwitch.EightyColumnMode] ? 1 : 0,
-                            machineState.State[SoftSwitch.Store80] ? 1 : 0
-                        );
-
-                        memoryBlocks.Remap();
-
-                        currentHiresTestPattern++;
-                        currentHiresTestPattern %= hiresPatterns.Count;
-                        DoHiresTest(addr, main);
-                    }
-
-                    if (state.IsKeyDown(Keys.F10) && !prevKeyboard.IsKeyDown(Keys.F10))
-                    {
-                        var (addr, page, color, aux1, main1, aux2, main2) = dhiresPatterns[currentDHiresTestPattern];
-
-                        machineState.State[SoftSwitch.Page2] = page == 2;
-                        machineState.State[SoftSwitch.TextMode] = false;
-                        machineState.State[SoftSwitch.MixedMode] = false;
-                        machineState.State[SoftSwitch.HiRes] = true;
-                        machineState.State[SoftSwitch.IOUDisabled] = true;
-                        machineState.State[SoftSwitch.DoubleHiRes] = true;
-                        machineState.State[SoftSwitch.EightyColumnMode] = true;
-                        machineState.State[SoftSwitch.Store80] = false;
-
-                        SimDebugger.Info(
-                            "test={0} color={1} addr={2:X4} aux1={3:X2} main1={4:X2} aux2={5:X2} main2={6:X2} page2={7} text={8} mixed={9} hires={10} ioudis={11} dhires={12} 80col={13} store80={13}\n",
-                            currentDHiresTestPattern,
-                            color,
-                            addr,
-                            aux1,
-                            main1,
-                            aux2,
-                            main2,
-                            machineState.State[SoftSwitch.Page2] ? 1 : 0,
-                            machineState.State[SoftSwitch.TextMode] ? 1 : 0,
-                            machineState.State[SoftSwitch.MixedMode] ? 1 : 0,
-                            machineState.State[SoftSwitch.HiRes] ? 1 : 0,
-                            machineState.State[SoftSwitch.IOUDisabled] ? 1 : 0,
-                            machineState.State[SoftSwitch.DoubleHiRes] ? 1 : 0,
-                            machineState.State[SoftSwitch.EightyColumnMode] ? 1 : 0,
-                            machineState.State[SoftSwitch.Store80] ? 1 : 0
-                        );
-
-                        memoryBlocks.Remap();
-
-                        currentDHiresTestPattern++;
-                        currentDHiresTestPattern %= dhiresPatterns.Count;
-                        DoDHiresTest(addr, aux1, main1, aux2, main2);
-                    }
-#endif
-
-                    if (KeyMapper.TryMap(key, state, out byte ascii))
-                    {
-                        iou.InjectKey(ascii);
-                        break; // Apple II only accepts one key at a time
-                    }
+                    audioRenderer.Clear();
+                    audioSource.Clear();
+                    cpuPaused = false;
                 }
             }
 
-            previousKeyboardState = state;
-        }
-
-#if RENDER_DHIRES_PAGE
-        private void DoDHiresTest(int pageBase, byte aux1, byte main1, byte aux2, byte main2)
-        {
-            for (ushort addr = (ushort)pageBase; addr < pageBase + 0x2000; addr++)
+            if (IsJustPressed(Keys.F5))
             {
-                memoryBlocks.ZeroMain(addr);
-                memoryBlocks.ZeroAux(addr);
+                cpuPaused = !cpuPaused;
             }
 
-            for (var y = 0; y < 192; y++)
+            if (IsJustPressed(Keys.F6))
             {
-                var rowAddr = pageBase + DhiresMemoryReader.RowOffsets[y];
-
-                for (var x = 0; x < 40; x++)
+                if (cpuPaused)
                 {
-                    ushort addr = (ushort)(rowAddr + (x * 2));
-                    memoryBlocks.SetAux((addr), aux1);
-                    memoryBlocks.SetMain(addr, main1);
-
-                    addr = (ushort)(rowAddr + (x * 2) + 1);
-                    memoryBlocks.SetAux(addr, aux2);
-                    memoryBlocks.SetMain(addr, main2);
+                    stepRequested = true;
                 }
             }
+
+            // F11: Toggle Fullscreen
+            if (IsJustPressed(Keys.F11))
+            {
+                graphicsDeviceManager.ToggleFullScreen();
+            }
         }
 
-        private void DoHiresTest(int pageBase, byte main)
+        public void UpdateKeyboard(KeyboardState currentState, KeyboardState previousState)
         {
-            for (ushort addr = (ushort)pageBase; addr < pageBase + 0x2000; addr++)
+            bool IsJustPressed(Keys key) => currentState.IsKeyDown(key) && !previousState.IsKeyDown(key);
+
+            // --- TOGGLE CAPS LOCK ---
+            // You can bind this to the physical CapsLock key, or something safe like F6
+            if (IsJustPressed(Keys.CapsLock))
             {
-                memoryBlocks.ZeroMain(addr);
+                appleCapsLock = !appleCapsLock;
+
+                // Optional: Trigger a tiny UI popup or sound so the user knows it changed
+                // uiManager.ShowNotification("Caps Lock: " + (appleCapsLock ? "ON" : "OFF"));
             }
 
-            for (var y = 0; y < 192; y++)
-            {
-                var rowAddr = pageBase + HiresMemoryReader.RowOffsets[y];
+            // --- ARROW KEYS ---
+            if (IsJustPressed(Keys.Left)) iou.InjectKey(0x88);
+            if (IsJustPressed(Keys.Right)) iou.InjectKey(0x95);
+            if (IsJustPressed(Keys.Down)) iou.InjectKey(0x8A);
+            if (IsJustPressed(Keys.Up)) iou.InjectKey(0x8B);
 
-                for (var x = 0; x < 40; x++)
-                {
-                    ushort addr = (ushort)(rowAddr + x);
-                    memoryBlocks.SetMain(addr, main);
-                }
-            }
+            // --- OPEN / SOLID APPLE ---
+            iou.OpenApple(currentState.IsKeyDown(Keys.LeftAlt));
+            iou.SolidApple(currentState.IsKeyDown(Keys.RightAlt));
         }
-#endif
 
         private void HandleResize(object sender, EventArgs e)
         {
@@ -515,6 +357,32 @@ namespace InnoWerks.Emulators.AppleIIe
             graphicsDeviceManager.ApplyChanges();
 
             Window.ClientSizeChanged += HandleResize;
+        }
+
+        private void OnTextInput(object sender, TextInputEventArgs e)
+        {
+            char c = e.Character;
+
+            // 2. Handle Printable Characters (ASCII 32 to 126)
+            if (c >= 32 && c <= 126)
+            {
+                // Apply Emulated Caps Lock (Only shift 'a' through 'z')
+                if (appleCapsLock && c >= 'a' && c <= 'z')
+                {
+                    c = (char)(c - 32); // Convert to uppercase ASCII
+                }
+
+                byte appleAscii = (byte)((c & 0x7F) | 0x80);
+                iou.InjectKey(appleAscii);
+            }
+            // 3. Handle Ctrl+Letter combinations (ASCII 1 to 26)
+            // The OS automatically generates these when holding Ctrl!
+            else if (c >= 1 && c <= 26)
+            {
+                // c is already the correct 1-26 value. Just add the Apple II high-bit.
+                byte appleCtrlAscii = (byte)(c | 0x80);
+                iou.InjectKey(appleCtrlAscii);
+            }
         }
     }
 }
