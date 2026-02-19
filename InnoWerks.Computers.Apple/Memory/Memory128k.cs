@@ -177,7 +177,7 @@ namespace InnoWerks.Computers.Apple
 
         /// <summary>
         /// Overall memory map
-        ///
+        ///<para>
         /// BSR / ROM                $E0 - $FF   mainMemory / auxMemory / intEFRom
         /// Bank 2                   $D0 - $DF   lcRam
         /// Bank 1                   $D0 - $DF   lcRam / intDxRom
@@ -190,7 +190,7 @@ namespace InnoWerks.Computers.Apple
         /// Text Page 1              $04 - $07
         /// BASIC workspace          $02 - $03
         /// zero page and stack      $00 - $01
-        ///
+        /// </para>
         /// </summary>
         public void Remap()
         {

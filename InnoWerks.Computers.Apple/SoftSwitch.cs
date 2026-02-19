@@ -3,8 +3,6 @@ namespace InnoWerks.Computers.Apple
     public enum SoftSwitch
     {
         // Keyboard & system
-        KeyboardData,
-        KeyboardStrobe,
         Speaker,
         TapeOut,
         TapeIn,
