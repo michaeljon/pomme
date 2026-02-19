@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.NetworkInformation;
 using System.Reflection.PortableExecutable;
+using InnoWerks.Assemblers;
 using InnoWerks.Computers.Apple;
 using InnoWerks.Processors;
 using InnoWerks.Simulators;
@@ -26,6 +27,12 @@ namespace InnoWerks.Emulators.AppleIIe
 {
     public class Emulator : Game
     {
+        // Constants
+        private const int AppleClockSpeed = 1020484;
+        private const float FramesPerSecond = 59.94f;
+
+        private long totalCyclesExecuted;
+
         //
         // Command line options
         //
@@ -61,6 +68,9 @@ namespace InnoWerks.Emulators.AppleIIe
         // MonoGame stuff
         //
         private readonly GraphicsDeviceManager graphicsDeviceManager;
+
+        private readonly AppleIIAudioSource audioSource;
+        private readonly AudioRenderer audioRenderer;
 
         //
         // layout stuff
@@ -98,9 +108,13 @@ namespace InnoWerks.Emulators.AppleIIe
             Content.RootDirectory = "Content";
 
             IsMouseVisible = true;
-            IsFixedTimeStep = false;
+            IsFixedTimeStep = true;
+            TargetElapsedTime = TimeSpan.FromSeconds(1.0 / FramesPerSecond);
 
-            graphicsDeviceManager.SynchronizeWithVerticalRetrace = false;
+            audioSource = new();
+            audioRenderer = new();
+
+            graphicsDeviceManager.SynchronizeWithVerticalRetrace = true;
         }
 
         protected override void Initialize()
@@ -139,9 +153,6 @@ namespace InnoWerks.Emulators.AppleIIe
                 (cpu) => { });
 
             appleBus.LoadProgramToRom(mainRom);
-
-            // var audit = File.ReadAllBytes("tests/audit.o");
-            // appleBus.LoadProgramToRam(audit, 0x6000);
 
             cpu.Reset();
 
@@ -191,6 +202,7 @@ namespace InnoWerks.Emulators.AppleIIe
                 lastTimer = gameTime.ElapsedGameTime.TotalMilliseconds;
             }
 
+            audioRenderer.UpdateAudio(appleBus.CycleCount, audioSource);
             base.Update(gameTime);
         }
 
@@ -210,6 +222,7 @@ namespace InnoWerks.Emulators.AppleIIe
         private void RunCpuForFrame()
         {
             var targetCycles = appleBus.CycleCount + VideoTiming.FrameCycles;
+
             while (appleBus.CycleCount < targetCycles)
             {
                 var nextInstruction = cpu.PeekInstruction();
@@ -228,9 +241,16 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             var nextInstruction = cpu.PeekInstruction();
 
-            cpuTraceBuffer.Add(nextInstruction);
+            bool previousSpeakerState = machineState.State[SoftSwitch.Speaker];
 
+            cpuTraceBuffer.Add(nextInstruction);
             cpu.Step();
+
+            // Check for toggles
+            if (machineState.State[SoftSwitch.Speaker] != previousSpeakerState)
+            {
+                audioSource.TouchSpeaker(appleBus.CycleCount);
+            }
         }
 
         protected override void Draw(GameTime gameTime)
@@ -327,6 +347,9 @@ namespace InnoWerks.Emulators.AppleIIe
                     {
                         cpuPaused = true;
                         cpu.Reset();
+
+                        audioRenderer.Clear();
+                        audioSource.Clear();
                         cpuPaused = false;
                     }
 
@@ -335,6 +358,9 @@ namespace InnoWerks.Emulators.AppleIIe
                         cpuPaused = true;
                         cpu.Reset();
                         memoryBlocks.Reset();
+
+                        audioRenderer.Clear();
+                        audioSource.Clear();
                         cpuPaused = false;
                     }
 
