@@ -46,9 +46,6 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             ArgumentNullException.ThrowIfNull(source);
 
-            // --- SAFETY CHECK: EMULATOR RESET ---
-            // If the CPU time jumped backwards, the emulator was likely reset.
-            // We must reset our audio counters to match, or we will crash/screech.
             double expectedTime = (double)totalSamplesGenerated * CyclesPerSecond / SampleRate;
             if (currentCpuCycle < expectedTime - 1000) // 1000 cycle tolerance
             {
@@ -99,7 +96,6 @@ namespace InnoWerks.Emulators.AppleIIe
                     // Stop if toggle is in the future
                     if (toggle.CycleTimestamp >= sampleEndCycle) break;
 
-                    // --- THE FIX: CLAMP DURATION ---
                     // If toggle is in the past (missed it last frame?), duration is 0.
                     // This prevents "negative energy" glitches.
                     double duration = Math.Max(0, toggle.CycleTimestamp - currentCycle);
