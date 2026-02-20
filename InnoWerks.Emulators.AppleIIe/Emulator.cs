@@ -383,6 +383,10 @@ namespace InnoWerks.Emulators.AppleIIe
                 byte appleCtrlAscii = (byte)(c | 0x80);
                 iou.InjectKey(appleCtrlAscii);
             }
+            else
+            {
+                iou.InjectKey((byte)c);
+            }
         }
     }
 }
