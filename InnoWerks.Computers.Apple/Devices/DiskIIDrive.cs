@@ -21,10 +21,16 @@ namespace InnoWerks.Computers.Apple
         private byte latch;
         private int spinCount;
 
+        private readonly int driveNumber;
+
+        public bool DiskPresent => floppyDisk != null;
+
         private readonly int[][] driveHeadStepDelta = new int[4][];
 
-        public DiskIIDrive()
+        public DiskIIDrive(int driveNumber)
         {
+            this.driveNumber = driveNumber;
+
             driveHeadStepDelta[0] = [0, 0, 1, 1, 0, 0, 1, 1, -1, -1, 0, 0, -1, -1, 0, 0];  // phase 0
             driveHeadStepDelta[1] = [0, -1, 0, -1, 1, 0, 1, 0, 0, -1, 0, -1, 1, 0, 1, 0];  // phase 1
             driveHeadStepDelta[2] = [0, 0, -1, -1, 0, 0, -1, -1, 1, 1, 0, 0, 1, 1, 0, 0];  // phase 2
@@ -33,10 +39,17 @@ namespace InnoWerks.Computers.Apple
 
         public void InsertDisk(string path)
         {
+            EjectDisk();
             floppyDisk = FloppyDisk.FromDsk(path);
 
             driveOn = false;
             magnets = 0;
+        }
+
+        public void EjectDisk()
+        {
+            floppyDisk?.Save();
+            floppyDisk = null;
         }
 
         public void Reset()
@@ -137,7 +150,18 @@ namespace InnoWerks.Computers.Apple
 
         public void Write()
         {
+            if (writeMode && driveOn && floppyDisk?.IsWriteProtected == false)
+            {
+                floppyDisk.WriteNibble(trackStartOffset + nibbleOffset, latch);
+                nibbleOffset++;
+                if (nibbleOffset >= FloppyDisk.TRACK_NIBBLE_LENGTH)
+                {
+                    nibbleOffset = 0;
+                }
+            }
         }
+
+        public bool IsWriteProtected => floppyDisk?.IsWriteProtected ?? false;
 
         public void SetReadMode()
         {
@@ -160,5 +184,7 @@ namespace InnoWerks.Computers.Apple
                 latch = (byte)0xFF;
             }
         }
+
+        public override string ToString() => $"Disk II Drive {driveNumber}";
     }
 }

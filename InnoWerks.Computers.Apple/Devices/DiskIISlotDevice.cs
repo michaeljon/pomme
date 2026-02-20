@@ -11,17 +11,14 @@ namespace InnoWerks.Computers.Apple
 
     public sealed class DiskIISlotDevice : SlotRomDevice
     {
-        private readonly DiskIIDrive drive1 = new();
-        private readonly DiskIIDrive drive2 = new();
+        private readonly DiskIIDrive drive1 = new(1);
+        private readonly DiskIIDrive drive2 = new(2);
 
         DiskIIDrive currentDrive;
 
         public DiskIISlotDevice(IBus bus, MachineState machineState, byte[] romImage)
             : base(6, "Disk II Controller", bus, machineState, romImage)
         {
-            drive1 = new DiskIIDrive();
-            drive2 = new DiskIIDrive();
-
             currentDrive = drive1;
         }
 
@@ -86,7 +83,14 @@ namespace InnoWerks.Computers.Apple
                     // read mode
                     // SimDebugger.Info($"DoIo{ioType} DiskII Rmode(${address:X1}, {value:X2})\n");
                     currentDrive.SetReadMode();
-                    return 0x80;
+                    if (currentDrive.DiskPresent && currentDrive.IsWriteProtected)
+                    {
+                        return 0x80;
+                    }
+                    else
+                    {
+                        return 0x00;
+                    }
 
                 case 0xF:
                     // write mode

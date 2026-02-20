@@ -159,7 +159,7 @@ namespace InnoWerks.Computers.Apple
 
                 if (slotDevice?.HandlesWrite(address) == true)
                 {
-                    SimDebugger.Info("Write IO {0} {1:X4}\n", slot, address);
+                    // SimDebugger.Info("Write IO {0} {1:X4}\n", slot, address);
                     slotDevice.Write(address, value);
                 }
 
