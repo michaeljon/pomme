@@ -113,6 +113,17 @@
       "requireExactSource": false
     },
     {
+      "name": "Emulator (a2diag)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe/bin/Debug/net10.0/InnoWerks.Emulators.AppleIIe.dll",
+      "cwd": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe",
+      "args": ["--disk1", "disks/A2eDiagnostics_v2.1.dsk"],
+      "stopAtEntry": false,
+      "requireExactSource": false
+    },
+    {
       "name": ".NET Core Attach",
       "type": "coreclr",
       "request": "attach",

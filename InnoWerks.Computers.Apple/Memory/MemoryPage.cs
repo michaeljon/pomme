@@ -30,6 +30,24 @@ namespace InnoWerks.Computers.Apple
 
         public byte PageNumber { get; init; }
 
+        private static readonly byte[] zeros = new byte[PageSize];
+        private static readonly byte[] ffs = new byte[PageSize];
+
+        private static readonly MemoryPage zeroValuePage = new(MemoryPageType.Undefined, "0x00", 0x00);
+        private static readonly MemoryPage ffValuePage = new(MemoryPageType.Undefined, "0xff", 0x00);
+
+        static MemoryPage()
+        {
+            for (var i = 0; i < PageSize; i++)
+            {
+                zeros[i] = 0;
+                ffs[i] = 0;
+            }
+
+            Array.Copy(ffs, zeroValuePage.Block, PageSize);
+            Array.Copy(ffs, ffValuePage.Block, PageSize);
+        }
+
         public MemoryPage(MemoryPageType memoryPageType, string description, byte pageNumber)
         {
             Block = new byte[PageSize];
@@ -46,53 +64,17 @@ namespace InnoWerks.Computers.Apple
 
         public void ZeroOut()
         {
-            for (var i = 0; i < PageSize; i++)
-            {
-                Block[i] = 0x00;
-            }
+            Array.Copy(zeros, Block, PageSize);
         }
 
         public static MemoryPage Zeros(MemoryPageType memoryPageType, byte pageNumber)
         {
-            var page = new MemoryPage(memoryPageType, "0x00", pageNumber);
-            for (var i = 0; i < PageSize; i++)
-            {
-                page.Block[i] = 0x00;
-            }
-            return page;
+            return zeroValuePage;
         }
 
         public static MemoryPage FFs(MemoryPageType memoryPageType, byte pageNumber)
         {
-            var page = new MemoryPage(memoryPageType, "0xff", pageNumber);
-            for (var i = 0; i < PageSize; i++)
-            {
-                page.Block[i] = 0xFF;
-            }
-            return page;
-        }
-
-        public static MemoryPage Random(MemoryPageType memoryPageType, byte pageNumber)
-        {
-            var r = new Random();
-
-            var page = new MemoryPage(memoryPageType, "rnd", pageNumber);
-#pragma warning disable CA5394
-            r.NextBytes(page.Block);
-#pragma warning restore CA5394
-            return page;
-        }
-
-        public static MemoryPage Alternating(MemoryPageType memoryPageType, byte pageNumber)
-        {
-            var page = new MemoryPage(memoryPageType, "alt", pageNumber);
-            for (var i = 0; i < PageSize / 2; i += 2)
-            {
-                page.Block[i] = 0x00;
-                page.Block[i + 1] = 0xA0;
-            }
-            return page;
+            return ffValuePage;
         }
     }
 }
-

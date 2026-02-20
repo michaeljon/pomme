@@ -8,9 +8,11 @@ namespace InnoWerks.Simulators
         {
             ArgumentNullException.ThrowIfNull(bus);
 
+            var oc = bus.Peek(programCounter);
+
             return new DecodedOperation
             {
-                OpCodeValue = bus.Peek(programCounter),
+                OpCodeValue = oc,
                 Display = "<illegal>",
             };
         }
@@ -23,10 +25,12 @@ namespace InnoWerks.Simulators
         {
             ArgumentNullException.ThrowIfNull(bus);
 
+            var oc = bus.Peek(programCounter);
+
             return new DecodedOperation
             {
                 Length = 1,
-                OpCodeValue = bus.Peek(programCounter),
+                OpCodeValue = oc,
                 Display = "",
             };
         }
@@ -39,10 +43,12 @@ namespace InnoWerks.Simulators
         {
             ArgumentNullException.ThrowIfNull(bus);
 
+            var oc = bus.Peek(programCounter);
+
             return new DecodedOperation
             {
                 Length = 1,
-                OpCodeValue = bus.Peek(programCounter),
+                OpCodeValue = oc,
                 Display = "",
             };
         }
@@ -55,10 +61,12 @@ namespace InnoWerks.Simulators
         {
             ArgumentNullException.ThrowIfNull(bus);
 
+            var oc = bus.Peek(programCounter);
+
             return new DecodedOperation
             {
                 Length = 1,
-                OpCodeValue = bus.Peek(programCounter),
+                OpCodeValue = oc,
                 Display = "",
             };
         }
@@ -71,12 +79,15 @@ namespace InnoWerks.Simulators
         {
             ArgumentNullException.ThrowIfNull(bus);
 
+            var oc = bus.Peek(programCounter);
+            var o1 = bus.Peek((ushort)(programCounter + 1));
+
             return new DecodedOperation
             {
                 Length = 2,
-                OpCodeValue = bus.Peek(programCounter),
-                Operand1 = bus.Peek((ushort)(programCounter + 1)),
-                Display = $"#${bus.Peek((ushort)(programCounter + 1)):X2}",
+                OpCodeValue = oc,
+                Operand1 = o1,
+                Display = $"#${o1:X2}",
             };
         }
 
@@ -91,13 +102,17 @@ namespace InnoWerks.Simulators
         {
             ArgumentNullException.ThrowIfNull(bus);
 
+            var oc = bus.Peek(programCounter);
+            var o1 = bus.Peek((ushort)(programCounter + 1));
+            var o2 = bus.Peek((ushort)(programCounter + 2));
+
             return new DecodedOperation
             {
                 Length = 3,
-                OpCodeValue = bus.Peek(programCounter),
-                Operand1 = bus.Peek((ushort)(programCounter + 1)),
-                Operand2 = bus.Peek((ushort)(programCounter + 2)),
-                Display = $"${PeekWord(bus, (ushort)(programCounter + 1)):X4}",
+                OpCodeValue = oc,
+                Operand1 = o1,
+                Operand2 = o2,
+                Display = $"${o2:X2}{o1:X2}",
             };
         }
 
@@ -111,12 +126,15 @@ namespace InnoWerks.Simulators
         {
             ArgumentNullException.ThrowIfNull(bus);
 
+            var oc = bus.Peek(programCounter);
+            var o1 = bus.Peek((ushort)(programCounter + 1));
+
             return new DecodedOperation
             {
                 Length = 2,
-                OpCodeValue = bus.Peek(programCounter),
-                Operand1 = bus.Peek((ushort)(programCounter + 1)),
-                Display = $"${bus.Peek((ushort)(programCounter + 1)):X2}",
+                OpCodeValue = oc,
+                Operand1 = o1,
+                Display = $"${o1:X2}",
             };
         }
 
@@ -134,13 +152,17 @@ namespace InnoWerks.Simulators
         {
             ArgumentNullException.ThrowIfNull(bus);
 
+            var oc = bus.Peek(programCounter);
+            var o1 = bus.Peek((ushort)(programCounter + 1));
+            var o2 = bus.Peek((ushort)(programCounter + 2));
+
             return new DecodedOperation
             {
                 Length = 3,
-                OpCodeValue = bus.Peek(programCounter),
-                Operand1 = bus.Peek((ushort)(programCounter + 1)),
-                Operand2 = bus.Peek((ushort)(programCounter + 2)),
-                Display = $"${PeekWord(bus, (ushort)(programCounter + 1)):X4},X",
+                OpCodeValue = oc,
+                Operand1 = o1,
+                Operand2 = o2,
+                Display = $"${o2:X2}{o1:X2},X",
             };
         }
 
@@ -158,13 +180,17 @@ namespace InnoWerks.Simulators
         {
             ArgumentNullException.ThrowIfNull(bus);
 
+            var oc = bus.Peek(programCounter);
+            var o1 = bus.Peek((ushort)(programCounter + 1));
+            var o2 = bus.Peek((ushort)(programCounter + 2));
+
             return new DecodedOperation
             {
                 Length = 3,
-                OpCodeValue = bus.Peek(programCounter),
-                Operand1 = bus.Peek((ushort)(programCounter + 1)),
-                Operand2 = bus.Peek((ushort)(programCounter + 2)),
-                Display = $"${PeekWord(bus, (ushort)(programCounter + 1)):X4},Y",
+                OpCodeValue = oc,
+                Operand1 = o1,
+                Operand2 = o2,
+                Display = $"${o2:X2}{o1:X2},Y",
             };
         }
 
@@ -182,12 +208,15 @@ namespace InnoWerks.Simulators
         {
             ArgumentNullException.ThrowIfNull(bus);
 
+            var oc = bus.Peek(programCounter);
+            var o1 = bus.Peek((ushort)(programCounter + 1));
+
             return new DecodedOperation
             {
                 Length = 2,
-                OpCodeValue = bus.Peek(programCounter),
-                Operand1 = bus.Peek((ushort)(programCounter + 1)),
-                Display = $"(${bus.Peek((ushort)(programCounter + 1)):X2},X)",
+                OpCodeValue = oc,
+                Operand1 = o1,
+                Display = $"(${o1:X2},X)",
             };
         }
 
@@ -205,12 +234,15 @@ namespace InnoWerks.Simulators
         {
             ArgumentNullException.ThrowIfNull(bus);
 
+            var oc = bus.Peek(programCounter);
+            var o1 = bus.Peek((ushort)(programCounter + 1));
+
             return new DecodedOperation
             {
                 Length = 2,
-                OpCodeValue = bus.Peek(programCounter),
-                Operand1 = bus.Peek((ushort)(programCounter + 1)),
-                Display = $"(${bus.Peek((ushort)(programCounter + 1)):X2},Y",
+                OpCodeValue = oc,
+                Operand1 = o1,
+                Display = $"(${o1:X2},Y",
             };
         }
 
@@ -227,12 +259,15 @@ namespace InnoWerks.Simulators
         {
             ArgumentNullException.ThrowIfNull(bus);
 
+            var oc = bus.Peek(programCounter);
+            var o1 = bus.Peek((ushort)(programCounter + 1));
+
             return new DecodedOperation
             {
                 Length = 2,
-                OpCodeValue = bus.Peek(programCounter),
-                Operand1 = bus.Peek((ushort)(programCounter + 1)),
-                Display = $"${bus.Peek((ushort)(programCounter + 1)):X2}",
+                OpCodeValue = oc,
+                Operand1 = o1,
+                Display = $"${o1:X2}",
             };
         }
 
@@ -244,12 +279,15 @@ namespace InnoWerks.Simulators
         {
             ArgumentNullException.ThrowIfNull(bus);
 
+            var oc = bus.Peek(programCounter);
+            var o1 = bus.Peek((ushort)(programCounter + 1));
+
             return new DecodedOperation
             {
                 Length = 2,
-                OpCodeValue = bus.Peek(programCounter),
-                Operand1 = bus.Peek((ushort)(programCounter + 1)),
-                Display = $"(${bus.Peek((ushort)(programCounter + 1)):X2})",
+                OpCodeValue = oc,
+                Operand1 = o1,
+                Display = $"(${o1:X2})",
             };
         }
 
@@ -262,13 +300,17 @@ namespace InnoWerks.Simulators
         {
             ArgumentNullException.ThrowIfNull(bus);
 
+            var oc = bus.Peek(programCounter);
+            var o1 = bus.Peek((ushort)(programCounter + 1));
+            var o2 = bus.Peek((ushort)(programCounter + 2));
+
             return new DecodedOperation
             {
                 Length = 3,
-                OpCodeValue = bus.Peek(programCounter),
-                Operand1 = bus.Peek((ushort)(programCounter + 1)),
-                Operand2 = bus.Peek((ushort)(programCounter + 2)),
-                Display = $"(${PeekWord(bus, (ushort)(programCounter + 1)):X4},X)",
+                OpCodeValue = oc,
+                Operand1 = o1,
+                Operand2 = o2,
+                Display = $"(${o2:X2}{o1:X2},X)",
             };
         }
 
@@ -286,12 +328,15 @@ namespace InnoWerks.Simulators
         {
             ArgumentNullException.ThrowIfNull(bus);
 
+            var oc = bus.Peek(programCounter);
+            var o1 = bus.Peek((ushort)(programCounter + 1));
+
             return new DecodedOperation
             {
                 Length = 2,
-                OpCodeValue = bus.Peek(programCounter),
-                Operand1 = bus.Peek((ushort)(programCounter + 1)),
-                Display = $"(${bus.Peek((ushort)(programCounter + 1)):X2},X)",
+                OpCodeValue = oc,
+                Operand1 = o1,
+                Display = $"(${o1:X2},X)",
             };
         }
 
@@ -308,12 +353,15 @@ namespace InnoWerks.Simulators
         {
             ArgumentNullException.ThrowIfNull(bus);
 
+            var oc = bus.Peek(programCounter);
+            var o1 = bus.Peek((ushort)(programCounter + 1));
+
             return new DecodedOperation
             {
                 Length = 2,
-                OpCodeValue = bus.Peek(programCounter),
-                Operand1 = bus.Peek((ushort)(programCounter + 1)),
-                Display = $"(${bus.Peek((ushort)(programCounter + 1)):X2}),Y",
+                OpCodeValue = oc,
+                Operand1 = o1,
+                Display = $"(${o1:X2}),Y",
             };
         }
 
@@ -330,22 +378,18 @@ namespace InnoWerks.Simulators
         {
             ArgumentNullException.ThrowIfNull(bus);
 
+            var oc = bus.Peek(programCounter);
+            var o1 = bus.Peek((ushort)(programCounter + 1));
+            var o2 = bus.Peek((ushort)(programCounter + 2));
+
             return new DecodedOperation
             {
                 Length = 3,
-                OpCodeValue = bus.Peek(programCounter),
-                Operand1 = bus.Peek((ushort)(programCounter + 1)),
-                Operand2 = bus.Peek((ushort)(programCounter + 2)),
-                Display = $"(${PeekWord(bus, (ushort)(programCounter + 1)):X4})",
+                OpCodeValue = oc,
+                Operand1 = o1,
+                Operand2 = o2,
+                Display = $"(${o2:X2}{o1:X2})",
             };
-        }
-
-        private static ushort PeekWord(IBus bus, ushort address)
-        {
-            var lo = bus.Peek(address);
-            var hi = bus.Peek((ushort)(address + 1));
-
-            return (ushort)((hi << 8) | lo);
         }
     }
 }

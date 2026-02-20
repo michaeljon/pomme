@@ -47,14 +47,26 @@ namespace InnoWerks.Computers.Apple
             {
                 if (machineState.State[SoftSwitch.SlotC3RomEnabled] == false)
                 {
+                    var pre = machineState.State[SoftSwitch.IntC8RomEnabled];
                     machineState.State[SoftSwitch.IntC8RomEnabled] = true;
-                    memoryBlocks.Remap();
+
+                    // only remap if we've changed the value
+                    if (pre == false)
+                    {
+                        memoryBlocks.Remap();
+                    }
                 }
             }
             else if (address == 0xCFFF)
             {
+                var pre = machineState.State[SoftSwitch.IntC8RomEnabled];
                 machineState.State[SoftSwitch.IntC8RomEnabled] = false;
-                memoryBlocks.Remap();
+
+                // only remap if we've changed the value
+                if (pre == true)
+                {
+                    memoryBlocks.Remap();
+                }
             }
 
             return memoryBlocks.Read(address);
@@ -70,14 +82,26 @@ namespace InnoWerks.Computers.Apple
             {
                 if (machineState.State[SoftSwitch.SlotC3RomEnabled] == false)
                 {
+                    var pre = machineState.State[SoftSwitch.IntC8RomEnabled];
                     machineState.State[SoftSwitch.IntC8RomEnabled] = true;
-                    memoryBlocks.Remap();
+
+                    // only remap if we've changed the value
+                    if (pre == false)
+                    {
+                        memoryBlocks.Remap();
+                    }
                 }
             }
             else if (address == 0xCFFF)
             {
+                var pre = machineState.State[SoftSwitch.IntC8RomEnabled];
                 machineState.State[SoftSwitch.IntC8RomEnabled] = false;
-                memoryBlocks.Remap();
+
+                // only remap if we've changed the value
+                if (pre == true)
+                {
+                    memoryBlocks.Remap();
+                }
             }
 
             memoryBlocks.Write(address, value);

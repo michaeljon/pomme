@@ -37,7 +37,7 @@ namespace InnoWerks.Emulators.AppleIIe
            new Color(0x00, 0x00, 0x99),    //  "#000099", dk blue
            new Color(0xDD, 0x22, 0xDD),    //  "#DD22DD", purple
            new Color(0x00, 0x77, 0x22),    //  "#007722", dk green
-           new Color(0x00, 0x00, 0x55),    //  "#555555", gray
+           new Color(0xAA, 0xAA, 0xAA),    //  "#AAAAAA", gray
            new Color(0x22, 0x22, 0xFF),    //  "#2222FF", med blue
            new Color(0x66, 0xAA, 0xFF),    //  "#66AAFF", lt blue
            new Color(0x88, 0x55, 0x00),    //  "#885500", brown
@@ -57,7 +57,7 @@ namespace InnoWerks.Emulators.AppleIIe
            new Color(0x88, 0x55, 0x00),    //  "#885500", brown
            new Color(0xFF, 0x66, 0x00),    //  "#FF6600", orange
            new Color(0x00, 0x77, 0x22),    //  "#007722", dk green
-           new Color(0x00, 0x00, 0x55),    //  "#555555", gray
+           new Color(0xAA, 0xAA, 0xAA),    //  "#AAAAAA", gray
            new Color(0x11, 0xDD, 0x00),    //  "#11DD00", lt green
            new Color(0xFF, 0xFF, 0x00),    //  "#FFFF00", yellow
            new Color(0x00, 0x00, 0x99),    //  "#000099", dk blue
@@ -86,7 +86,7 @@ namespace InnoWerks.Emulators.AppleIIe
            new Color(0x88, 0x55, 0x00),    //  "#885500", brown
            new Color(0xFF, 0x66, 0x00),    //  "#FF6600", orange
            new Color(0x00, 0x77, 0x22),    //  "#007722", dk green
-           new Color(0x00, 0x00, 0x55),    //  "#555555", gray
+           new Color(0xAA, 0xAA, 0xAA),    //  "#AAAAAA", gray
            new Color(0x11, 0xDD, 0x00),    //  "#11DD00", lt green
            new Color(0xFF, 0xFF, 0x00),    //  "#FFFF00", yellow
            new Color(0x00, 0x00, 0x99),    //  "#000099", dk blue

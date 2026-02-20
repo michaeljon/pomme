@@ -23,7 +23,7 @@ namespace InnoWerks.Simulators
             CycleCount = cycleCount;
 
             Mnemonic = opcode.OpCode.ToString();
-            Formatted = $"{ProgramCounter:X4} {OpCode.OpCode}   {opcode.DecodeOperand(ProgramCounter, bus).Display}";
+            // Formatted = $"{ProgramCounter:X4} {OpCode.OpCode}   {opcode.DecodeOperand(ProgramCounter, bus).Display}";
         }
 
         public override bool Equals(object obj)

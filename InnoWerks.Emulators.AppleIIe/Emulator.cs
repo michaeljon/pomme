@@ -120,7 +120,7 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             Window.Title = "Rotten Apple IIe";
 
-            var mainRom = File.ReadAllBytes("roms/apple2e-16k.rom");
+            var mainRom = File.ReadAllBytes("roms/Apple2e_Enhanced.rom");
             var diskIIRom = File.ReadAllBytes("roms/DiskII.rom");
 
             var config = new AppleConfiguration(AppleModel.AppleIIe)
@@ -292,6 +292,20 @@ namespace InnoWerks.Emulators.AppleIIe
                     audioRenderer.Clear();
                     audioSource.Clear();
                     cpuPaused = false;
+                }
+
+                var state = Keyboard.GetState();
+                foreach (var key in state.GetPressedKeys())
+                {
+                    if (KeyMapper.TryMap(key, state, out byte ascii))
+                    {
+                        // 3. Handle Ctrl+Letter combinations (ASCII 1 to 26)
+                        // The OS automatically generates these when holding Ctrl!
+                        if ((ascii & 0x1f) >= 1 && (ascii & 0x1f) <= 26)
+                        {
+                            iou.InjectKey((byte)(ascii & 0x1f));
+                        }
+                    }
                 }
             }
 
