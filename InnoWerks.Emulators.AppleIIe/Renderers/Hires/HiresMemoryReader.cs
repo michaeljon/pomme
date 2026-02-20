@@ -39,13 +39,13 @@ namespace InnoWerks.Emulators.AppleIIe
             }
         }
 
-        public void ReadHiresPage(HiresBuffer buffer)
+        public void ReadHiresPage(HiresBuffer buffer, int rows = 192)
         {
             ArgumentNullException.ThrowIfNull(buffer);
 
             var memory = ram.Read((byte)(page == 2 ? 0x40 : 0x20), 32);
 
-            for (int y = 0; y < 192; y++)
+            for (int y = 0; y < rows; y++)
             {
                 for (int x = 0; x < 40; x++)
                 {

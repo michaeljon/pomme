@@ -11,6 +11,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace InnoWerks.Emulators.AppleIIe
 {
+    [DebuggerDisplay("{WhoAmI}")]
     public class LoresRenderer : Renderer
     {
         private readonly LoresMemoryReader loresMemoryReader;
@@ -50,12 +51,12 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             ArgumentNullException.ThrowIfNull(spriteBatch);
 
-            var cols = eightyColumnMode ? 80 : 40;
-            loresMemoryReader.ReadLoresPage(loresBuffer);
-
             // todo: convert this back to scanlines instead of cells
             start /= DisplayCharacteristics.AppleCellHeight;
             count /= DisplayCharacteristics.AppleCellHeight;
+
+            var cols = eightyColumnMode ? 80 : 40;
+            loresMemoryReader.ReadLoresPage(loresBuffer, count - start);
 
             for (var row = start; row < start + count; row++)
             {

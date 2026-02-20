@@ -43,25 +43,25 @@ namespace InnoWerks.Emulators.AppleIIe
             }
         }
 
-        public void ReadTextPage(TextBuffer textBuffer)
+        public void ReadTextPage(TextBuffer textBuffer, int rows = 24)
         {
             ArgumentNullException.ThrowIfNull(textBuffer);
 
             if (eightyColumnMode == false)
             {
-                Read40Column(textBuffer);
+                Read40Column(textBuffer, rows);
             }
             else
             {
-                Read80Column(textBuffer);
+                Read80Column(textBuffer, rows);
             }
         }
 
-        private void Read40Column(TextBuffer textBuffer)
+        private void Read40Column(TextBuffer textBuffer, int rows = 24)
         {
             var memory = ram.Read((byte)(page == 2 ? 0x08 : 0x04), 4);
 
-            for (var row = 0; row < 24; row++)
+            for (var row = 0; row < rows; row++)
             {
                 for (var col = 0; col < 40; col++)
                 {
@@ -72,12 +72,12 @@ namespace InnoWerks.Emulators.AppleIIe
             }
         }
 
-        private void Read80Column(TextBuffer textBuffer)
+        private void Read80Column(TextBuffer textBuffer, int rows = 24)
         {
             var main = ram.GetMain(0x04, 4);
             var aux = ram.GetAux(0x04, 4);
 
-            for (var row = 0; row < 24; row++)
+            for (var row = 0; row < rows; row++)
             {
                 for (var col = 0; col < 40; col++)
                 {

@@ -11,12 +11,13 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace InnoWerks.Emulators.AppleIIe
 {
+    [DebuggerDisplay("{WhoAmI}")]
     public class TextModeRenderer : Renderer
     {
         private const int GlyphWidth = 8;
         private const int GlyphHeight = 8;
         private const int GlyphsPerRow = 16;
-        private const int GlyphCount = 512;
+        private const int GlyphCount = 256;
 
         private const int TexWidth = GlyphsPerRow * GlyphWidth;                  // 128
         private const int TexHeight = (GlyphCount / GlyphsPerRow) * GlyphHeight; // 256
@@ -67,12 +68,12 @@ namespace InnoWerks.Emulators.AppleIIe
 
             var cols = eightyColumnMode ? 80 : 40;
 
-            var textBuffer = new TextBuffer(cols);
-            textMemoryReader.ReadTextPage(textBuffer);
-
             // todo: convert this back to scanlines instead of cells
             start /= DisplayCharacteristics.AppleCellHeight;
             count /= DisplayCharacteristics.AppleCellHeight;
+
+            var textBuffer = new TextBuffer(cols);
+            textMemoryReader.ReadTextPage(textBuffer, count - start);
 
             for (var row = start; row < start + count; row++)
             {

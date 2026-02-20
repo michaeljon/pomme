@@ -42,25 +42,25 @@ namespace InnoWerks.Emulators.AppleIIe
             }
         }
 
-        public void ReadLoresPage(LoresBuffer loresBuffer)
+        public void ReadLoresPage(LoresBuffer loresBuffer, int rows = 24)
         {
             ArgumentNullException.ThrowIfNull(loresBuffer);
 
             if (eightyColumnMode == false)
             {
-                ReadLores40(loresBuffer, page);
+                ReadLores40(loresBuffer, page, rows);
             }
             else
             {
-                ReadLores80(loresBuffer, page);
+                ReadLores80(loresBuffer, page, rows);
             }
         }
 
-        private void ReadLores40(LoresBuffer loresBuffer, int page)
+        private void ReadLores40(LoresBuffer loresBuffer, int page, int rows = 24)
         {
             var memory = ram.Read((byte)(page == 2 ? 0x08 : 0x04), 4);
 
-            for (var row = 0; row < 24; row++)
+            for (var row = 0; row < rows; row++)
             {
                 for (var col = 0; col < 40; col++)
                 {
@@ -71,12 +71,12 @@ namespace InnoWerks.Emulators.AppleIIe
             }
         }
 
-        private void ReadLores80(LoresBuffer loresBuffer, int page)
+        private void ReadLores80(LoresBuffer loresBuffer, int page, int rows = 24)
         {
             var main = ram.GetMain(0x04, 4);
             var aux = ram.GetAux(0x04, 4);
 
-            for (var row = 0; row < 24; row++)
+            for (var row = 0; row < rows; row++)
             {
                 for (var col = 0; col < 40; col++)
                 {

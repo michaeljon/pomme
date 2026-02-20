@@ -13,6 +13,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace InnoWerks.Emulators.AppleIIe
 {
+    [DebuggerDisplay("{WhoAmI}")]
     public class HiresRenderer : Renderer
     {
         private readonly HiresMemoryReader hiresMemoryReader;
@@ -74,7 +75,7 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             ArgumentNullException.ThrowIfNull(spriteBatch);
 
-            hiresMemoryReader.ReadHiresPage(hiresBuffer);
+            hiresMemoryReader.ReadHiresPage(hiresBuffer, count - start);
 
             // Temp buffers for the current scanline
             // bitStarts: 1 = A dot starts here. 0 = No dot starts here.
@@ -116,7 +117,8 @@ namespace InnoWerks.Emulators.AppleIIe
                 int rowOffset = y * DisplayCharacteristics.HiresAppleWidth;
 
                 // Initialize row to Black first
-                for (int i = 0; i < DisplayCharacteristics.HiresAppleWidth; i++) screenPixels[rowOffset + i] = DisplayCharacteristics.HiresBlack1;
+                for (int i = 0; i < DisplayCharacteristics.HiresAppleWidth; i++)
+                    screenPixels[rowOffset + i] = DisplayCharacteristics.HiresBlack1;
 
                 for (var x = 0; x < DisplayCharacteristics.HiresAppleWidth; x++)
                 {
@@ -207,7 +209,11 @@ namespace InnoWerks.Emulators.AppleIIe
             if (count > 0)
             {
                 screenTexture.SetData(screenPixels);
-                spriteBatch.Draw(screenTexture, rectangle, DisplayCharacteristics.HiresWhite1);
+                spriteBatch.Draw(
+                    screenTexture,
+                    rectangle,
+                    new Rectangle(0, 0, DisplayCharacteristics.HiresAppleWidth, count),
+                    DisplayCharacteristics.HiresWhite1);
             }
         }
 

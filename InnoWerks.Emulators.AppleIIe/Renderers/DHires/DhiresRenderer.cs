@@ -11,6 +11,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace InnoWerks.Emulators.AppleIIe
 {
+    [DebuggerDisplay("{WhoAmI}")]
     public class DhiresRenderer : Renderer
     {
         private readonly DhiresMemoryReader dhiresMemoryReader;
@@ -51,7 +52,7 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             ArgumentNullException.ThrowIfNull(spriteBatch);
 
-            dhiresMemoryReader.ReadDhiresPage(dhiresBuffer);
+            dhiresMemoryReader.ReadDhiresPage(dhiresBuffer, count - start);
 
             for (var y = start; y < start + count; y++)
             {
@@ -72,7 +73,11 @@ namespace InnoWerks.Emulators.AppleIIe
             }
 
             screenTexture.SetData(screenPixels);
-            spriteBatch.Draw(screenTexture, rectangle, Color.White);
+            spriteBatch.Draw(
+                screenTexture,
+                rectangle,
+                new Rectangle(0, 0, DisplayCharacteristics.HiresAppleWidth, count),
+                DisplayCharacteristics.HiresWhite1);
         }
 
         protected override void DoDispose(bool disposing)

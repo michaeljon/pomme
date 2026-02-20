@@ -76,14 +76,14 @@ namespace InnoWerks.Emulators.AppleIIe
             return pixels;
         }
 
-        public void ReadDhiresPage(DhiresBuffer buffer)
+        public void ReadDhiresPage(DhiresBuffer buffer, int rows = 192)
         {
             ArgumentNullException.ThrowIfNull(buffer);
 
             var main = ram.GetMain((byte)(page == 2 ? 0x40 : 0x20), 32);
             var aux = ram.GetAux((byte)(page == 2 ? 0x40 : 0x20), 32);
 
-            for (int y = 0; y < 192; y++)
+            for (int y = 0; y < rows; y++)
             {
                 var rawBytes = new byte[80];
                 for (var b = 0; b < 40; b++)
