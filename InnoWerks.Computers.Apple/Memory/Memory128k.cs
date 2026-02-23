@@ -134,7 +134,6 @@ namespace InnoWerks.Computers.Apple
             for (var slot = 0; slot < 8; slot++)
             {
                 loSlotRom[slot] = MemoryPage.Zeros(MemoryPageType.CardRom, (byte)(0xC0 + slot));
-                // loSlotRom[slot] = null;
             }
 
             // c8 slot rom, one page per slot, $C800-$CFFF

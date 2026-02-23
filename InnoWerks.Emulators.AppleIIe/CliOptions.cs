@@ -10,5 +10,8 @@ namespace InnoWerks.Emulators.AppleIIe
 
         [Option('2', "disk2", HelpText = "Disk to boot in Drive 2")]
         public string Disk2 { get; set; }
+
+        [Option('p', "profile", HelpText = "Install ProFile disk controller in slot 5 with this file backing it.")]
+        public string Profile { get; set; }
     }
 }

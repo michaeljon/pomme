@@ -121,7 +121,6 @@ namespace InnoWerks.Emulators.AppleIIe
             Window.Title = "Rotten Apple IIe";
 
             var mainRom = File.ReadAllBytes("roms/Apple2e_Enhanced.rom");
-            var diskIIRom = File.ReadAllBytes("roms/DiskII.rom");
 
             var config = new AppleConfiguration(AppleModel.AppleIIe)
             {
@@ -139,11 +138,21 @@ namespace InnoWerks.Emulators.AppleIIe
             iou = new IOU(memoryBlocks, machineState, appleBus);
             mmu = new MMU(memoryBlocks, machineState, appleBus);
 
+            // later, move rom loading into device
+            var diskIIRom = File.ReadAllBytes("roms/DiskII.rom");
             var disk = new DiskIISlotDevice(appleBus, machineState, diskIIRom);
             disk.GetDrive(1).InsertDisk(cliOptions.Disk1);
             if (string.IsNullOrEmpty(cliOptions.Disk2) == false)
             {
                 disk.GetDrive(2).InsertDisk(cliOptions.Disk2);
+            }
+
+            if (string.IsNullOrEmpty(cliOptions.Profile) == false)
+            {
+                // later, move rom loading into device
+                var profileRom = File.ReadAllBytes("roms/profile_10mb.rom");
+                var profile = new ProfileSlotDevice(5, appleBus, machineState, profileRom, true);
+                profile.InsertDisk(cliOptions.Profile);
             }
 
             cpu = new Cpu65C02(

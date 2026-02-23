@@ -69,54 +69,22 @@ namespace InnoWerks.Computers.Apple
             this.bus = bus;
             this.machineState = machineState;
 
-            if (romImage.Length > 256)
+            if (romImage.Length > 256 && romImage.Length != 2048)
             {
-                if (Slot < 1 || Slot > 4)
-                {
-                    throw new ArgumentException("Only devices in slots 1-4 can use extra ROM space $C800-$CFFF");
-                }
-
-                if (romImage.Length > 256)
-                {
-                    throw new ArgumentException("Device ROM can be no longer than 256 bytes");
-                }
+                throw new ArgumentException("Device ROM for devices with expansion slot ROM must be 2k");
             }
 
             HasRom = true;
+            Rom = new byte[256];
+            Array.Copy(romImage, 0, Rom, 0, 256);
 
-            Rom = romImage;
-
-            bus.AddDevice(this);
-        }
-
-        protected SlotRomDevice(int slot, string name, MachineState machineState, byte[] cxRom, byte[] c8Rom)
-        {
-            ArgumentException.ThrowIfNullOrEmpty(name, nameof(name));
-            ArgumentNullException.ThrowIfNull(machineState, nameof(machineState));
-            ArgumentNullException.ThrowIfNull(cxRom, nameof(cxRom));
-            ArgumentNullException.ThrowIfNull(c8Rom, nameof(c8Rom));
-
-            ArgumentOutOfRangeException.ThrowIfGreaterThan(slot, 7, nameof(slot));
-            ArgumentOutOfRangeException.ThrowIfLessThan(slot, 0, nameof(slot));
-
-            if (slot < 1 || slot > 4)
+            // a 2k ROM usually shares the first 256 bytes with the cxRom
+            if (romImage.Length == 2048)
             {
-                throw new ArgumentException("Only devices in slots 1-4 can use extra ROM space $C800-$CFFF");
+                HasAuxRom = true;
+                ExpansionRom = new byte[2048];
+                Array.Copy(romImage, 0, ExpansionRom, 0, 2048);
             }
-
-            ArgumentOutOfRangeException.ThrowIfNotEqual(cxRom.Length, 256, nameof(cxRom));
-            ArgumentOutOfRangeException.ThrowIfNotEqual(c8Rom.Length, 2048, nameof(c8Rom));
-
-            Slot = slot;
-            Name = name;
-
-            this.machineState = machineState;
-
-            HasRom = true;
-            HasAuxRom = true;
-
-            Rom = cxRom;
-            ExpansionRom = c8Rom;
 
             bus.AddDevice(this);
         }
@@ -124,6 +92,7 @@ namespace InnoWerks.Computers.Apple
         public int Slot { get; }
 
         public string Name { get; }
+
         public virtual bool HandlesRead(ushort address) =>
             (address >= IoBaseAddressLo && address <= IoBaseAddressHi) ||
             (address >= RomBaseAddressLo && address <= RomBaseAddressHi) ||

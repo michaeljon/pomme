@@ -16,13 +16,13 @@ namespace InnoWerks.Computers.Apple
         LanguageCard
     }
 
+#pragma warning disable CA1819 // Properties should not return arrays
+
     public class MemoryPage
     {
         public const int PageSize = 256;
 
-#pragma warning disable CA1819 // Properties should not return arrays
         public byte[] Block { get; init; }
-#pragma warning restore CA1819 // Properties should not return arrays
 
         public MemoryPageType MemoryPageType { get; init; }
 
