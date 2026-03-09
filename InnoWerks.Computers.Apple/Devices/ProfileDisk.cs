@@ -33,23 +33,42 @@ namespace InnoWerks.Computers.Apple
         private readonly byte[] dataBuffer = new byte[BlockSize];
         private int dataIndex;
 
-        private bool tenMbDrive;
+        private readonly bool tenMbDrive;
         private string path;
 
         private byte status;
 
+        // todo: fix this so it can live on any page
+        private static readonly byte[] cxRom = [
+            /* 00 */  0x4C, 0x10, 0xC5,                 // JMP $C510    ; Init
+            /* 03 */  0x4C, 0x20, 0xC5,                 // JMP $C520    ; Driver entry
+            /* 06 */  0x01, 0x00, 0x00, 0x00, 0x00,     //              ; prodos signature
+            /* 0b */  0x20,                             //              ; device id
+            /* 0c */  0x00, 0x00, 0x00, 0x00,           //              ; padding
+            /* 10 */  0xAD, 0xFF, 0xC5,                 // LDA $C5FF    ; enable $C800
+            /* 13 */  0x4C, 0xD7, 0xC8,                 // JMP $C8D7    ; jump to firmware init
+            /* 16 */  0x00, 0x00, 0x00, 0x00, 0x00,
+            /* 1b */  0x00, 0x00, 0x00, 0x00, 0x00,
+            /* 20 */  0xAD, 0xFF, 0xC5,                 // LDA $C5FF    ; enable $C800
+            /* 23 */  0x4C, 0xD7, 0xC8,                 // JMP $C8D7    ; jump to firmware entry
+        ];
+
         public ProfileSlotDevice(
             int slot,
+            ICpu cpu,
             IBus bus,
             MachineState machineState,
             byte[] c8Rom,
             bool tenMb = false)
-            : base(slot, "Profile Controller", bus, machineState, c8Rom)
+            : base(slot, "Profile Controller", cpu, bus, machineState, cxRom, c8Rom)
         {
             tenMbDrive = tenMb;
 
             int blocks = tenMb ? Blocks10MB : Blocks5MB;
             diskImage = new byte[blocks * BlockSize];
+
+            ArgumentNullException.ThrowIfNull(bus, nameof(bus));
+            bus.AddDevice(this);
         }
 
         public void InsertDisk(string path)
@@ -100,13 +119,10 @@ namespace InnoWerks.Computers.Apple
 
         public override bool HandlesRead(ushort address) =>
             (address >= IoBaseAddressLo && address <= IoBaseAddressHi) ||
-            (address >= RomBaseAddressLo && address <= RomBaseAddressHi) ||
-            (address >= ExpansionBaseAddressLo && address <= ExpansionBaseAddressHi);
+            (address >= RomBaseAddressLo && address <= RomBaseAddressHi);
 
         public override bool HandlesWrite(ushort address) =>
-            (address >= IoBaseAddressLo && address <= IoBaseAddressHi) ||
-            (address >= RomBaseAddressLo && address <= RomBaseAddressHi) ||
-            (address >= ExpansionBaseAddressLo && address <= ExpansionBaseAddressHi);
+            (address >= IoBaseAddressLo && address <= IoBaseAddressHi);
 
         private void BeginCommand(byte cmd)
         {
@@ -237,9 +253,9 @@ namespace InnoWerks.Computers.Apple
             dataIndex = 0;
         }
 
-        protected override void DoCx(CardIoType ioType, byte address, byte value) { }
+        protected override byte DoCx(CardIoType ioType, ushort address, byte value) { return 0x00; }
 
-        protected override void DoC8(CardIoType ioType, byte address, byte value) { }
+        protected override byte DoC8(CardIoType ioType, ushort address, byte value) { return 0x00; }
 
         public override void Tick(int cycles) {/* NO-OP */ }
 

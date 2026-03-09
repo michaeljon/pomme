@@ -117,9 +117,11 @@
       "cwd": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe",
       "args": [
         "--disk1",
-        "disks/ProDOS_User.dsk",
+        "disks/prodos-util.dsk",
         "--profile",
-        "disks/profile.dsk"
+        "disks/profile.dsk",
+        "--harddisk",
+        "disks/harddisk.po"
       ],
       "stopAtEntry": false,
       "requireExactSource": false
@@ -142,7 +144,14 @@
       "preLaunchTask": "build",
       "program": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe/bin/Debug/net10.0/InnoWerks.Emulators.AppleIIe.dll",
       "cwd": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe",
-      "args": ["--disk1", "disks/A2eDiagnostics_v2.1.dsk"],
+      "args": [
+        "--disk1",
+        "disks/A2eDiagnostics_v2.1.dsk",
+        "--profile",
+        "disks/profile.po",
+        "--harddisk",
+        "disks/harddisk.po"
+      ],
       "stopAtEntry": false,
       "requireExactSource": false
     },

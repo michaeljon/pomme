@@ -13,5 +13,8 @@ namespace InnoWerks.Emulators.AppleIIe
 
         [Option('p', "profile", HelpText = "Install ProFile disk controller in slot 5 with this file backing it.")]
         public string Profile { get; set; }
+
+        [Option('h', "harddisk", HelpText = "Install ProDOS hard drive in slot 7 with this file backing it.")]
+        public string HardDisk { get; set; }
     }
 }

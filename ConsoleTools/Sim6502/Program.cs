@@ -336,7 +336,7 @@ namespace Sim6502
 
         private int Step(ICpu cpu)
         {
-            var cycleCount = cpu.Step(writeInstructions: verboseSteps, returnPriorToBreak: true);
+            var cycleCount = cpu.Step(returnPriorToBreak: true);
 
             if (cycleCount == 0)
             {
@@ -359,7 +359,7 @@ namespace Sim6502
 
             for (var step = 0; step < steps; step++)
             {
-                var stepCycleCount = cpu.Step(writeInstructions: verboseSteps, returnPriorToBreak: true);
+                var stepCycleCount = cpu.Step(returnPriorToBreak: true);
 
                 instructionCount++;
                 cycleCount += stepCycleCount;
@@ -394,7 +394,7 @@ namespace Sim6502
 
             while (breakEncountered == false)
             {
-                var stepCycleCount = cpu.Step(writeInstructions: verboseSteps, returnPriorToBreak: true);
+                var stepCycleCount = cpu.Step(returnPriorToBreak: true);
 
                 if (stepCycleCount == 0)
                 {

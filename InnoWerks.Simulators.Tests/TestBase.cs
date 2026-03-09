@@ -86,12 +86,12 @@ namespace InnoWerks.Simulators.Tests
             {
                 for (var s = 0; s < code.Count; s++)
                 {
-                    cpu.Step(writeInstructions: false);
+                    cpu.Step();
                 }
             }
             else
             {
-                var (instructionCount, cycleCount) = cpu.Run(stopOnBreak: true, writeInstructions: false);
+                var (instructionCount, cycleCount) = cpu.Run(stopOnBreak: true);
 
                 TestContext.WriteLine($"INST: {instructionCount}");
                 TestContext.WriteLine($"CYCLES: {cycleCount}");

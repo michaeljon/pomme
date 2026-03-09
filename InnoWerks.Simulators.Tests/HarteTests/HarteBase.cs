@@ -130,7 +130,7 @@ namespace InnoWerks.Simulators.Tests
             };
 
             // run test
-            var cycleCount = cpu.Step(writeInstructions: false);
+            var cycleCount = cpu.Step();
 
             var finalRegisters = new Registers()
             {

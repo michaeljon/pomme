@@ -62,9 +62,6 @@ namespace Emu6502
             var iou = new IOU(memoryBlocks, machineState, bus);
             var mmu = new MMU(memoryBlocks, machineState, bus);
 
-            var disk = new DiskIISlotDevice(bus, machineState, diskIIRom);
-            disk.GetDrive(1).InsertDisk("disks/dos33.dsk");
-
             var cpu = new Cpu65C02(
                 bus,
                 (cpu, programCounter) => { },
@@ -76,6 +73,11 @@ namespace Emu6502
                         Environment.Exit(0);
                     }
                 });
+
+            var disk = new DiskIISlotDevice(cpu, bus, machineState, diskIIRom);
+            disk.GetDrive(1).InsertDisk("disks/dos33.dsk");
+
+            bus.AddDevice(disk);
 
             foreach (var (address, name) in SoftSwitchAddress.Lookup.OrderBy(a => a.Key))
             {
@@ -191,7 +193,7 @@ namespace Emu6502
                     {
                         var traceEntry = cpu.PeekInstruction();
 
-                        Console.Write($"{traceEntry.Formatted}\n");
+                        Console.Write($"{traceEntry.DecodedOperation}\n");
                         Console.Write("> ");
                         var key = Console.ReadKey();
                         if (key.KeyChar == 'G')
@@ -200,7 +202,7 @@ namespace Emu6502
                         }
                     }
 
-                    cpu.Step(writeInstructions: options.Trace);
+                    cpu.Step();
 
                     if (options.SingleStep == true)
                     {

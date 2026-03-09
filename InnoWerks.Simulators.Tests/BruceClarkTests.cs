@@ -40,7 +40,7 @@ namespace InnoWerks.Simulators.Tests
 
             // run
             Console.WriteLine();
-            var (instructionCount, cycleCount) = cpu.Run(stopOnBreak: true, writeInstructions: false);
+            var (instructionCount, cycleCount) = cpu.Run(stopOnBreak: true);
 
             TestContext.WriteLine($"INST: {instructionCount}");
             TestContext.WriteLine($"CYCLES: {cycleCount}");
@@ -79,7 +79,7 @@ namespace InnoWerks.Simulators.Tests
 
             // run
             Console.WriteLine();
-            var (instructionCount, cycleCount) = cpu.Run(stopOnBreak: true, writeInstructions: false);
+            var (instructionCount, cycleCount) = cpu.Run(stopOnBreak: true);
 
             TestContext.WriteLine($"INST: {instructionCount}");
             TestContext.WriteLine($"CYCLES: {cycleCount}");
@@ -118,7 +118,7 @@ namespace InnoWerks.Simulators.Tests
 
             // run
             Console.WriteLine();
-            var (instructionCount, cycleCount) = cpu.Run(stopOnBreak: true, writeInstructions: false);
+            var (instructionCount, cycleCount) = cpu.Run(stopOnBreak: true);
 
             TestContext.WriteLine($"INST: {instructionCount}");
             TestContext.WriteLine($"CYCLES: {cycleCount}");

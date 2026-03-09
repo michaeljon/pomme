@@ -55,7 +55,7 @@ namespace InnoWerks.Simulators
             Registers.Reset();
         }
 
-        protected abstract void Dispatch(OpCodeDefinition opCodeDefinition, bool writeInstructions = false);
+        protected abstract void Dispatch(OpCodeDefinition opCodeDefinition);
 
         protected abstract InstructionSet InstructionSet { get; }
 
@@ -139,7 +139,7 @@ namespace InnoWerks.Simulators
             return (ushort)((0xff & StackPop()) | (0xff00 & (StackPop() << 8)));
         }
 
-        public (int intructionCount, int cycleCount) Run(bool stopOnBreak = false, bool writeInstructions = false, int stepsPerSecond = 0)
+        public (int intructionCount, int cycleCount) Run(bool stopOnBreak = false, int stepsPerSecond = 0)
         {
             var instructionCount = 0;
 
@@ -160,15 +160,9 @@ namespace InnoWerks.Simulators
                     break;
                 }
 
-                OpCodeDefinition opCodeDefinition =
-                    GetInstruction(operation, writeInstructions);
+                OpCodeDefinition opCodeDefinition = GetInstruction(operation);
 
-                Dispatch(opCodeDefinition, writeInstructions);
-
-                if (writeInstructions)
-                {
-                    Console.Error.WriteLine($"  {Registers.GetRegisterDisplay}   {Registers.InternalGetFlagsDisplay,-8}");
-                }
+                Dispatch(opCodeDefinition);
 
                 postExecutionCallback?.Invoke(this);
 
@@ -188,7 +182,7 @@ namespace InnoWerks.Simulators
             return (instructionCount, cycleCount);
         }
 
-        public int Step(bool writeInstructions = false, bool returnPriorToBreak = false)
+        public int Step(bool returnPriorToBreak = false)
         {
             bus.BeginTransaction();
 
@@ -206,11 +200,10 @@ namespace InnoWerks.Simulators
             // T0
             operation = bus.Read(Registers.ProgramCounter);
 
-            OpCodeDefinition opCodeDefinition =
-                GetInstruction(operation, writeInstructions);
+            OpCodeDefinition opCodeDefinition = GetInstruction(operation);
 
             // rest of memory cycles
-            Dispatch(opCodeDefinition, writeInstructions);
+            Dispatch(opCodeDefinition);
 
             postExecutionCallback?.Invoke(this);
 
@@ -222,21 +215,14 @@ namespace InnoWerks.Simulators
         {
             var operation = bus.Peek(Registers.ProgramCounter);
 
-            OpCodeDefinition opCodeDefinition =
-                GetInstruction(operation, false);
+            OpCodeDefinition opCodeDefinition = GetInstruction(operation);
 
             return new CpuTraceEntry(Registers.ProgramCounter, bus, bus.CycleCount, opCodeDefinition);
         }
 
-        private OpCodeDefinition GetInstruction(byte operation, bool writeInstructions)
+        private OpCodeDefinition GetInstruction(byte operation)
         {
             OpCodeDefinition opCodeDefinition = InstructionSet[operation];
-
-            if (writeInstructions)
-            {
-                var stepToExecute = $"{Registers.ProgramCounter:X4} {opCodeDefinition.OpCode}   {opCodeDefinition.DecodeOperand(Registers.ProgramCounter, bus),-10}\n";
-                Console.Error.Write(stepToExecute);
-            }
 
             // decode the operand based on the opcode and addressing mode
             if (opCodeDefinition.AddressingMode == AddressingMode.Unknown)

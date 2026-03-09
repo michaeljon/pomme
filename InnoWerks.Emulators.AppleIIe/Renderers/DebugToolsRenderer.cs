@@ -234,7 +234,7 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             var opcode = cpuTraceEntry.OpCode;
             var pc = cpuTraceEntry.ProgramCounter;
-            var decoded = cpuTraceEntry.OpCode.DecodeOperand(cpuTraceEntry.ProgramCounter, bus);
+            var decoded = cpuTraceEntry.DecodedOperation;
 
             if (breakpoints.Contains(cpuTraceEntry.ProgramCounter))
             {

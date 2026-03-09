@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 
 namespace InnoWerks.Simulators
 {
@@ -6,9 +7,9 @@ namespace InnoWerks.Simulators
     {
         public readonly ushort ProgramCounter { get; init; }
         public readonly OpCodeDefinition OpCode { get; init; }
+        public readonly DecodedOperation DecodedOperation { get; init; }
         public readonly ulong CycleCount { get; init; }
         public readonly string Mnemonic { get; init; }
-        public readonly string Formatted { get; init; }
 
         public CpuTraceEntry(
             ushort programCounter,
@@ -21,9 +22,9 @@ namespace InnoWerks.Simulators
             ProgramCounter = programCounter;
             OpCode = opcode;
             CycleCount = cycleCount;
+            DecodedOperation = opcode.DecodeOperand(ProgramCounter, bus);
 
             Mnemonic = opcode.OpCode.ToString();
-            // Formatted = $"{ProgramCounter:X4} {OpCode.OpCode}   {opcode.DecodeOperand(ProgramCounter, bus).Display}";
         }
 
         public override bool Equals(object obj)
@@ -49,6 +50,11 @@ namespace InnoWerks.Simulators
         public bool Equals(CpuTraceEntry other)
         {
             return other.ProgramCounter == ProgramCounter;
+        }
+
+        public override string ToString()
+        {
+            return $"{ProgramCounter:X4} {OpCode.OpCode}   {DecodedOperation.Display}";
         }
     }
 }

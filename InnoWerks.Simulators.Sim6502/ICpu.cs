@@ -32,19 +32,17 @@ namespace InnoWerks.Simulators
         /// complete program. This is only used for test scenarios.
         /// </summary>
         /// <param name="stopOnBreak"></param>
-        /// <param name="writeInstructions"></param>
         /// <param name="stepsPerSecond"></param>
         /// <returns></returns>
-        (int intructionCount, int cycleCount) Run(bool stopOnBreak = false, bool writeInstructions = false, int stepsPerSecond = 0);
+        (int intructionCount, int cycleCount) Run(bool stopOnBreak = false, int stepsPerSecond = 0);
 
         /// <summary>
         /// Runs a single cycle-accurate CPU instruction and returns the number of
         /// cycles "consumed" during that instruction.
         /// </summary>
-        /// <param name="writeInstructions"></param>
         /// <param name="returnPriorToBreak"></param>
         /// <returns>true if the CPU encounters a BRK instruction</returns>
-        int Step(bool writeInstructions = false, bool returnPriorToBreak = false);
+        int Step(bool returnPriorToBreak = false);
 
         CpuTraceEntry PeekInstruction();
 

@@ -16,10 +16,17 @@ namespace InnoWerks.Computers.Apple
 
         DiskIIDrive currentDrive;
 
-        public DiskIISlotDevice(IBus bus, MachineState machineState, byte[] romImage)
-            : base(6, "Disk II Controller", bus, machineState, romImage)
+        public DiskIISlotDevice(
+            ICpu cpu,
+            IBus bus,
+            MachineState machineState,
+            byte[] romImage)
+            : base(6, "Disk II Controller", cpu, bus, machineState, romImage)
         {
             currentDrive = drive1;
+
+            ArgumentNullException.ThrowIfNull(bus, nameof(bus));
+            bus.AddDevice(this);
         }
 
         protected override byte DoIo(CardIoType ioType, byte address, byte value)
@@ -107,9 +114,15 @@ namespace InnoWerks.Computers.Apple
             return 0xFF;
         }
 
-        protected override void DoCx(CardIoType ioType, byte address, byte value) { }
+        public override bool HandlesRead(ushort address) =>
+            (address >= IoBaseAddressLo && address <= IoBaseAddressHi);
 
-        protected override void DoC8(CardIoType ioType, byte address, byte value) { }
+        public override bool HandlesWrite(ushort address) =>
+            (address >= IoBaseAddressLo && address <= IoBaseAddressHi);
+
+        protected override byte DoCx(CardIoType ioType, ushort address, byte value) { return 0x00; }
+
+        protected override byte DoC8(CardIoType ioType, ushort address, byte value) { return 0x00; }
 
         public override void Tick(int cycles) {/* NO-OP */ }
 

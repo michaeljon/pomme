@@ -26,7 +26,7 @@ namespace InnoWerks.Simulators
 
         protected override InstructionSet InstructionSet => CpuInstructions.OpCode65C02;
 
-        protected override void Dispatch(OpCodeDefinition opCodeDefinition, bool writeInstructions = false)
+        protected override void Dispatch(OpCodeDefinition opCodeDefinition)
         {
             ArgumentNullException.ThrowIfNull(opCodeDefinition);
 

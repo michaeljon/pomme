@@ -130,6 +130,24 @@ namespace InnoWerks.Computers.Apple
                     return intC8Handler.Read(address);
                 }
             }
+            else if ((address >= 0xC100 && address <= 0xC2FF) || (address >= 0xC400 && address <= 0xC7FF))
+            {
+                if (machineState.State[SoftSwitch.IntCxRomEnabled] == false)
+                {
+                    var slot = (address >> 8) & 7;
+                    var slotDevice = slotDevices[slot];
+
+                    // if (slot != 6)
+                    // {
+                    //     SimDebugger.Info($"Read slot {slot} ROM address {address:X4}\n");
+                    // }
+
+                    if (slotDevice?.HandlesRead(address) == true)
+                    {
+                        return slotDevice.Read(address);
+                    }
+                }
+            }
 
             return memoryBlocks.Read(address);
         }
@@ -171,6 +189,25 @@ namespace InnoWerks.Computers.Apple
                 {
                     intC8Handler.Write(address, value);
                     return;
+                }
+            }
+            else if ((address >= 0xC100 && address <= 0xC2FF) || (address >= 0xC400 && address <= 0xC7FF))
+            {
+                if (machineState.State[SoftSwitch.IntCxRomEnabled] == false)
+                {
+                    var slot = (address >> 8) & 7;
+                    var slotDevice = slotDevices[slot];
+
+                    // if (slot != 6)
+                    // {
+                    //     SimDebugger.Info($"Write slot {slot} ROM address {address:X4}\n");
+                    // }
+
+                    if (slotDevice?.HandlesWrite(address) == true)
+                    {
+                        slotDevice.Write(address, value);
+                        return;
+                    }
                 }
             }
 

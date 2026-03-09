@@ -32,6 +32,8 @@ namespace InnoWerks.Computers.Apple
 #pragma warning disable CA1716, CA1707, CA1822
     public abstract class SlotRomDevice : ISlotDevice
     {
+        private readonly ICpu cpu;
+
         private readonly IBus bus;
 
         public const ushort IO_BASE_ADDR = 0xC080;
@@ -48,66 +50,57 @@ namespace InnoWerks.Computers.Apple
 
 #pragma warning restore CA1819 // Properties should not return arrays
 
-        protected SlotRomDevice(int slot, string name, IBus bus, MachineState machineState, byte[] romImage)
-        {
-            ArgumentException.ThrowIfNullOrEmpty(name, nameof(name));
-            ArgumentNullException.ThrowIfNull(machineState, nameof(machineState));
-            ArgumentNullException.ThrowIfNull(bus, nameof(bus));
-            ArgumentNullException.ThrowIfNull(romImage, nameof(romImage));
+        protected SlotRomDevice(int slot, string name, ICpu cpu, IBus bus, MachineState machineState)
+            : this(slot, name, cpu, bus, machineState, null, null) { }
 
+        protected SlotRomDevice(int slot, string name, ICpu cpu, IBus bus, MachineState machineState, byte[] romImage)
+            : this(slot, name, cpu, bus, machineState, romImage, null) { }
+
+        protected SlotRomDevice(int slot, string name, ICpu cpu, IBus bus, MachineState machineState, byte[] cxRom, byte[] c8Rom)
+        {
             ArgumentOutOfRangeException.ThrowIfGreaterThan(slot, 7, nameof(slot));
             ArgumentOutOfRangeException.ThrowIfLessThan(slot, 0, nameof(slot));
 
-            if (romImage.Length < 256)
-            {
-                throw new ArgumentException("Device ROM must be at least 256 bytes");
-            }
+            ArgumentException.ThrowIfNullOrEmpty(name, nameof(name));
+            ArgumentNullException.ThrowIfNull(cpu, nameof(cpu));
+            ArgumentNullException.ThrowIfNull(bus, nameof(bus));
+            ArgumentNullException.ThrowIfNull(machineState, nameof(machineState));
 
             Slot = slot;
             Name = name;
 
+            this.cpu = cpu;
             this.bus = bus;
             this.machineState = machineState;
 
-            if (romImage.Length > 256 && romImage.Length != 2048)
+            if (cxRom != null)
             {
-                throw new ArgumentException("Device ROM for devices with expansion slot ROM must be 2k");
+                HasRom = true;
+                Rom = new byte[256];
+                Array.Copy(cxRom, 0, Rom, 0, cxRom.Length);
             }
 
-            HasRom = true;
-            Rom = new byte[256];
-            Array.Copy(romImage, 0, Rom, 0, 256);
-
-            // a 2k ROM usually shares the first 256 bytes with the cxRom
-            if (romImage.Length == 2048)
+            if (c8Rom != null)
             {
                 HasAuxRom = true;
                 ExpansionRom = new byte[2048];
-                Array.Copy(romImage, 0, ExpansionRom, 0, 2048);
+                Array.Copy(c8Rom, 0, ExpansionRom, 0, 2048);
             }
-
-            bus.AddDevice(this);
         }
 
         public int Slot { get; }
 
         public string Name { get; }
 
-        public virtual bool HandlesRead(ushort address) =>
-            (address >= IoBaseAddressLo && address <= IoBaseAddressHi) ||
-            (address >= RomBaseAddressLo && address <= RomBaseAddressHi) ||
-            (address >= ExpansionBaseAddressLo && address <= ExpansionBaseAddressHi);
+        public abstract bool HandlesRead(ushort address);
 
-        public virtual bool HandlesWrite(ushort address) =>
-            (address >= IoBaseAddressLo && address <= IoBaseAddressHi) ||
-            (address >= RomBaseAddressLo && address <= RomBaseAddressHi) ||
-            (address >= ExpansionBaseAddressLo && address <= ExpansionBaseAddressHi);
+        public abstract bool HandlesWrite(ushort address);
 
         protected abstract byte DoIo(CardIoType ioType, byte address, byte value);
 
-        protected abstract void DoCx(CardIoType ioType, byte address, byte value);
+        protected abstract byte DoCx(CardIoType ioType, ushort address, byte value);
 
-        protected abstract void DoC8(CardIoType ioType, byte address, byte value);
+        protected abstract byte DoC8(CardIoType ioType, ushort address, byte value);
 
         public byte Read(ushort address)
         {
@@ -122,7 +115,7 @@ namespace InnoWerks.Computers.Apple
                 if (machineState.State[SoftSwitch.IntCxRomEnabled] == false)
                 {
                     // return value from rom
-                    DoCx(CardIoType.Read, (byte)(address & 0x0F), 0x00);
+                    return DoCx(CardIoType.Read, address, 0x00);
                 }
             }
             else if (address >= ExpansionBaseAddressLo && address <= ExpansionBaseAddressHi)
@@ -130,7 +123,7 @@ namespace InnoWerks.Computers.Apple
                 if (machineState.State[SoftSwitch.IntCxRomEnabled] == false || machineState.State[SoftSwitch.IntC8RomEnabled] == false)
                 {
                     // return value from rom
-                    DoC8(CardIoType.Read, (byte)(address & 0x0F), 0x00);
+                    return DoC8(CardIoType.Read, address, 0x00);
                 }
             }
 
@@ -150,16 +143,16 @@ namespace InnoWerks.Computers.Apple
 
                 if (machineState.State[SoftSwitch.IntCxRomEnabled] == false)
                 {
-                    // return value from rom
-                    DoCx(CardIoType.Write, (byte)(address & 0x0F), 0x00);
+                    // write to rom
+                    DoCx(CardIoType.Write, address, value);
                 }
             }
             else if (address >= ExpansionBaseAddressLo && address <= ExpansionBaseAddressHi)
             {
                 if (machineState.State[SoftSwitch.IntCxRomEnabled] == false || machineState.State[SoftSwitch.IntC8RomEnabled] == false)
                 {
-                    // return value from rom
-                    DoC8(CardIoType.Write, (byte)(address & 0x0F), 0x00);
+                    // write to rom
+                    DoC8(CardIoType.Write, address, value);
                 }
             }
 

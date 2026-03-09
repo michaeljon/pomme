@@ -1,4 +1,8 @@
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Runtime.Serialization;
+using InnoWerks.Processors;
 
 namespace InnoWerks.Simulators
 {
@@ -46,6 +50,15 @@ namespace InnoWerks.Simulators
                     int idx = (current - count + i + buffer.Length) % buffer.Length;
                     yield return buffer[idx];
                 }
+            }
+        }
+
+        public void WriteStackTrace()
+        {
+            var entries = Entries.ToList();
+            foreach (var entry in entries)
+            {
+                Debug.WriteLine(entry.ToString());
             }
         }
     }

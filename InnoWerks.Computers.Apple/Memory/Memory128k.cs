@@ -134,6 +134,7 @@ namespace InnoWerks.Computers.Apple
             for (var slot = 0; slot < 8; slot++)
             {
                 loSlotRom[slot] = MemoryPage.Zeros(MemoryPageType.CardRom, (byte)(0xC0 + slot));
+                loSlotRom[slot].Slot = slot;
             }
 
             // c8 slot rom, one page per slot, $C800-$CFFF
@@ -144,6 +145,7 @@ namespace InnoWerks.Computers.Apple
                 for (var page = 0; page < 2048 / MemoryPage.PageSize; page++)
                 {
                     hiSlotRom[slot][page] = MemoryPage.Zeros(MemoryPageType.CardRom, (byte)(0xC8 + page));
+                    hiSlotRom[slot][page].Slot = slot;
                 }
             }
 
@@ -541,12 +543,11 @@ namespace InnoWerks.Computers.Apple
 
         public void LoadSlotCxRom(int slot, byte[] objectCode)
         {
-            // slots load themselves starting at 1, so 0xC6 would map to
-            // a Disk II in slot 6
-            var memoryPage = new MemoryPage(MemoryPageType.CardRom, $"slot{slot}-cx", (byte)(0xC0 + slot));
-            Array.Copy(objectCode, 0, memoryPage.Block, 0, 256);
-
-            loSlotRom[slot] = memoryPage;
+            loSlotRom[slot] = new MemoryPage(MemoryPageType.CardRom, $"slot{slot}-cx", (byte)(0xC0 + slot))
+            {
+                Block = objectCode,
+                Slot = slot
+            };
         }
 
         public void LoadSlotC8Rom(int slot, byte[] objectCode)
@@ -557,6 +558,8 @@ namespace InnoWerks.Computers.Apple
             {
                 var memoryPage = new MemoryPage(MemoryPageType.CardRom, $"slot{slot}-c8", (byte)(0xC8 + page));
                 Array.Copy(objectCode, 0, memoryPage.Block, 0, 256);
+
+                memoryPage.Slot = slot;
 
                 hiSlotRom[slot][page] = memoryPage;
             }
@@ -620,6 +623,11 @@ namespace InnoWerks.Computers.Apple
         {
             var page = GetPage(address);
             var offset = GetOffset(address);
+
+            if (activeWrite[page] == null)
+            {
+                return;
+            }
 
             activeWrite[page]?.Block[offset] = value;
         }
