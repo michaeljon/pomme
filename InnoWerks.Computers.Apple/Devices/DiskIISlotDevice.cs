@@ -136,12 +136,12 @@ namespace InnoWerks.Computers.Apple
 
         public DiskIIDrive GetDrive(int drive)
         {
-            if (drive < 1 || drive > 2)
+            if (drive < 0 || drive > 1)
             {
-                throw new ArgumentOutOfRangeException(nameof(drive), "DiskII Controller support Drive 1 and Drive 2 only");
+                throw new ArgumentOutOfRangeException(nameof(drive), "DiskII Controller support Drive 0 and Drive 1 only");
             }
 
-            return drive == 1 ? drive1 : drive2;
+            return drive == 0 ? drive1 : drive2;
         }
     }
 }

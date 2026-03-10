@@ -52,7 +52,14 @@ namespace InnoWerks.Emulators.AppleIIe
         private CpuTraceBuffer cpuTraceBuffer = new(128);
         private bool cpuPaused;
         private bool stepRequested;
-        private readonly HashSet<ushort> breakpoints = [0xC500, 0xC510, 0xC700, 0xC710];
+        private readonly HashSet<ushort> breakpoints = [
+            // 0x7FD,      // JMP to our code
+            // 0x7FE,      // slot check
+            // 0x07FF,     // an RTS later high byte of our entry
+            // 0x0800,
+            // 0xC700,
+            // 0xC7C0
+        ];
 
         //
         // display renderer
@@ -146,25 +153,26 @@ namespace InnoWerks.Emulators.AppleIIe
             // later, move rom loading into device
             var diskIIRom = File.ReadAllBytes("roms/DiskII.rom");
             var disk = new DiskIISlotDevice(cpu, appleBus, machineState, diskIIRom);
-            disk.GetDrive(1).InsertDisk(cliOptions.Disk1);
-            if (string.IsNullOrEmpty(cliOptions.Disk2) == false)
+            if (string.IsNullOrEmpty(cliOptions.Disk1) == false)
             {
-                disk.GetDrive(2).InsertDisk(cliOptions.Disk2);
+                disk.GetDrive(0).InsertDisk(cliOptions.Disk1);
             }
 
-            // if (string.IsNullOrEmpty(cliOptions.Profile) == false)
-            // {
-            //     // later, move rom loading into device
-            //     var profileRom = File.ReadAllBytes("roms/profile_10mb.rom");
-            //     var profile = new ProfileSlotDevice(7, cpu, appleBus, machineState, profileRom, true);
-            //     profile.InsertDisk(cliOptions.Profile);
-            // }
+            if (string.IsNullOrEmpty(cliOptions.Disk2) == false)
+            {
+                disk.GetDrive(1).InsertDisk(cliOptions.Disk2);
+            }
 
-            // if (string.IsNullOrEmpty(cliOptions.HardDisk) == false)
-            // {
-            //     var hardDrive = new ProDOSSlotDevice(7, cpu, appleBus, machineState);
-            //     hardDrive.InsertDisk(cliOptions.HardDisk);
-            // }
+            var hardDrive = new ProDOSSlotDevice(7, cpu, appleBus, machineState);
+            if (string.IsNullOrEmpty(cliOptions.HardDisk1) == false)
+            {
+                hardDrive.InsertDisk(cliOptions.HardDisk1, 0);
+            }
+
+            if (string.IsNullOrEmpty(cliOptions.HardDisk2) == false)
+            {
+                hardDrive.InsertDisk(cliOptions.HardDisk2, 1);
+            }
 
             appleBus.LoadProgramToRom(mainRom);
 

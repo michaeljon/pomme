@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <ProjectReference Include="..\InnoWerks.Simulators.Sim6502\InnoWerks.Simulators.Sim6502.csproj" />
+    <ProjectReference Include="..\InnoWerks.Assemblers.Asm6502\InnoWerks.Assemblers.Asm6502.csproj" />
     <ProjectReference Include="..\ConsoleTools\WozParse\WozParse.csproj" />
   </ItemGroup>
 </Project>

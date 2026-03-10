@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using InnoWerks.Processors;
@@ -40,6 +41,8 @@ namespace InnoWerks.Simulators
         protected Action<ICpu> postExecutionCallback { get; init; }
 
         protected bool illegalInstructionEncountered { get; set; }
+
+        protected Dictionary<ushort, Action<ICpu, IBus>> intercepts { get; } = [];
 
         protected Cpu6502Core(IBus bus,
                                      Action<ICpu, ushort> preExecutionCallback,
@@ -139,52 +142,16 @@ namespace InnoWerks.Simulators
             return (ushort)((0xff & StackPop()) | (0xff00 & (StackPop() << 8)));
         }
 
-        public (int intructionCount, int cycleCount) Run(bool stopOnBreak = false, int stepsPerSecond = 0)
-        {
-            var instructionCount = 0;
-
-            bus.BeginTransaction();
-
-            while (true)
-            {
-                instructionCount++;
-
-                preExecutionCallback?.Invoke(this, Registers.ProgramCounter);
-
-                // T0
-                var operation = bus.Read(Registers.ProgramCounter);
-                // this is a bad hard-coding right now...
-                if (operation == 0x00)
-                {
-                    // BRK
-                    break;
-                }
-
-                OpCodeDefinition opCodeDefinition = GetInstruction(operation);
-
-                Dispatch(opCodeDefinition);
-
-                postExecutionCallback?.Invoke(this);
-
-                if (stepsPerSecond > 0)
-                {
-                    var t = Task.Run(async delegate
-                                {
-                                    await Task.Delay(new TimeSpan((long)(1.0 / stepsPerSecond * 1000) * TimeSpan.TicksPerMillisecond));
-                                    return 0;
-                                });
-                    t.Wait();
-                }
-            }
-
-            int cycleCount = bus.EndTransaction();
-
-            return (instructionCount, cycleCount);
-        }
-
         public int Step(bool returnPriorToBreak = false)
         {
             bus.BeginTransaction();
+
+            // we're going to see if there's an intercept registered
+            // and if so we'll call it.
+            if (intercepts.TryGetValue(Registers.ProgramCounter, out var handler))
+            {
+                handler?.Invoke(this, bus);
+            }
 
             // for debugging we're just going to peek at the next
             // instruction, and if it's both a BRK and we've been asked
@@ -192,7 +159,7 @@ namespace InnoWerks.Simulators
             var operation = bus.Peek(Registers.ProgramCounter);
             if (operation == 0x00 && returnPriorToBreak == true)
             {
-                return 0;
+                return bus.EndTransaction();
             }
 
             preExecutionCallback?.Invoke(this, Registers.ProgramCounter);
@@ -200,7 +167,7 @@ namespace InnoWerks.Simulators
             // T0
             operation = bus.Read(Registers.ProgramCounter);
 
-            OpCodeDefinition opCodeDefinition = GetInstruction(operation);
+            var opCodeDefinition = GetInstruction(operation);
 
             // rest of memory cycles
             Dispatch(opCodeDefinition);
@@ -218,6 +185,21 @@ namespace InnoWerks.Simulators
             OpCodeDefinition opCodeDefinition = GetInstruction(operation);
 
             return new CpuTraceEntry(Registers.ProgramCounter, bus, bus.CycleCount, opCodeDefinition);
+        }
+
+        public void AddIntercept(ushort address, Action<ICpu, IBus> handler)
+        {
+            intercepts.Add(address, handler);
+        }
+
+        public void ClearIntercept(ushort address)
+        {
+            intercepts.Remove(address);
+        }
+
+        public void ClearIntercepts()
+        {
+            intercepts.Clear();
         }
 
         private OpCodeDefinition GetInstruction(byte operation)

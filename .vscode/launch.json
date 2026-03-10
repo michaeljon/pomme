@@ -116,12 +116,12 @@
       "program": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe/bin/Debug/net10.0/InnoWerks.Emulators.AppleIIe.dll",
       "cwd": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe",
       "args": [
-        "--disk1",
-        "disks/prodos-util.dsk",
-        "--profile",
-        "disks/profile.dsk",
-        "--harddisk",
-        "disks/harddisk.po"
+        // "--disk1",
+        // "disks/prodos-util.dsk",
+        "--harddisk1",
+        "disks/PRODOS_111_1.HDV",
+        "--harddisk2",
+        "disks/new-disk.hdv"
       ],
       "stopAtEntry": false,
       "requireExactSource": false

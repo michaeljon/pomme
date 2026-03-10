@@ -1,3 +1,4 @@
+using System;
 using InnoWerks.Processors;
 
 //
@@ -28,15 +29,6 @@ namespace InnoWerks.Simulators
         void Reset();
 
         /// <summary>
-        /// Puts the CPU in a free-run state where it simply executes a
-        /// complete program. This is only used for test scenarios.
-        /// </summary>
-        /// <param name="stopOnBreak"></param>
-        /// <param name="stepsPerSecond"></param>
-        /// <returns></returns>
-        (int intructionCount, int cycleCount) Run(bool stopOnBreak = false, int stepsPerSecond = 0);
-
-        /// <summary>
         /// Runs a single cycle-accurate CPU instruction and returns the number of
         /// cycles "consumed" during that instruction.
         /// </summary>
@@ -44,7 +36,29 @@ namespace InnoWerks.Simulators
         /// <returns>true if the CPU encounters a BRK instruction</returns>
         int Step(bool returnPriorToBreak = false);
 
+        /// <summary>
+        /// Provides a non-access counting view at the next instruction.
+        /// This is used by the CPU itself to check for intercept handler
+        /// execution, and for debuggers and emulators to capture and
+        /// display the next call.
+        /// </summary>
+        /// <returns></returns>
         CpuTraceEntry PeekInstruction();
+
+        /// <summary>
+        /// Registers a function that is called when PC == address. This
+        /// is used for injecting device driver code that's not implemented
+        /// in ROM (think SmartPort and disk controllers). It's up to the
+        /// implementation here to set the registers as necessary. The CPU
+        /// will continue the in-flight Step upon return from handler.
+        /// </summary>
+        /// <param name="address">Address that results in call</param>
+        /// <param name="handler">Handler function for the intercept</param>
+        void AddIntercept(ushort address, Action<ICpu, IBus> handler);
+
+        void ClearIntercept(ushort address);
+
+        void ClearIntercepts();
 
         /// <summary>
         /// Pushes a byte onto the stack at the current value of SP

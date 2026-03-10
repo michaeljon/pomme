@@ -5,16 +5,16 @@ namespace InnoWerks.Emulators.AppleIIe
 {
     public class CliOptions
     {
-        [Option('1', "disk1", Default = "disks/dos33.dsk", HelpText = "Disk to boot in Drive 1")]
+        [Option("disk1", HelpText = "Install this disk in slot 6 drive 1")]
         public string Disk1 { get; set; }
 
-        [Option('2', "disk2", HelpText = "Disk to boot in Drive 2")]
+        [Option("disk2", HelpText = "Install this disk in slot 6 drive 2")]
         public string Disk2 { get; set; }
 
-        [Option('p', "profile", HelpText = "Install ProFile disk controller in slot 5 with this file backing it.")]
-        public string Profile { get; set; }
+        [Option("harddisk1", HelpText = "Install ProDOS hard drive in slot 7 drive 1 with this file backing it.")]
+        public string HardDisk1 { get; set; }
 
-        [Option('h', "harddisk", HelpText = "Install ProDOS hard drive in slot 7 with this file backing it.")]
-        public string HardDisk { get; set; }
+        [Option("harddisk2", HelpText = "Install ProDOS hard drive in slot 7 drive 2 with this file backing it.")]
+        public string HardDisk2 { get; set; }
     }
 }

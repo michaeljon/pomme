@@ -38,7 +38,7 @@ namespace InnoWerks.Simulators.Tests
 
             // run
             Console.WriteLine();
-            cpu.Run(stopOnBreak: true);
+            RunCpu(cpu, bus);
 
             Assert.IsTrue(cpu.Registers.Carry);
         }
@@ -73,7 +73,7 @@ namespace InnoWerks.Simulators.Tests
 
             // run
             Console.WriteLine();
-            cpu.Run(stopOnBreak: true);
+            RunCpu(cpu, bus);
 
             Assert.AreEqual(0x04, cpu.Registers.A);
             Assert.IsFalse(cpu.Registers.Carry);

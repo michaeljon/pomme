@@ -62,7 +62,6 @@ namespace InnoWerks.Simulators.Tests
             }
         }
 
-
         protected ICpu RunTinyTest(IBus bus, Dictionary<ushort, LineInformation> code, CpuClass cpuClass, int lines = 1)
         {
             ArgumentNullException.ThrowIfNull(bus);
@@ -91,13 +90,38 @@ namespace InnoWerks.Simulators.Tests
             }
             else
             {
-                var (instructionCount, cycleCount) = cpu.Run(stopOnBreak: true);
+                var (instructionCount, cycleCount) = RunCpu(cpu, bus);
 
                 TestContext.WriteLine($"INST: {instructionCount}");
                 TestContext.WriteLine($"CYCLES: {cycleCount}");
             }
 
             return cpu;
+        }
+
+        protected (int intructionCount, int cycleCount) RunCpu(ICpu cpu, IBus bus)
+        {
+            ArgumentNullException.ThrowIfNull(cpu);
+            ArgumentNullException.ThrowIfNull(bus);
+
+            var instructionCount = 0;
+
+            bus.BeginTransaction();
+
+            while (true)
+            {
+                instructionCount++;
+
+                var operation = bus.Peek(cpu.Registers.ProgramCounter);
+                if (operation == 0x00)
+                {
+                    break;
+                }
+
+                cpu.Step();
+            }
+
+            return (instructionCount, bus.EndTransaction());
         }
 
         protected void PrintPage(IBus bus, byte page)
