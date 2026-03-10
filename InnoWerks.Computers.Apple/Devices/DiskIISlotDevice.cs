@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
 using InnoWerks.Processors;
@@ -19,11 +20,16 @@ namespace InnoWerks.Computers.Apple
         public DiskIISlotDevice(
             ICpu cpu,
             IBus bus,
-            MachineState machineState,
-            byte[] romImage)
-            : base(6, "Disk II Controller", cpu, bus, machineState, romImage)
+            MachineState machineState)
+            : base(6, "Disk II Controller", cpu, bus, machineState)
         {
             currentDrive = drive1;
+
+            HasRom = true;
+            Rom = new byte[MemoryPage.PageSize];
+
+            var diskIIRom = File.ReadAllBytes("roms/DiskII.rom");
+            Array.Copy(diskIIRom, Rom, diskIIRom.Length);
 
             ArgumentNullException.ThrowIfNull(bus, nameof(bus));
             bus.AddDevice(this);

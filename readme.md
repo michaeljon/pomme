@@ -1,4 +1,4 @@
-# Pomme, A Rotten Apple
+# Pomme: Une pomme pourrie
 
 What started off as an experiment to build a 6502 core simulator, mainly as a means for demonstrating a simple comuter architecture to a graduate CS class, turned into most of an Apple IIe emulator. A lot of thanks needs to go to the Apple2Infinitum Slack community for help and encouragement.
 

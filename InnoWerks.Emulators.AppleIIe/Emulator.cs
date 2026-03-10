@@ -125,7 +125,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
         protected override void Initialize()
         {
-            Window.Title = "Rotten Apple IIe";
+            Window.Title = "Une pomme pourrie - Apple IIe";
 
             var mainRom = File.ReadAllBytes("roms/Apple2e_Enhanced.rom");
 
@@ -151,19 +151,18 @@ namespace InnoWerks.Emulators.AppleIIe
                 (cpu) => { });
 
             // later, move rom loading into device
-            var diskIIRom = File.ReadAllBytes("roms/DiskII.rom");
-            var disk = new DiskIISlotDevice(cpu, appleBus, machineState, diskIIRom);
+            var floppyDrive = new DiskIISlotDevice(cpu, appleBus, machineState);
             if (string.IsNullOrEmpty(cliOptions.Disk1) == false)
             {
-                disk.GetDrive(0).InsertDisk(cliOptions.Disk1);
+                floppyDrive.GetDrive(0).InsertDisk(cliOptions.Disk1);
             }
 
             if (string.IsNullOrEmpty(cliOptions.Disk2) == false)
             {
-                disk.GetDrive(1).InsertDisk(cliOptions.Disk2);
+                floppyDrive.GetDrive(1).InsertDisk(cliOptions.Disk2);
             }
 
-            var hardDrive = new ProDOSSlotDevice(7, cpu, appleBus, machineState);
+            var hardDrive = new ProDOSSlotDevice(5, cpu, appleBus, machineState);
             if (string.IsNullOrEmpty(cliOptions.HardDisk1) == false)
             {
                 hardDrive.InsertDisk(cliOptions.HardDisk1, 0);

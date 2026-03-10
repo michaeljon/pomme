@@ -43,7 +43,6 @@ namespace Emu6502
         private static int RunEmulator(CliOptions options)
         {
             var mainRom = File.ReadAllBytes("roms/apple2e-16k.rom");
-            var diskIIRom = File.ReadAllBytes("roms/DiskII.rom");
             var audit = File.ReadAllBytes("tests/audit.o");
 
             var config = new AppleConfiguration(AppleModel.AppleIIe)
@@ -74,7 +73,7 @@ namespace Emu6502
                     }
                 });
 
-            var disk = new DiskIISlotDevice(cpu, bus, machineState, diskIIRom);
+            var disk = new DiskIISlotDevice(cpu, bus, machineState);
             disk.GetDrive(1).InsertDisk("disks/dos33.dsk");
 
             bus.AddDevice(disk);

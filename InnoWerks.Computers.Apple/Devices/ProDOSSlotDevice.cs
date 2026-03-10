@@ -16,7 +16,7 @@ namespace InnoWerks.Computers.Apple
             Format
         }
 
-        private const int NumberOfDrives = 2;
+        private const int NumberOfDrives = 4;
         private const ushort NumberOfBlocks = 65535;
         private const ushort BlockSize = 512;
 
@@ -126,6 +126,8 @@ namespace InnoWerks.Computers.Apple
             // bit 0 The device's status can be read (must be on).
             Rom[0xFE] = 0b00111111;
 
+            // todo ^^^^ make bits 5-4 mirror the number of drives installed
+
             // drive entry point
             Rom[0xFF] = EntryPoint;
 
@@ -157,7 +159,7 @@ namespace InnoWerks.Computers.Apple
                 mountedDrives += string.IsNullOrEmpty(drivePaths[d]) ? 0 : 1;
             }
 
-            // SimDebugger.Info($"command={command} rawUnit={rawUnit:X2} unit={unit} slot={slot} blockStart={blockStart:X4} bufferAddr={bufferAddr:X4} mountedDrives={mountedDrives}\n");
+            SimDebugger.Info($"command={command} rawUnit={rawUnit:X2} unit={unit} slot={slot} blockStart={blockStart:X4} bufferAddr={bufferAddr:X4} mountedDrives={mountedDrives}\n");
 
             if (unit > mountedDrives)
             {
