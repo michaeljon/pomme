@@ -2,18 +2,6 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "WozParser",
-      "type": "coreclr",
-      "request": "launch",
-      "preLaunchTask": "build",
-      "program": "${workspaceFolder}/ConsoleTools/WozParse/bin/Debug/net10.0/WozParse.dll",
-      "args": [],
-      "cwd": "${workspaceFolder}/ConsoleTools/WozParse",
-      "console": "internalConsole",
-      "stopAtEntry": false,
-      "requireExactSource": false
-    },
-    {
       "name": "Assembler",
       "type": "coreclr",
       "request": "launch",
@@ -123,6 +111,17 @@
         "--harddisk2",
         "disks/new-disk.hdv"
       ],
+      "stopAtEntry": false,
+      "requireExactSource": false
+    },
+    {
+      "name": "Emulator (total replay)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe/bin/Debug/net10.0/InnoWerks.Emulators.AppleIIe.dll",
+      "cwd": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe",
+      "args": ["--harddisk1", "disks/Total.Replay.hdv"],
       "stopAtEntry": false,
       "requireExactSource": false
     },
