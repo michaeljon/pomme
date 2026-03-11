@@ -119,7 +119,7 @@ namespace InnoWerks.Simulators
 
         public void StackPush(byte b)
         {
-            bus.Write((ushort)(StackBase + Registers.StackPointer), b);
+            bus.Write(StackBase + Registers.StackPointer, b);
 
             Registers.StackPointer = (byte)((Registers.StackPointer - 1) & 0xff);
         }
@@ -128,7 +128,7 @@ namespace InnoWerks.Simulators
         {
             Registers.StackPointer = (byte)((Registers.StackPointer + 1) & 0xff);
 
-            return bus.Read((ushort)(StackBase + Registers.StackPointer));
+            return bus.Read(StackBase + Registers.StackPointer);
         }
 
         public void StackPushWord(ushort s)
@@ -304,7 +304,7 @@ namespace InnoWerks.Simulators
         public void BBR(ushort _, byte value, byte bit)
         {
             // T3
-            var offset = bus.Read((ushort)(Registers.ProgramCounter + 2));
+            var offset = bus.Read(Registers.ProgramCounter + 2);
 
             // T2 - T3
             var addr = (ushort)(Registers.ProgramCounter + 3 + ((sbyte)offset < 0 ? (sbyte)offset : offset));
@@ -342,7 +342,7 @@ namespace InnoWerks.Simulators
         public void BBS(ushort _, byte value, byte bit)
         {
             // T3
-            var offset = bus.Read((ushort)(Registers.ProgramCounter + 2));
+            var offset = bus.Read(Registers.ProgramCounter + 2);
 
             // T2 - T3
             var addr = (ushort)(Registers.ProgramCounter + 3 + ((sbyte)offset < 0 ? (sbyte)offset : offset));
@@ -1210,7 +1210,7 @@ namespace InnoWerks.Simulators
             var pch = StackPop();
 
             // T5
-            bus.Read((ushort)((pch << 8) | pcl));
+            bus.Read((pch << 8) | pcl);
 
             Registers.ProgramCounter = (ushort)(((pch << 8) | pcl) + 1);
         }
@@ -1516,7 +1516,7 @@ namespace InnoWerks.Simulators
                     var hi = ((sbyte)offset < 0) ? ((addr & 0xff00) >> 8) + 1 : ((addr & 0xff00) >> 8) - 1;
 
                     /* discarded */
-                    bus.Read((ushort)((hi << 8) | lo));
+                    bus.Read((hi << 8) | lo);
                 }
 
                 Registers.ProgramCounter = addr;

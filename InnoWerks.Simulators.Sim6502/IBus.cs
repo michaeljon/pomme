@@ -1,22 +1,5 @@
 namespace InnoWerks.Simulators
 {
-    public enum PeekArea
-    {
-        Current,
-
-        MainRam,
-
-        AuxRam,
-
-        LanguageCardRam,
-
-        LowRom,
-
-        CxRom,
-
-        HighRom
-    }
-
     public interface IBus
     {
         void AddDevice(ISoftSwitchDevice device);
@@ -56,6 +39,14 @@ namespace InnoWerks.Simulators
         /// <returns></returns>
         byte Peek(ushort address);
 
+        byte Peek(int address) => Peek((ushort)address);
+
+        byte Peek(uint address) => Peek((ushort)address);
+
+        byte Peek(long address) => Peek((ushort)address);
+
+        byte Peek(ulong address) => Peek((ushort)address);
+
         /// <summary>
         /// Allows for a non-cycle impacting write to the bus. This is
         /// used for debug and CPU-internal access to the underlying memory.
@@ -65,6 +56,14 @@ namespace InnoWerks.Simulators
         /// <returns></returns>
         void Poke(ushort address, byte value);
 
+        void Poke(int address, byte value) => Poke((ushort)address, value);
+
+        void Poke(uint address, byte value) => Poke((ushort)address, value);
+
+        void Poke(long address, byte value) => Poke((ushort)address, value);
+
+        void Poke(ulong address, byte value) => Poke((ushort)address, value);
+
         /// <summary>
         /// Reads a byte from the address and updates the cycle count. This
         /// operation may read RAM, ROM, an I/O port, or a slot.
@@ -73,6 +72,14 @@ namespace InnoWerks.Simulators
         /// <returns></returns>
         byte Read(ushort address);
 
+        byte Read(int address) => Read((ushort)address);
+
+        byte Read(uint address) => Read((ushort)address);
+
+        byte Read(long address) => Read((ushort)address);
+
+        byte Read(ulong address) => Read((ushort)address);
+
         /// <summary>
         /// Writes a byte to the address and updates the cycle count. This
         /// operation may write RAM, an I/O port, or a slot.
@@ -80,6 +87,14 @@ namespace InnoWerks.Simulators
         /// <param name="address"></param>
         /// <param name="value"></param>
         void Write(ushort address, byte value);
+
+        void Write(int address, byte value) => Write((ushort)address, value);
+
+        void Write(uint address, byte value) => Write((ushort)address, value);
+
+        void Write(long address, byte value) => Write((ushort)address, value);
+
+        void Write(ulong address, byte value) => Write((ushort)address, value);
 
         /// <summary>
         /// Copies a "program" into ROM.

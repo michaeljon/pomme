@@ -1,3 +1,5 @@
+// #define MONOCHROME
+
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -61,14 +63,22 @@ namespace InnoWerks.Emulators.AppleIIe
                 for (var x = 0; x < DhiresBuffer.PixelCount / 4; x++)
                 {
                     var p = dhiresBuffer.GetPixel(y, x);
-                    var drawColor = DisplayCharacteristics.DHiresPalette[p.Color];
 
                     int baseIndex = rowOffset + (x * 4);
+
+#if MONOCHROME
+                    screenPixels[baseIndex] = (p.Color & 0x01) != 0 ? DisplayCharacteristics.DHiresWhite : DisplayCharacteristics.DHiresBlack;
+                    screenPixels[baseIndex + 1] = (p.Color & 0x02) != 0 ? DisplayCharacteristics.DHiresWhite : DisplayCharacteristics.DHiresBlack;
+                    screenPixels[baseIndex + 2] = (p.Color & 0x04) != 0 ? DisplayCharacteristics.DHiresWhite : DisplayCharacteristics.DHiresBlack;
+                    screenPixels[baseIndex + 3] = (p.Color & 0x08) != 0 ? DisplayCharacteristics.DHiresWhite : DisplayCharacteristics.DHiresBlack;
+#else
+                    var drawColor = DisplayCharacteristics.DHiresPalette[p.Color];
 
                     screenPixels[baseIndex] = drawColor;
                     screenPixels[baseIndex + 1] = drawColor;
                     screenPixels[baseIndex + 2] = drawColor;
                     screenPixels[baseIndex + 3] = drawColor;
+#endif
                 }
             }
 

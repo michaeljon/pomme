@@ -70,7 +70,7 @@ namespace Sim6502
         {
             machineState = new();
             memoryBlocks = new(machineState);
-            bus = new(configuration, memoryBlocks, machineState);
+            bus = new AppleBus(configuration, memoryBlocks, machineState);
         }
 
         private int RunSimulator(CliOptions options)
@@ -574,7 +574,7 @@ namespace Sim6502
         {
             for (var i = 0; i < bytes.Count; i++)
             {
-                bus.Poke((ushort)(addr + i), bytes[i]);
+                ((IBus)bus).Poke(addr + i, bytes[i]);
             }
 
             Console.WriteLine($"{bytes.Count} bytes written to {addr:X4}");
@@ -590,7 +590,7 @@ namespace Sim6502
             // but for now
             for (var i = 0; i < len; i++)
             {
-                Console.WriteLine($"{(addr + i):X4}: ${bus.Peek((ushort)(addr + i)):X2}");
+                Console.WriteLine($"{(addr + i):X4}: ${((IBus)bus).Peek(addr + i):X2}");
             }
         }
 
@@ -620,7 +620,7 @@ namespace Sim6502
                         Console.Write("  ");
                     }
 
-                    Console.Write("{0:X2} ", bus.Peek((ushort)(l + b)));
+                    Console.Write("{0:X2} ", ((IBus)bus).Peek(l + b));
                 }
 
                 Console.WriteLine();

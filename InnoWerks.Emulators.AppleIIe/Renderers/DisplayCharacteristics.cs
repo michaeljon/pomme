@@ -79,6 +79,9 @@ namespace InnoWerks.Emulators.AppleIIe
         public static readonly Color HiresOrange = new(0xFF, 0x66, 0x00);
         public static readonly Color HiresWhite2 = new(0xFF, 0xFF, 0xFF);
 
+        public static readonly Color DHiresWhite = new(0xFF, 0xFF, 0xFF);
+        public static readonly Color DHiresBlack = new(0x00, 0x00, 0x00);
+
         public static readonly Color[] DHiresPalette =
         [
            new Color(0x00, 0x00, 0x00),    //  "#000000", black

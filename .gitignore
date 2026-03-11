@@ -15,3 +15,7 @@ temp/
 *.tsv
 
 .mgstats
+
+*.hdv
+*.dsk
+*.po

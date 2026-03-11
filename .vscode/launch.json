@@ -85,14 +85,7 @@
       "preLaunchTask": "build",
       "program": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe/bin/Debug/net10.0/InnoWerks.Emulators.AppleIIe.dll",
       "cwd": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe",
-      "args": [
-        "--disk1",
-        "disks/dos33.dsk",
-        "--disk2",
-        "disks/blank.dsk",
-        "--profile",
-        "disks/profile.dsk"
-      ],
+      "args": ["--disk1", "disks/dos33.dsk", "--disk2", "disks/blank.dsk"],
       "stopAtEntry": false,
       "requireExactSource": false
     },
@@ -125,6 +118,30 @@
       "stopAtEntry": false,
       "requireExactSource": false
     },
+
+    {
+      "name": "Emulator (lots-o-disks)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe/bin/Debug/net10.0/InnoWerks.Emulators.AppleIIe.dll",
+      "cwd": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe",
+      "args": [
+        // "--disk1",
+        // "disks/ProDOS_2_4_3.po",
+        "--harddisk1",
+        "disks/ProDOS_2_4_3.po",
+        "--harddisk2",
+        "disks/new-disk-2.hdv",
+        "--harddisk3",
+        "disks/new-disk-3.hdv",
+        "--harddisk4",
+        "disks/new-disk-4.hdv"
+      ],
+      "stopAtEntry": false,
+      "requireExactSource": false
+    },
+
     {
       "name": "Emulator (a2audit)",
       "type": "coreclr",
@@ -136,6 +153,19 @@
       "stopAtEntry": false,
       "requireExactSource": false
     },
+
+    {
+      "name": "Emulator (a2desktop)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe/bin/Debug/net10.0/InnoWerks.Emulators.AppleIIe.dll",
+      "cwd": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe",
+      "args": ["--harddisk1", "disks/A2DeskTop-1.5-en_32MB.hdv"],
+      "stopAtEntry": false,
+      "requireExactSource": false
+    },
+
     {
       "name": "Emulator (a2diag)",
       "type": "coreclr",
@@ -146,10 +176,14 @@
       "args": [
         "--disk1",
         "disks/A2eDiagnostics_v2.1.dsk",
-        "--profile",
-        "disks/profile.po",
-        "--harddisk",
-        "disks/harddisk.po"
+        "--harddisk1",
+        "disks/a2diag-d1.hdv",
+        "--harddisk2",
+        "disks/a2diag-d2.hdv",
+        "--harddisk3",
+        "disks/a2diag-d3.hdv",
+        "--harddisk4",
+        "disks/a2diag-d4.hdv"
       ],
       "stopAtEntry": false,
       "requireExactSource": false
