@@ -22,5 +22,8 @@ namespace InnoWerks.Emulators.AppleIIe
 
         [Option("harddisk4", HelpText = "Install ProDOS hard drive in slot 7 drive 4 with this file backing it.")]
         public string HardDisk4 { get; set; }
+
+        [Option("monochrome", HelpText = "Display in monochrome: green, amber, or white. Omit for color mode.")]
+        public string Monochrome { get; set; }
     }
 }

@@ -224,7 +224,7 @@ namespace InnoWerks.Computers.Apple
                 mountedDrives += string.IsNullOrEmpty(drivePaths[d]) ? 0 : 1;
             }
 
-            SimDebugger.Info($"command={command} rawUnit={rawUnit:X2} unit={unit} slot={slot} blockStart={blockStart:X4} bufferAddr={bufferAddr:X4} mountedDrives={mountedDrives}\n");
+            // SimDebugger.Info($"command={command} rawUnit={rawUnit:X2} unit={unit} slot={slot} blockStart={blockStart:X4} bufferAddr={bufferAddr:X4} mountedDrives={mountedDrives}\n");
 
             if (unit > mountedDrives - 1)
             {
@@ -257,7 +257,7 @@ namespace InnoWerks.Computers.Apple
                     break;
 
                 case Command.Read:
-                    if (fileStream[unit].CanRead == false || fileStream[unit].CanSeek == false)
+                    if (fileStream[unit] == null || fileStream[unit].CanRead == false || fileStream[unit].CanSeek == false)
                     {
                         cpu.Registers.Carry = true;
                         cpu.Registers.A = IOError;
@@ -282,7 +282,7 @@ namespace InnoWerks.Computers.Apple
                     break;
 
                 case Command.Write:
-                    if (fileStream[unit].CanWrite == false || fileStream[unit].CanSeek == false)
+                    if (fileStream[unit] == null || fileStream[unit].CanWrite == false || fileStream[unit].CanSeek == false)
                     {
                         cpu.Registers.Carry = true;
                         cpu.Registers.A = WriteProtected;

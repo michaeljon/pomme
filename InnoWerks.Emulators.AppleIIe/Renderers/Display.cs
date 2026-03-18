@@ -78,9 +78,11 @@ namespace InnoWerks.Emulators.AppleIIe
             this.memoryBlocks = memoryBlocks;
         }
 
-        public void LoadContent(Color textColor, ContentManager contentManager)
+        public void LoadContent(Color? monochromeColor, ContentManager contentManager)
         {
             ArgumentNullException.ThrowIfNull(contentManager);
+
+            var textColor = monochromeColor ?? DisplayCharacteristics.AmberText;
 
             spriteBatch = new SpriteBatch(graphicsDevice);
 
@@ -100,23 +102,23 @@ namespace InnoWerks.Emulators.AppleIIe
 
             textPage1Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, false, 1, textColor);
             textPage2Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, false, 2, textColor);
-            loresPage1Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, false, 1);
-            loresPage2Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, false, 2);
-            hiresPage1Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, 1, false);
-            hiresPage2Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, 2, false);
+            loresPage1Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, false, 1, monochromeColor);
+            loresPage2Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, false, 2, monochromeColor);
+            hiresPage1Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, 1, monochromeColor);
+            hiresPage2Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, 2, monochromeColor);
 
             text80Page1Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, true, 1, textColor);
             text80Page2Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, true, 2, textColor);
-            dloresPage1Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, true, 1);
-            dloresPage2Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, true, 2);
-            dhiresPage1Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, 1);
-            dhiresPage2Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, 2);
+            dloresPage1Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, true, 1, monochromeColor);
+            dloresPage2Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, true, 2, monochromeColor);
+            dhiresPage1Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, 1, monochromeColor);
+            dhiresPage2Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, 2, monochromeColor);
 
             currentTextRenderer = textPage1Renderer;
             currentGraphicsRenderer = loresPage1Renderer;
 
-            // debug stuff, for now, this becomes an option later
-            debugToolsRenderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, contentManager, textColor);
+            // debug stuff is always white
+            debugToolsRenderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, contentManager, Color.White);
         }
 
         public void Draw(
