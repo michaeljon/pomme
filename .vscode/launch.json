@@ -161,7 +161,12 @@
       "preLaunchTask": "build",
       "program": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe/bin/Debug/net10.0/InnoWerks.Emulators.AppleIIe.dll",
       "cwd": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe",
-      "args": ["--harddisk1", "disks/A2DeskTop-1.5-en_32MB.hdv"],
+      "args": [
+        "--harddisk1",
+        "disks/A2DeskTop-1.5-en_32MB.hdv",
+        "--monochrome",
+        "white"
+      ],
       "stopAtEntry": false,
       "requireExactSource": false
     },
