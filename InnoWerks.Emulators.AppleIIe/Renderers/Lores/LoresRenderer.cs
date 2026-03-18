@@ -19,6 +19,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
         private readonly bool eightyColumnMode;
         private readonly int page;
+        private readonly Color? monochromeColor;
 
         public LoresRenderer(
             GraphicsDevice graphicsDevice,
@@ -28,11 +29,13 @@ namespace InnoWerks.Emulators.AppleIIe
             MachineState machineState,
 
             bool eightyColumnMode,
-            int page)
+            int page,
+            Color? monochromeColor = null)
             : base(graphicsDevice, cpu, bus, memoryBlocks, machineState)
         {
             this.eightyColumnMode = eightyColumnMode;
             this.page = page;
+            this.monochromeColor = monochromeColor;
 
             loresBuffer = new LoresBuffer(eightyColumnMode ? 80 : 40);
             loresMemoryReader = new(memoryBlocks, machineState, eightyColumnMode, page);
@@ -76,8 +79,8 @@ namespace InnoWerks.Emulators.AppleIIe
 
         private void DrawBlocks(SpriteBatch spriteBatch, LoresCell cell, int col, int row)
         {
-            Color top = cell.Top(col, eightyColumnMode);
-            Color bottom = cell.Bottom(col, eightyColumnMode);
+            Color top = cell.Top(col, eightyColumnMode, monochromeColor);
+            Color bottom = cell.Bottom(col, eightyColumnMode, monochromeColor);
 
             var topRect = new Rectangle(
                 col * (eightyColumnMode ? DisplayCharacteristics.AppleCellWidth : DisplayCharacteristics.AppleCellWidth * 2),

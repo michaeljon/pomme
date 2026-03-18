@@ -23,7 +23,7 @@ namespace InnoWerks.Emulators.AppleIIe
         private readonly Color[] screenPixels = new Color[DisplayCharacteristics.HiresAppleWidth * DisplayCharacteristics.AppleDisplayHeight];
 
         private readonly int page;
-        private readonly bool monochrome;
+        private readonly Color? monochromeColor;
 
         public HiresRenderer(
             GraphicsDevice graphicsDevice,
@@ -33,11 +33,11 @@ namespace InnoWerks.Emulators.AppleIIe
             MachineState machineState,
 
             int page,
-            bool monochrome)
+            Color? monochromeColor)
             : base(graphicsDevice, cpu, bus, memoryBlocks, machineState)
         {
             this.page = page;
-            this.monochrome = monochrome;
+            this.monochromeColor = monochromeColor;
 
             hiresBuffer = new HiresBuffer();
             hiresMemoryReader = new(memoryBlocks, machineState, page);
@@ -167,8 +167,11 @@ namespace InnoWerks.Emulators.AppleIIe
                         // Back-propagate White to the previous dot if it touched us
                         if (x >= 2 && bitStarts[x - 2] == 1)
                         {
-                            screenPixels[rowOffset + x - 2] = DisplayCharacteristics.HiresWhite1;
-                            screenPixels[rowOffset + x - 1] = DisplayCharacteristics.HiresWhite1;
+                            var backColor = monochromeColor.HasValue
+                                ? DisplayCharacteristics.ToMonochrome(DisplayCharacteristics.HiresWhite1, monochromeColor.Value)
+                                : DisplayCharacteristics.HiresWhite1;
+                            screenPixels[rowOffset + x - 2] = backColor;
+                            screenPixels[rowOffset + x - 1] = backColor;
                         }
                     }
                     else
@@ -179,7 +182,7 @@ namespace InnoWerks.Emulators.AppleIIe
                         int effectiveX = isGap ? (x - 2) : x;
 
                         // Now calculate phase using the corrected position
-                        bool isEvenPhase = ((effectiveX / 2) % 2) == 0;
+                        bool isEvenPhase = effectiveX / 2 % 2 == 0;
                         bool isHighPalette = msbFlags[x];
 
                         if (!isHighPalette) // Group A
@@ -195,6 +198,9 @@ namespace InnoWerks.Emulators.AppleIIe
                                 DisplayCharacteristics.HiresOrange;  // Orange
                         }
                     }
+
+                    if (monochromeColor.HasValue)
+                        drawColor = DisplayCharacteristics.ToMonochrome(drawColor, monochromeColor.Value);
 
                     // --- Paint the Dot (2 Pixels) ---
                     screenPixels[rowOffset + x] = drawColor;

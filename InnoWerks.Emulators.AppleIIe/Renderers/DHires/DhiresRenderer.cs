@@ -19,8 +19,10 @@ namespace InnoWerks.Emulators.AppleIIe
 
         private readonly Texture2D screenTexture;
         private readonly Color[] screenPixels = new Color[DisplayCharacteristics.HiresAppleWidth * DisplayCharacteristics.AppleDisplayHeight];
+        private readonly bool[][] monochromeBits;
 
         private readonly int page;
+        private readonly Color? monochromeColor;
 
         public DhiresRenderer(
             GraphicsDevice graphicsDevice,
@@ -28,13 +30,19 @@ namespace InnoWerks.Emulators.AppleIIe
             IBus bus,
             Memory128k memoryBlocks,
             MachineState machineState,
-            int page)
+            int page,
+            Color? monochromeColor = null)
             : base(graphicsDevice, cpu, bus, memoryBlocks, machineState)
         {
             this.page = page;
+            this.monochromeColor = monochromeColor;
 
             dhiresBuffer = new DhiresBuffer();
             dhiresMemoryReader = new(memoryBlocks, machineState, page);
+
+            monochromeBits = new bool[DisplayCharacteristics.AppleDisplayHeight][];
+            for (int i = 0; i < DisplayCharacteristics.AppleDisplayHeight; i++)
+                monochromeBits[i] = new bool[DisplayCharacteristics.HiresAppleWidth];
 
             screenTexture = new Texture2D(graphicsDevice, DisplayCharacteristics.HiresAppleWidth, DisplayCharacteristics.AppleDisplayHeight);
         }
@@ -52,6 +60,34 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             ArgumentNullException.ThrowIfNull(spriteBatch);
 
+            if (monochromeColor.HasValue)
+                DrawMonochrome(start, count);
+            else
+                DrawColor(start, count);
+
+            screenTexture.SetData(screenPixels);
+            spriteBatch.Draw(
+                screenTexture,
+                rectangle,
+                new Rectangle(0, 0, DisplayCharacteristics.HiresAppleWidth, count),
+                DisplayCharacteristics.HiresWhite1);
+        }
+
+        private void DrawMonochrome(int start, int count)
+        {
+            dhiresMemoryReader.ReadDhiresMonochromePage(monochromeBits, count - start);
+
+            for (var y = start; y < start + count; y++)
+            {
+                int rowOffset = y * DisplayCharacteristics.HiresAppleWidth;
+
+                for (var x = 0; x < DisplayCharacteristics.HiresAppleWidth; x++)
+                    screenPixels[rowOffset + x] = monochromeBits[y][x] ? monochromeColor.Value : Color.Black;
+            }
+        }
+
+        private void DrawColor(int start, int count)
+        {
             dhiresMemoryReader.ReadDhiresPage(dhiresBuffer, count - start);
 
             for (var y = start; y < start + count; y++)
@@ -71,13 +107,6 @@ namespace InnoWerks.Emulators.AppleIIe
                     screenPixels[baseIndex + 3] = drawColor;
                 }
             }
-
-            screenTexture.SetData(screenPixels);
-            spriteBatch.Draw(
-                screenTexture,
-                rectangle,
-                new Rectangle(0, 0, DisplayCharacteristics.HiresAppleWidth, count),
-                DisplayCharacteristics.HiresWhite1);
         }
 
         protected override void DoDispose(bool disposing)

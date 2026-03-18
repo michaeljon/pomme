@@ -184,8 +184,17 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             display = new Display(GraphicsDevice, cpu, appleBus, memoryBlocks, machineState);
 
-            display.LoadContent(DisplayCharacteristics.AmberText, Content);
+            display.LoadContent(ResolveMonochromeColor(cliOptions.Monochrome), Content);
         }
+
+        private static Color? ResolveMonochromeColor(string monochrome) =>
+            monochrome?.ToLowerInvariant() switch
+            {
+                "green" => DisplayCharacteristics.GreenText,
+                "amber" => DisplayCharacteristics.AmberText,
+                "white" => DisplayCharacteristics.WhiteText,
+                _ => null
+            };
 
         protected override void Update(GameTime gameTime)
         {

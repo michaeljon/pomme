@@ -10,8 +10,27 @@ namespace InnoWerks.Emulators.AppleIIe
         public readonly byte TopIndex => (byte)(value & 0x0F);
         public readonly byte BottomIndex => (byte)((value & 0xF0) >> 4);
 
-        public readonly Color Top(int col, bool hires) => (col & 1) == 1 && hires ? DisplayCharacteristics.LoresPaletteOdd[TopIndex] : DisplayCharacteristics.LoresPaletteEven[TopIndex];
-        public readonly Color Bottom(int col, bool hires) => (col & 1) == 1 && hires ? DisplayCharacteristics.LoresPaletteOdd[BottomIndex] : DisplayCharacteristics.LoresPaletteEven[BottomIndex];
+        // REVIEW - determine if the 'hires' parameter is still necessary
+        public readonly Color Top(int col, bool hires, Color? monochromeColor = null)
+        {
+            var color = (col & 1) == 1 && hires
+                ? DisplayCharacteristics.LoresPaletteOdd[TopIndex]
+                : DisplayCharacteristics.LoresPaletteEven[TopIndex];
+            return monochromeColor.HasValue
+                ? DisplayCharacteristics.ToMonochrome(color, monochromeColor.Value)
+                : color;
+        }
+
+        // REVIEW - determine if the 'hires' parameter is still necessary
+        public readonly Color Bottom(int col, bool hires, Color? monochromeColor = null)
+        {
+            var color = (col & 1) == 1 && hires
+                ? DisplayCharacteristics.LoresPaletteOdd[BottomIndex]
+                : DisplayCharacteristics.LoresPaletteEven[BottomIndex];
+            return monochromeColor.HasValue
+                ? DisplayCharacteristics.ToMonochrome(color, monochromeColor.Value)
+                : color;
+        }
 
         private readonly byte value;
 

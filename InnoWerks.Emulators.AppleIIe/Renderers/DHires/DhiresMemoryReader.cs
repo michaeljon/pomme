@@ -76,6 +76,37 @@ namespace InnoWerks.Emulators.AppleIIe
             return pixels;
         }
 
+        /// <summary>
+        /// Reads the DHIRES page as raw 1-bit-per-pixel monochrome data.
+        /// In monochrome mode each of the 7 usable bits per byte maps directly
+        /// to one screen pixel (560 pixels/row), LSB first, with aux bytes
+        /// preceding main bytes for each column position.
+        /// </summary>
+        public void ReadDhiresMonochromePage(bool[][] bits, int rows = 192)
+        {
+            ArgumentNullException.ThrowIfNull(bits);
+
+            var main = ram.GetMain((byte)(page == 2 ? 0x40 : 0x20), 32);
+            var aux = ram.GetAux((byte)(page == 2 ? 0x40 : 0x20), 32);
+
+            for (int y = 0; y < rows; y++)
+            {
+                int screenX = 0;
+
+                for (int b = 0; b < 40; b++)
+                {
+                    byte auxByte = aux[RowOffsets[y] + b];
+                    byte mainByte = main[RowOffsets[y] + b];
+
+                    for (int bit = 0; bit < 7; bit++)
+                        bits[y][screenX++] = ((auxByte >> bit) & 1) == 1;
+
+                    for (int bit = 0; bit < 7; bit++)
+                        bits[y][screenX++] = ((mainByte >> bit) & 1) == 1;
+                }
+            }
+        }
+
         public void ReadDhiresPage(DhiresBuffer buffer, int rows = 192)
         {
             ArgumentNullException.ThrowIfNull(buffer);

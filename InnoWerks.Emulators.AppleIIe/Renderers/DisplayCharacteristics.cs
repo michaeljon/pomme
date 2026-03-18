@@ -5,6 +5,21 @@ namespace InnoWerks.Emulators.AppleIIe
 {
     public static class DisplayCharacteristics
     {
+        /// <summary>
+        /// Converts a color to a monochrome equivalent by scaling the target monochrome
+        /// color by the source color's luminance. This preserves brightness differences
+        /// from the original palette rather than collapsing everything to on/off.
+        /// </summary>
+        public static Color ToMonochrome(Color source, Color monoColor)
+        {
+            float luminance = (0.2126f * source.R + 0.7152f * source.G + 0.0722f * source.B) / 255f;
+            return new Color(
+                (int)(monoColor.R * luminance),
+                (int)(monoColor.G * luminance),
+                (int)(monoColor.B * luminance));
+        }
+
+
         public const int AppleCellWidth = 7;
 
         public const int AppleCellHeight = 8;
