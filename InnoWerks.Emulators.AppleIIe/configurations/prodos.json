@@ -1,0 +1,21 @@
+{
+  "appleModel": "appleIIeEnhanced",
+  "showInternals": true,
+  "breakpoints": [],
+  "slots": [
+    {
+      "deviceType": "mouse",
+      "slotNumber": 4
+    },
+    {
+      "deviceType": "hardDisk",
+      "slotNumber": 6,
+      "driveOne": {
+        "image": "disks/ProDOS_2_4_3.po",
+        "readOnly": false
+      }
+    }
+  ],
+  "monochrome": false,
+  "color": "white"
+}

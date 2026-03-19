@@ -73,7 +73,7 @@ namespace Emu6502
                     }
                 });
 
-            var disk = new DiskIISlotDevice(cpu, bus, machineState);
+            var disk = new DiskIISlotDevice(6, cpu, bus, machineState);
             disk.GetDrive(1).InsertDisk("disks/dos33.dsk");
 
             bus.AddDevice(disk);

@@ -6,6 +6,10 @@ namespace InnoWerks.Computers.Apple
 
         AppleIIPlus,
 
-        AppleIIe
+        AppleIIe,
+
+        AppleIIeEnhanced,
+
+        AppleIIc,
     }
 }

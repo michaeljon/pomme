@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.NetworkInformation;
 using System.Reflection.PortableExecutable;
+using CommandLine;
 using InnoWerks.Assemblers;
 using InnoWerks.Computers.Apple;
 using InnoWerks.Processors;
@@ -34,7 +35,7 @@ namespace InnoWerks.Emulators.AppleIIe
         //
         // Command line options
         //
-        private readonly CliOptions cliOptions;
+        private readonly EmulatorConfiguration emulatorConfiguration;
 
         //
         // The Apple IIe itself
@@ -94,9 +95,10 @@ namespace InnoWerks.Emulators.AppleIIe
         private double lastTimer;
         private bool flashOn = true;
 
-        public Emulator(CliOptions cliOptions)
+        public Emulator(EmulatorConfiguration emulatorConfiguration)
         {
-            this.cliOptions = cliOptions;
+            ArgumentNullException.ThrowIfNull(emulatorConfiguration);
+            this.emulatorConfiguration = emulatorConfiguration;
 
             graphicsDeviceManager = new GraphicsDeviceManager(this)
             {
@@ -134,7 +136,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
             var mainRom = File.ReadAllBytes("roms/Apple2e_Enhanced.rom");
 
-            var config = new AppleConfiguration(AppleModel.AppleIIe)
+            var config = new AppleConfiguration(emulatorConfiguration.AppleModel)
             {
                 CpuClass = CpuClass.WDC65C02,
                 HasAuxMemory = true,
@@ -155,42 +157,56 @@ namespace InnoWerks.Emulators.AppleIIe
                 (cpu, programCounter) => { },
                 (cpu) => { });
 
-            // later, move rom loading into device
-            var floppyDrive = new DiskIISlotDevice(cpu, appleBus, machineState);
-            if (string.IsNullOrEmpty(cliOptions.Disk1) == false)
+            foreach (var slot in emulatorConfiguration.Slots)
             {
-                floppyDrive.GetDrive(0).InsertDisk(cliOptions.Disk1);
-            }
+                switch (slot.DeviceType)
+                {
+                    case DeviceType.Mouse:
+                        mouseDevice = new MouseSlotDevice(slot.SlotNumber, cpu, appleBus, machineState);
+                        break;
 
-            if (string.IsNullOrEmpty(cliOptions.Disk2) == false)
-            {
-                floppyDrive.GetDrive(1).InsertDisk(cliOptions.Disk2);
-            }
+                    case DeviceType.HardDisk:
+                        var hdDevice = slot as ConfiguredHardDisk;
+                        var hardDrive = new ProDOSSlotDevice(slot.SlotNumber, cpu, appleBus, machineState);
 
-            var hardDrive = new ProDOSSlotDevice(5, cpu, appleBus, machineState);
-            if (string.IsNullOrEmpty(cliOptions.HardDisk1) == false)
-            {
-                hardDrive.InsertDisk(cliOptions.HardDisk1, 0);
-            }
+                        if (hdDevice.DriveOne != null && string.IsNullOrEmpty(hdDevice.DriveOne.Image) == false)
+                        {
+                            hardDrive.InsertDisk(hdDevice.DriveOne.Image, 0);
+                        }
 
-            if (string.IsNullOrEmpty(cliOptions.HardDisk2) == false)
-            {
-                hardDrive.InsertDisk(cliOptions.HardDisk2, 1);
-            }
+                        if (hdDevice.DriveTwo != null && string.IsNullOrEmpty(hdDevice.DriveTwo.Image) == false)
+                        {
+                            hardDrive.InsertDisk(hdDevice.DriveTwo.Image, 1);
+                        }
 
-            if (string.IsNullOrEmpty(cliOptions.HardDisk3) == false)
-            {
-                hardDrive.InsertDisk(cliOptions.HardDisk3, 2);
-            }
+                        if (hdDevice.DriveThree != null && string.IsNullOrEmpty(hdDevice.DriveThree.Image) == false)
+                        {
+                            hardDrive.InsertDisk(hdDevice.DriveThree.Image, 2);
+                        }
 
-            if (string.IsNullOrEmpty(cliOptions.HardDisk4) == false)
-            {
-                hardDrive.InsertDisk(cliOptions.HardDisk4, 3);
-            }
+                        if (hdDevice.DriveFour != null && string.IsNullOrEmpty(hdDevice.DriveFour.Image) == false)
+                        {
+                            hardDrive.InsertDisk(hdDevice.DriveFour.Image, 3);
+                        }
 
-            if (cliOptions.Mouse)
-            {
-                mouseDevice = new MouseSlotDevice(4, cpu, appleBus, machineState);
+                        break;
+
+                    case DeviceType.DiskII:
+                        var diskiiDevice = slot as ConfiguredDiskIIDevice;
+                        var floppyDrive = new DiskIISlotDevice(slot.SlotNumber, cpu, appleBus, machineState);
+
+                        if (diskiiDevice.DriveOne != null && string.IsNullOrEmpty(diskiiDevice.DriveOne.Image) == false)
+                        {
+                            floppyDrive.GetDrive(0).InsertDisk(diskiiDevice.DriveOne.Image);
+                        }
+
+                        if (diskiiDevice.DriveTwo != null && string.IsNullOrEmpty(diskiiDevice.DriveTwo.Image) == false)
+                        {
+                            floppyDrive.GetDrive(1).InsertDisk(diskiiDevice.DriveTwo.Image);
+                        }
+
+                        break;
+                }
             }
 
             appleBus.LoadProgramToRom(mainRom);
@@ -204,7 +220,7 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             display = new Display(GraphicsDevice, cpu, appleBus, memoryBlocks, machineState);
 
-            display.LoadContent(ResolveMonochromeColor(cliOptions.Monochrome), Content);
+            display.LoadContent(emulatorConfiguration.ResolveMonochromeColor(), Content);
         }
 
         private static Color? ResolveMonochromeColor(string monochrome) =>

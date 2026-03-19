@@ -41,6 +41,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="configurations\**\*">
+      <Link>configurations\%(RecursiveDir)/%(FileName)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+
     <None Include="roms\**\*">
       <Link>roms\%(RecursiveDir)/%(FileName)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

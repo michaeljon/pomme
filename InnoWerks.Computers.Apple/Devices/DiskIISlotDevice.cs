@@ -18,10 +18,11 @@ namespace InnoWerks.Computers.Apple
         DiskIIDrive currentDrive;
 
         public DiskIISlotDevice(
+            int slot,
             ICpu cpu,
             IBus bus,
             MachineState machineState)
-            : base(6, "Disk II Controller", cpu, bus, machineState)
+            : base(slot, "Disk II Controller", cpu, bus, machineState)
         {
             currentDrive = drive1;
 
