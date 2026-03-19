@@ -51,18 +51,22 @@ namespace InnoWerks.Simulators
         /// in ROM (think SmartPort and disk controllers). It's up to the
         /// implementation here to set the registers as necessary. The CPU
         /// will continue the in-flight Step upon return from handler.
+        /// If handler returns true then the CPU will automatically clean up
+        /// the stack and perform a virtual RTS before continuing on with the
+        /// next instruction. If the handler returns false then the CPU
+        /// will simply fall through with whatever instruction is next.
         /// </summary>
         /// <param name="address">Address that results in call</param>
         /// <param name="handler">Handler function for the intercept</param>
-        void AddIntercept(ushort address, Action<ICpu, IBus> handler);
+        void AddIntercept(ushort address, Func<ICpu, IBus, bool> handler);
 
-        void AddIntercept(int address, Action<ICpu, IBus> handler) => AddIntercept((ushort)address, handler);
+        void AddIntercept(int address, Func<ICpu, IBus, bool> handler) => AddIntercept((ushort)address, handler);
 
-        void AddIntercept(uint address, Action<ICpu, IBus> handler) => AddIntercept((ushort)address, handler);
+        void AddIntercept(uint address, Func<ICpu, IBus, bool> handler) => AddIntercept((ushort)address, handler);
 
-        void AddIntercept(long address, Action<ICpu, IBus> handler) => AddIntercept((ushort)address, handler);
+        void AddIntercept(long address, Func<ICpu, IBus, bool> handler) => AddIntercept((ushort)address, handler);
 
-        void AddIntercept(ulong address, Action<ICpu, IBus> handler) => AddIntercept((ushort)address, handler);
+        void AddIntercept(ulong address, Func<ICpu, IBus, bool> handler) => AddIntercept((ushort)address, handler);
 
         void ClearIntercept(ushort address);
 

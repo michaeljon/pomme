@@ -42,7 +42,7 @@ namespace InnoWerks.Simulators
 
         protected bool illegalInstructionEncountered { get; set; }
 
-        protected Dictionary<ushort, Action<ICpu, IBus>> intercepts { get; } = [];
+        protected Dictionary<ushort, Func<ICpu, IBus, bool>> intercepts { get; } = [];
 
         protected Cpu6502Core(IBus bus,
                                      Action<ICpu, ushort> preExecutionCallback,
@@ -148,13 +148,11 @@ namespace InnoWerks.Simulators
 
             // we're going to see if there's an intercept registered
             // and if so we'll call it.
-            if (intercepts.TryGetValue(Registers.ProgramCounter, out var handler))
+            if (intercepts.TryGetValue(Registers.ProgramCounter, out var handler) && handler?.Invoke(this, bus) == true)
             {
-                if (handler != null)
-                {
-                    // SimDebugger.Info($"Intercept ${Registers.ProgramCounter:X4} is being called\n");
-                    handler.Invoke(this, bus);
-                }
+                // the intercept has completed and wants an RTS so rewire the program counter
+                // and do the stack stuff
+                RTS(0, 0);
             }
 
             // for debugging we're just going to peek at the next
@@ -191,8 +189,13 @@ namespace InnoWerks.Simulators
             return new CpuTraceEntry(Registers.ProgramCounter, bus, bus.CycleCount, opCodeDefinition);
         }
 
-        public void AddIntercept(ushort address, Action<ICpu, IBus> handler)
+        public void AddIntercept(ushort address, Func<ICpu, IBus, bool> handler)
         {
+            if (intercepts.ContainsKey(address))
+            {
+                throw new ArgumentException($"An intercept is already registered at {address:X4}", nameof(address));
+            }
+
             intercepts.Add(address, handler);
         }
 

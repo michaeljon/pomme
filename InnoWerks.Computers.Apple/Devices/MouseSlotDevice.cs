@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using InnoWerks.Processors;
 using InnoWerks.Simulators;
@@ -39,19 +40,13 @@ namespace InnoWerks.Computers.Apple
         private const byte ClampMouseVector = 0x17;
         private const byte HomeMouseVector = 0x18;
         private const byte InitMouseVector = 0x19;
-        private const byte GetClampVector = 0x19;
+        private const byte GetClampVector = 0x1A;
 
-        private const byte SetMouseIntercept = 0x80;
-        private const byte ServeMouseIntercept = 0x81;
-        private const byte ReadMouseIntercept = 0x82;
-        private const byte ClearMouseIntercept = 0x83;
-        private const byte PosMouseIntercept = 0x84;
-        private const byte ClampMouseIntercept = 0x85;
-        private const byte HomeMouseIntercept = 0x86;
-        private const byte InitMouseIntercept = 0x87;
-        private const byte GetClampIntercept = 0x98;
+        // where we're going to stuff our handlers
+        private const byte InterceptBase = 0x80;
 
         // Screen hole base addresses per-slot (slot n is base + n)
+        // watch out of the HandleClampMouse which does not use the slot offset
         private const ushort XLoScreenHole = 0x0478;
         private const ushort YLoScreenHole = 0x04F8;
 
@@ -82,6 +77,22 @@ namespace InnoWerks.Computers.Apple
         public MouseSlotDevice(int slot, ICpu cpu, IBus bus, MachineState machineState)
             : base(slot, "Apple Mouse Interface Card", cpu, bus, machineState)
         {
+            ArgumentNullException.ThrowIfNull(cpu, nameof(cpu));
+            ArgumentNullException.ThrowIfNull(bus, nameof(bus));
+
+            var initializers = new List<(byte vector, Func<ICpu, IBus, bool> handler)>
+            {
+                (SetMouseVector, HandleSetMouse),
+                (ServeMouseVector, HandleServeMouse),
+                (ReadMouseVector, HandleReadMouse),
+                (ClearMouseVector, HandleClearMouse),
+                (PosMouseVector, HandlePosMouse),
+                (ClampMouseVector, HandleClampMouse),
+                (HomeMouseVector, HandleHomeMouse),
+                (InitMouseVector, HandleInitMouse),
+                (GetClampVector, HandleGetClamp),
+            };
+
             HasRom = true;
             Rom = new byte[MemoryPage.PageSize];
 
@@ -101,33 +112,18 @@ namespace InnoWerks.Computers.Apple
             Rom[0x08] = 0x01;  // ID byte
             Rom[0x11] = 0x00;  // ID byte
 
-            // mouse card routine entry vectors, these redirect to
-            // the actual handler in the rom, which are intercepted below
-            Rom[SetMouseVector] = SetMouseIntercept;
-            Rom[ServeMouseVector] = ServeMouseIntercept;
-            Rom[ReadMouseVector] = ReadMouseIntercept;
-            Rom[ClearMouseVector] = ClearMouseIntercept;
-            Rom[PosMouseVector] = PosMouseIntercept;
-            Rom[ClampMouseVector] = ClampMouseIntercept;
-            Rom[HomeMouseVector] = HomeMouseIntercept;
-            Rom[InitMouseVector] = InitMouseIntercept;
-            Rom[GetClampVector] = GetClampIntercept;
-
-            ArgumentNullException.ThrowIfNull(bus, nameof(bus));
-            bus.AddDevice(this);
-
-            // now wire up our intercept handlers per the vectors above
-            ArgumentNullException.ThrowIfNull(cpu, nameof(cpu));
             var baseAddr = (ushort)(0xC000 + (slot * 0x100));
-            cpu.AddIntercept((ushort)(baseAddr + SetMouseIntercept), HandleSetMouse);
-            cpu.AddIntercept((ushort)(baseAddr + ServeMouseIntercept), HandleServeMouse);
-            cpu.AddIntercept((ushort)(baseAddr + ReadMouseIntercept), HandleReadMouse);
-            cpu.AddIntercept((ushort)(baseAddr + ClearMouseIntercept), HandleClearMouse);
-            cpu.AddIntercept((ushort)(baseAddr + PosMouseIntercept), HandlePosMouse);
-            cpu.AddIntercept((ushort)(baseAddr + ClampMouseIntercept), HandleClampMouse);
-            cpu.AddIntercept((ushort)(baseAddr + HomeMouseIntercept), HandleHomeMouse);
-            cpu.AddIntercept((ushort)(baseAddr + InitMouseIntercept), HandleInitMouse);
-            cpu.AddIntercept((ushort)(baseAddr + GetClampIntercept), HandleGetClamp);
+            foreach (var (vector, handler) in initializers)
+            {
+                // mouse card routine entry vectors, these redirect to
+                // the actual handler in the rom, which are intercepted below
+                Rom[vector] = (byte)(InterceptBase + vector);
+
+                // now wire up our intercept handlers per the vectors above
+                cpu.AddIntercept((ushort)(baseAddr + Rom[vector]), handler);
+            }
+
+            bus.AddDevice(this);
         }
 
         // Called by Emulator.cs each frame with the current host mouse state.
@@ -169,7 +165,7 @@ namespace InnoWerks.Computers.Apple
 
         // --- Firmware intercept handlers ---
 
-        private void HandleInitMouse(ICpu cpu, IBus bus)
+        private bool HandleInitMouse(ICpu cpu, IBus bus)
         {
             // verify that X and Y are correct on input
             if (cpu.Registers.X != 0xC0 + Slot || cpu.Registers.Y != (byte)(Slot << 4))
@@ -187,10 +183,10 @@ namespace InnoWerks.Computers.Apple
             clampMinY = 0; clampMaxY = 0x03FF;
 
             cpu.Registers.Carry = false;
-            ((Cpu6502Core)cpu).RTS(0, 0);
+            return true;
         }
 
-        private void HandleSetMouse(ICpu cpu, IBus bus)
+        private bool HandleSetMouse(ICpu cpu, IBus bus)
         {
             // verify that X and Y are correct on input
             if (cpu.Registers.X != 0xC0 + Slot || cpu.Registers.Y != (byte)(Slot << 4))
@@ -201,16 +197,17 @@ namespace InnoWerks.Computers.Apple
             if (cpu.Registers.A > 0x0F)
             {
                 cpu.Registers.Carry = true;
-                return;
             }
-            cpu.Registers.Carry = false;
+            else
+            {
+                cpu.Registers.Carry = false;
+                mouseMode = (MouseModeFlags)cpu.Registers.A;
+            }
 
-            mouseMode = (MouseModeFlags)cpu.Registers.A;
-
-            ((Cpu6502Core)cpu).RTS(0, 0);
+            return true;
         }
 
-        private void HandleReadMouse(ICpu cpu, IBus bus)
+        private bool HandleReadMouse(ICpu cpu, IBus bus)
         {
             // verify that X and Y are correct on input
             if (cpu.Registers.X != 0xC0 + Slot || cpu.Registers.Y != (byte)(Slot << 4))
@@ -224,10 +221,10 @@ namespace InnoWerks.Computers.Apple
             buttonPreviouslyDown = buttonCurrentlyDown;
 
             cpu.Registers.Carry = false;
-            ((Cpu6502Core)cpu).RTS(0, 0);
+            return true;
         }
 
-        private void HandleClearMouse(ICpu cpu, IBus bus)
+        private bool HandleClearMouse(ICpu cpu, IBus bus)
         {
             // verify that X and Y are correct on input
             if (cpu.Registers.X != 0xC0 + Slot || cpu.Registers.Y != (byte)(Slot << 4))
@@ -244,10 +241,10 @@ namespace InnoWerks.Computers.Apple
             WriteMouseData(bus);
 
             cpu.Registers.Carry = false;
-            ((Cpu6502Core)cpu).RTS(0, 0);
+            return true;
         }
 
-        private void HandleHomeMouse(ICpu cpu, IBus bus)
+        private bool HandleHomeMouse(ICpu cpu, IBus bus)
         {
             // verify that X and Y are correct on input
             if (cpu.Registers.X != 0xC0 + Slot || cpu.Registers.Y != (byte)(Slot << 4))
@@ -260,17 +257,17 @@ namespace InnoWerks.Computers.Apple
             mouseMoved = false;
 
             cpu.Registers.Carry = false;
-            ((Cpu6502Core)cpu).RTS(0, 0);
+            return true;
         }
 
-        private void HandlePosMouse(ICpu cpu, IBus bus)
+        private bool HandlePosMouse(ICpu cpu, IBus bus)
         {
             // what do we do for this? can't bounce the mouse around
             cpu.Registers.Carry = false;
-            ((Cpu6502Core)cpu).RTS(0, 0);
+            return true;
         }
 
-        private void HandleGetClamp(ICpu cpu, IBus bus)
+        private bool HandleGetClamp(ICpu cpu, IBus bus)
         {
             var reg = bus.Peek(0x0478);
             var val = (reg - 0x47) switch
@@ -291,10 +288,10 @@ namespace InnoWerks.Computers.Apple
             bus.Write(0x0578, (byte)val);
 
             cpu.Registers.Carry = false;
-            ((Cpu6502Core)cpu).RTS(0, 0);
+            return true;
         }
 
-        private void HandleClampMouse(ICpu cpu, IBus bus)
+        private bool HandleClampMouse(ICpu cpu, IBus bus)
         {
             // verify that X and Y are correct on input
             if (cpu.Registers.X != 0xC0 + Slot || cpu.Registers.Y != (byte)(Slot << 4))
@@ -302,10 +299,8 @@ namespace InnoWerks.Computers.Apple
                 // this is a failure case, really, because the protocol says this should hold
             }
 
-            // todo: these are the correct values, but they're different from the
-            //       screen hole convention for reporting (x,y) locations
-            var min = bus.Read(0x0478) | (bus.Read(0x0578) << 8);
-            var max = bus.Read(0x04F8) | (bus.Read(0x05F8) << 8);
+            var min = bus.Read(XLoScreenHole) | (bus.Read(XHiScreenHole) << 8);
+            var max = bus.Read(YLoScreenHole) | (bus.Read(YHiScreenHole) << 8);
 
             if (min >= 32768)
             {
@@ -328,10 +323,10 @@ namespace InnoWerks.Computers.Apple
             }
 
             cpu.Registers.Carry = false;
-            ((Cpu6502Core)cpu).RTS(0, 0);
+            return true;
         }
 
-        private void HandleServeMouse(ICpu cpu, IBus bus)
+        private bool HandleServeMouse(ICpu cpu, IBus bus)
         {
             // this one DOES NOT check X and Y because it's called via interrupt
             MouseStatusFlags status = MouseStatusFlags.Reserved0;
@@ -342,7 +337,7 @@ namespace InnoWerks.Computers.Apple
             bus.Write((ushort)(StatScreenHole + Slot), (byte)status);
 
             cpu.Registers.Carry = false;
-            ((Cpu6502Core)cpu).RTS(0, 0);
+            return true;
         }
 
         // --- Helpers ---

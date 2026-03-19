@@ -197,7 +197,7 @@ namespace InnoWerks.Computers.Apple
             */
         }
 
-        private void HandleIntercept(ICpu cpu, IBus bus)
+        private bool HandleIntercept(ICpu cpu, IBus bus)
         {
             // assume we're good
             cpu.Registers.A = Success;
@@ -230,10 +230,7 @@ namespace InnoWerks.Computers.Apple
             {
                 cpu.Registers.Carry = true;
                 cpu.Registers.A = NoDevice;
-
-                // params are unused by RTS
-                ((Cpu6502Core)cpu).RTS(0, 0);
-                return;
+                return true;
             }
 
             switch (command)
@@ -320,8 +317,7 @@ namespace InnoWerks.Computers.Apple
                     break;
             }
 
-            // params are unused by RTS
-            ((Cpu6502Core)cpu).RTS(0, 0);
+            return true;
         }
 
         public void InsertDisk(string path, int drive)
