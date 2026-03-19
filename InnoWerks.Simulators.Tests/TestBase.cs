@@ -134,14 +134,14 @@ namespace InnoWerks.Simulators.Tests
 
                 for (var b = 0; b < 8; b++)
                 {
-                    Console.Write("{0:X2} ", bus.Peek((ushort)(l + b)));
+                    Console.Write("{0:X2} ", bus.Peek(l + b));
                 }
 
                 Console.Write("  ");
 
                 for (var b = 8; b < 16; b++)
                 {
-                    Console.Write("{0:X2} ", bus.Peek((ushort)(l + b)));
+                    Console.Write("{0:X2} ", bus.Peek(l + b));
                 }
 
                 Console.WriteLine("");
@@ -179,14 +179,14 @@ namespace InnoWerks.Simulators.Tests
 
                 for (var b = 0; b < 8; b++)
                 {
-                    Console.Write($"{bus.Peek((ushort)((l * 16) + b)):X2} ");
+                    Console.Write($"{bus.Peek((l * 16) + b):X2} ");
                 }
 
                 Console.Write("\t  ");
 
                 for (var b = 8; b < 16; b++)
                 {
-                    Console.Write($"{bus.Peek((ushort)((l * 16) + b)):X2} ");
+                    Console.Write($"{bus.Peek((l * 16) + b):X2} ");
                 }
 
                 Console.WriteLine("");

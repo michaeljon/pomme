@@ -152,11 +152,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
             cpu = new Cpu65C02(
                 appleBus,
-                (cpu, programCounter) =>
-                {
-                    // if (programCounter >= 0xC400 && programCounter <= 0xC4FF)
-                    //     Console.WriteLine($"Slot4 ROM exec: {programCounter:X4}");
-                },
+                (cpu, programCounter) => { },
                 (cpu) => { });
 
             // later, move rom loading into device
@@ -180,6 +176,16 @@ namespace InnoWerks.Emulators.AppleIIe
             if (string.IsNullOrEmpty(cliOptions.HardDisk2) == false)
             {
                 hardDrive.InsertDisk(cliOptions.HardDisk2, 1);
+            }
+
+            if (string.IsNullOrEmpty(cliOptions.HardDisk3) == false)
+            {
+                hardDrive.InsertDisk(cliOptions.HardDisk3, 2);
+            }
+
+            if (string.IsNullOrEmpty(cliOptions.HardDisk4) == false)
+            {
+                hardDrive.InsertDisk(cliOptions.HardDisk4, 3);
             }
 
             if (cliOptions.Mouse)

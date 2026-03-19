@@ -56,7 +56,23 @@ namespace InnoWerks.Simulators
         /// <param name="handler">Handler function for the intercept</param>
         void AddIntercept(ushort address, Action<ICpu, IBus> handler);
 
+        void AddIntercept(int address, Action<ICpu, IBus> handler) => AddIntercept((ushort)address, handler);
+
+        void AddIntercept(uint address, Action<ICpu, IBus> handler) => AddIntercept((ushort)address, handler);
+
+        void AddIntercept(long address, Action<ICpu, IBus> handler) => AddIntercept((ushort)address, handler);
+
+        void AddIntercept(ulong address, Action<ICpu, IBus> handler) => AddIntercept((ushort)address, handler);
+
         void ClearIntercept(ushort address);
+
+        void ClearIntercept(int address) => ClearIntercept((ushort)address);
+
+        void ClearIntercept(uint address) => ClearIntercept((ushort)address);
+
+        void ClearIntercept(long address) => ClearIntercept((ushort)address);
+
+        void ClearIntercept(ulong address) => ClearIntercept((ushort)address);
 
         void ClearIntercepts();
 

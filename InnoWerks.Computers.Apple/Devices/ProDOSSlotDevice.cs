@@ -29,67 +29,79 @@ namespace InnoWerks.Computers.Apple
         private const byte NoDevice = 0x28;
         private const byte WriteProtected = 0x29;
 
+        // private const byte DiskDrive = 0x3C;
+        // private const byte SmartPort = 0x00;
+        // private const ushort DriveTypeOffset = 0x07;
+
         private readonly string[] rom1 = [
-"         ORG   $800",
-"         LDX   #$20    ; Apple IIe looks for magic bytes $20, $00, $03.",
-"         LDA   #$00    ; These indicate a disk drive or SmartPort device.",
-"         LDX   #$03",
-"         LDA   #$3C    ; $3C=disk drive, $00=SmartPort",
-"         BIT   $CFFF   ; Trigger all peripheral cards to turn off expansion ROMs",
-"         LDA   #$01    ; ProDOS command code = READ",
-"         STA   $42     ; Store ProDOS command code",
-"         LDA   #$4C    ; JMP",
-"         STA   $07FD",
-"         LDA   #$C0    ; jump address",
-"         STA   $07FE",
-"         LDA   #$60    ; Fake RTS to determine our slot",
-"         STA   $07FF",
-"         JSR   $07FF",
-"         TSX",
-"         LDA   $0100,X ; High byte of slot address",
-"         STA   $07FF   ; Store this for the high byte of our JMP command",
-"         ASL           ; Shift $Cs up to $s0 (e.g. $C7 -> $70)",
-"         ASL           ; We need this for the ProDOS unit number (below).",
-"         ASL           ; Format = bits DSSS0000",
-"         ASL           ; D = drive number (0), SSS = slot number (1-7)",
-"         STA   $43     ; Store ProDOS unit number here",
-"         LDA   #$08    ; Store block (512 bytes) at address $0800",
-"         STA   $45     ; Address high byte",
-"         LDA   #$00",
-"         STA   $44     ; Address low byte",
-"         STA   $46     ; Block 0 low byte",
-"         STA   $47     ; Block 0 high byte",
-"         JSR   $07FD   ; Read the block (will JMP to our driver and trigger it)",
-"         BCS   ERROR",
-"         LDA   #$0A    ; Store block (512 bytes) at address $0A00",
-"         STA   $45     ; Address high byte",
-"         LDA   #$01",
-"         STA   $46     ; Block 1 low byte",
-"         JSR   $07FD   ; Read",
-"         BCS   ERROR",
-"         LDA   $0801   ; Should be nonzero",
-"         BEQ   ERROR",
-"         LDA   #$01    ; Should always be 1",
-"         CMP   $0800",
-"         BNE   ERROR",
-"         LDX   $43     ; ProDOS block 0 code wants ProDOS unit number in X",
-"         JMP   $0801   ; Continue reading the disk",
-"ERROR    JMP   $E000   ; Out to BASIC on error",
+            "COMMAND  EQU   $42",
+            "UNIT     EQU   $43",
+            "ADDRLO   EQU   $44",
+            "ADDRHI   EQU   $45",
+            "BLKLO    EQU   $46",
+            "BLKHI    EQU   $47",
+            "",
+            "         LDX   #$20    ; Apple IIe looks for magic bytes $20, $00, $03.",
+            "         LDA   #$00    ; These indicate a disk drive or SmartPort device.",
+            "         LDX   #$03",
+            "         LDA   #$3C    ; $3C=disk drive, $00=SmartPort",
+            "",
+            "         BIT   $CFFF   ; Trigger all peripheral cards to turn off expansion ROMs",
+            "",
+            "         LDA   #$01    ; ProDOS command code = READ",
+            "         STA   COMMAND ; Store ProDOS command code",
+            "         LDA   #$4C    ; JMP inst",
+            "         STA   $07FD",
+            "         LDA   #$C0    ; jump address",
+            "         STA   $07FE",
+            "         LDA   #$60    ; RTS inst",
+            "         STA   $07FF",
+            "         JSR   $07FF",
+            "         TSX",
+            "         LDA   $0100,X ; High byte of slot address",
+            "         STA   $07FF   ; Store this for the high byte of our JMP command",
+            "         ASL           ; Shift $Cs up to $s0 (e.g. $C5 -> $50)",
+            "         ASL           ; We need this for the ProDOS unit number (below).",
+            "         ASL           ; Format = bits DSSS0000",
+            "         ASL           ; D = drive number (0), SSS = slot number (1-7)",
+            "         STA   UNIT    ; Store ProDOS unit number here",
+            "         LDA   #$08    ; Store block (512 bytes) at address $0800",
+            "         STA   ADDRHI  ; Address high byte",
+            "         LDA   #$00",
+            "         STA   ADDRLO  ; Address low byte",
+            "         STA   BLKLO   ; Block 0 low byte",
+            "         STA   BLKHI   ; Block 0 high byte",
+            "         JSR   $07FD   ; Read the block (will JMP to our driver and trigger it)",
+            "         BCS   ERROR",
+            "         LDA   #$0A    ; Store block (512 bytes) at address $0A00",
+            "         STA   ADDRHI  ; Address high byte",
+            "         LDA   #$01",
+            "         STA   BLKLO   ; Block 1 low byte",
+            "         JSR   $07FD   ; Read",
+            "         BCS   ERROR",
+            "         LDA   $0801   ; Should be nonzero",
+            "         BEQ   ERROR",
+            "         LDA   #$01    ; Should always be 1",
+            "         CMP   $0800",
+            "         BNE   ERROR",
+            "         LDX   UNIT    ; ProDOS block 0 code wants ProDOS unit number in X",
+            "         JMP   $0801   ; Continue reading the disk",
+            "ERROR    JMP   $E000   ; Out to BASIC on error",
         ];
 
         private readonly string[] rom2 = [
-"         NOP           ; Hard drive driver address",
-"         BRA   DONE",
-"         TSX           ; SmartPort driver address",
-"         INX",
-"         INC   $0100,X",
-"         INC   $0100,X",
-"         INC   $0100,X",
-"DONE     BCS   ERR",
-"         LDA   #$00",
-"         RTS",
-"ERR      LDA   #$27",
-"         RTS",
+            "         NOP           ; Hard drive driver address",
+            "         BRA   DONE",
+            "         TSX           ; SmartPort driver address",
+            "         INX",
+            "         INC   $0100,X",
+            "         INC   $0100,X",
+            "         INC   $0100,X",
+            "DONE     BCS   ERR",
+            "         LDA   #$00    ; Success",
+            "         RTS",
+            "ERR      LDA   #$27    ; I/O Error",
+            "         RTS",
         ];
 
         public ProDOSSlotDevice(
@@ -135,7 +147,54 @@ namespace InnoWerks.Computers.Apple
             bus.AddDevice(this);
 
             ArgumentNullException.ThrowIfNull(cpu, nameof(cpu));
-            cpu.AddIntercept((ushort)(0xC000 + EntryPoint + slot * 0x100), HandleIntercept);
+            cpu.AddIntercept(0xC000 + EntryPoint + slot * 0x100, HandleIntercept);
+
+            /*
+            cpu.AddIntercept(0xC000 + EntryPoint + 0x03 + slot * 0x100, (cpu, bus) =>
+            {
+                // assume we're good
+                cpu.Registers.A = Success;
+                cpu.Registers.Carry = false;
+
+                var callAddr = (ushort)(bus.Read(Cpu6502Core.StackBase + cpu.Registers.StackPointer + 2) << 8 | bus.Read(Cpu6502Core.StackBase + cpu.Registers.StackPointer + 1));
+
+                var command = bus.Read(callAddr);
+                var paramList = (ushort)(bus.Read(callAddr + 3) << 8 | bus.Read(callAddr + 2));
+
+                var unit = bus.Read(paramList + 1);
+                var bufferAddr = (ushort)(bus.Read(paramList + 3) << 8 | bus.Read(paramList + 2));
+
+                switch (command)
+                {
+                    case 0:
+                        cpu.Registers.Carry = true;
+                        break;
+
+                    case 1:
+                        if (bus.Read(paramList) != 3)
+                        {
+                            cpu.Registers.Carry = true;
+                        }
+                        else
+                        {
+                            var block = bus.Read(paramList + 6) << 16 |
+                                        bus.Read(paramList + 5) << 8 |
+                                        bus.Read(paramList + 4);
+
+                            // todo: read the block
+                        }
+                        break;
+
+                    case 2:
+                        cpu.Registers.Carry = true;
+                        break;
+
+                    default:
+                        cpu.Registers.Carry = true;
+                        break;
+                }
+            });
+            */
         }
 
         private void HandleIntercept(ICpu cpu, IBus bus)
@@ -150,6 +209,12 @@ namespace InnoWerks.Computers.Apple
             var slot = (rawUnit >> 4) & 0x07;
             var unit = (rawUnit & 0x80) >> 7;
 
+            if (slot != Slot)
+            {
+                // we've been asked to access the upper two drives
+                unit += 2;
+            }
+
             var bufferAddr = (ushort)(bus.Read(0x45) << 8 | bus.Read(0x44));
             var blockStart = (ushort)(bus.Read(0x47) << 8 | bus.Read(0x46));
 
@@ -161,10 +226,10 @@ namespace InnoWerks.Computers.Apple
 
             // SimDebugger.Info($"command={command} rawUnit={rawUnit:X2} unit={unit} slot={slot} blockStart={blockStart:X4} bufferAddr={bufferAddr:X4} mountedDrives={mountedDrives}\n");
 
-            if (unit > mountedDrives)
+            if (unit > mountedDrives - 1)
             {
                 cpu.Registers.Carry = true;
-                cpu.Registers.A = NoDevice;         // no device
+                cpu.Registers.A = NoDevice;
 
                 // params are unused by RTS
                 ((Cpu6502Core)cpu).RTS(0, 0);
@@ -179,7 +244,7 @@ namespace InnoWerks.Computers.Apple
                         cpu.Registers.X = 0;
                         cpu.Registers.Y = 0;
                         cpu.Registers.Carry = true;
-                        cpu.Registers.A = NoDevice;         // no device
+                        cpu.Registers.A = NoDevice;
 
                         break;
                     }
@@ -195,14 +260,14 @@ namespace InnoWerks.Computers.Apple
                     if (fileStream[unit] == null || fileStream[unit].CanRead == false || fileStream[unit].CanSeek == false)
                     {
                         cpu.Registers.Carry = true;
-                        cpu.Registers.A = IOError;         // i/o error
+                        cpu.Registers.A = IOError;
                     }
                     else
                     {
                         if (blockStart + BlockSize > fileStreamLength[unit])
                         {
                             cpu.Registers.Carry = true;
-                            cpu.Registers.A = IOError;         // i/o error
+                            cpu.Registers.A = IOError;
                         }
                         else
                         {
@@ -220,14 +285,14 @@ namespace InnoWerks.Computers.Apple
                     if (fileStream[unit] == null || fileStream[unit].CanWrite == false || fileStream[unit].CanSeek == false)
                     {
                         cpu.Registers.Carry = true;
-                        cpu.Registers.A = WriteProtected;         // read-only
+                        cpu.Registers.A = WriteProtected;
                     }
                     else
                     {
                         if (blockStart + BlockSize > fileStreamLength[unit])
                         {
                             cpu.Registers.Carry = true;
-                            cpu.Registers.A = IOError;         // i/o error
+                            cpu.Registers.A = IOError;
                         }
                         else
                         {
@@ -245,7 +310,7 @@ namespace InnoWerks.Computers.Apple
                     if (string.IsNullOrEmpty(drivePaths[unit]))
                     {
                         cpu.Registers.Carry = true;
-                        cpu.Registers.A = NoDevice;         // no device
+                        cpu.Registers.A = NoDevice;
                     }
                     else
                     {
@@ -294,10 +359,10 @@ namespace InnoWerks.Computers.Apple
         }
 
         public override bool HandlesRead(ushort address) =>
-            (address >= IoBaseAddressLo && address <= IoBaseAddressHi);
+            address >= IoBaseAddressLo && address <= IoBaseAddressHi;
 
         public override bool HandlesWrite(ushort address) =>
-            (address >= IoBaseAddressLo && address <= IoBaseAddressHi);
+            address >= IoBaseAddressLo && address <= IoBaseAddressHi;
 
         protected override byte DoCx(CardIoType ioType, ushort address, byte value) { return 0x00; }
 
@@ -311,7 +376,7 @@ namespace InnoWerks.Computers.Apple
         {
             for (var b = 0; b < BlockSize; b++)
             {
-                bus.Write((ushort)(bufferAddr + b), buffer[b]);
+                bus.Write(bufferAddr + b, buffer[b]);
             }
         }
 
@@ -319,7 +384,7 @@ namespace InnoWerks.Computers.Apple
         {
             for (var b = 0; b < BlockSize; b++)
             {
-                buffer[b] = bus.Read((ushort)(bufferAddr + b));
+                buffer[b] = bus.Read(bufferAddr + b);
             }
         }
 

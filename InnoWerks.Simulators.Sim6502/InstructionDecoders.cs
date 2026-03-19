@@ -80,7 +80,7 @@ namespace InnoWerks.Simulators
             ArgumentNullException.ThrowIfNull(bus);
 
             var oc = bus.Peek(programCounter);
-            var o1 = bus.Peek((ushort)(programCounter + 1));
+            var o1 = bus.Peek(programCounter + 1);
 
             return new DecodedOperation
             {
@@ -103,8 +103,8 @@ namespace InnoWerks.Simulators
             ArgumentNullException.ThrowIfNull(bus);
 
             var oc = bus.Peek(programCounter);
-            var o1 = bus.Peek((ushort)(programCounter + 1));
-            var o2 = bus.Peek((ushort)(programCounter + 2));
+            var o1 = bus.Peek(programCounter + 1);
+            var o2 = bus.Peek(programCounter + 2);
 
             return new DecodedOperation
             {
@@ -127,7 +127,7 @@ namespace InnoWerks.Simulators
             ArgumentNullException.ThrowIfNull(bus);
 
             var oc = bus.Peek(programCounter);
-            var o1 = bus.Peek((ushort)(programCounter + 1));
+            var o1 = bus.Peek(programCounter + 1);
 
             return new DecodedOperation
             {
@@ -153,8 +153,8 @@ namespace InnoWerks.Simulators
             ArgumentNullException.ThrowIfNull(bus);
 
             var oc = bus.Peek(programCounter);
-            var o1 = bus.Peek((ushort)(programCounter + 1));
-            var o2 = bus.Peek((ushort)(programCounter + 2));
+            var o1 = bus.Peek(programCounter + 1);
+            var o2 = bus.Peek(programCounter + 2);
 
             return new DecodedOperation
             {
@@ -181,8 +181,8 @@ namespace InnoWerks.Simulators
             ArgumentNullException.ThrowIfNull(bus);
 
             var oc = bus.Peek(programCounter);
-            var o1 = bus.Peek((ushort)(programCounter + 1));
-            var o2 = bus.Peek((ushort)(programCounter + 2));
+            var o1 = bus.Peek(programCounter + 1);
+            var o2 = bus.Peek(programCounter + 2);
 
             return new DecodedOperation
             {
@@ -209,7 +209,7 @@ namespace InnoWerks.Simulators
             ArgumentNullException.ThrowIfNull(bus);
 
             var oc = bus.Peek(programCounter);
-            var o1 = bus.Peek((ushort)(programCounter + 1));
+            var o1 = bus.Peek(programCounter + 1);
 
             return new DecodedOperation
             {
@@ -235,7 +235,7 @@ namespace InnoWerks.Simulators
             ArgumentNullException.ThrowIfNull(bus);
 
             var oc = bus.Peek(programCounter);
-            var o1 = bus.Peek((ushort)(programCounter + 1));
+            var o1 = bus.Peek(programCounter + 1);
 
             return new DecodedOperation
             {
@@ -260,7 +260,7 @@ namespace InnoWerks.Simulators
             ArgumentNullException.ThrowIfNull(bus);
 
             var oc = bus.Peek(programCounter);
-            var o1 = bus.Peek((ushort)(programCounter + 1));
+            var o1 = bus.Peek(programCounter + 1);
 
             return new DecodedOperation
             {
@@ -280,7 +280,7 @@ namespace InnoWerks.Simulators
             ArgumentNullException.ThrowIfNull(bus);
 
             var oc = bus.Peek(programCounter);
-            var o1 = bus.Peek((ushort)(programCounter + 1));
+            var o1 = bus.Peek(programCounter + 1);
 
             return new DecodedOperation
             {
@@ -301,8 +301,8 @@ namespace InnoWerks.Simulators
             ArgumentNullException.ThrowIfNull(bus);
 
             var oc = bus.Peek(programCounter);
-            var o1 = bus.Peek((ushort)(programCounter + 1));
-            var o2 = bus.Peek((ushort)(programCounter + 2));
+            var o1 = bus.Peek(programCounter + 1);
+            var o2 = bus.Peek(programCounter + 2);
 
             return new DecodedOperation
             {
@@ -329,7 +329,7 @@ namespace InnoWerks.Simulators
             ArgumentNullException.ThrowIfNull(bus);
 
             var oc = bus.Peek(programCounter);
-            var o1 = bus.Peek((ushort)(programCounter + 1));
+            var o1 = bus.Peek(programCounter + 1);
 
             return new DecodedOperation
             {
@@ -354,7 +354,7 @@ namespace InnoWerks.Simulators
             ArgumentNullException.ThrowIfNull(bus);
 
             var oc = bus.Peek(programCounter);
-            var o1 = bus.Peek((ushort)(programCounter + 1));
+            var o1 = bus.Peek(programCounter + 1);
 
             return new DecodedOperation
             {
@@ -379,8 +379,8 @@ namespace InnoWerks.Simulators
             ArgumentNullException.ThrowIfNull(bus);
 
             var oc = bus.Peek(programCounter);
-            var o1 = bus.Peek((ushort)(programCounter + 1));
-            var o2 = bus.Peek((ushort)(programCounter + 2));
+            var o1 = bus.Peek(programCounter + 1);
+            var o2 = bus.Peek(programCounter + 2);
 
             return new DecodedOperation
             {
