@@ -64,8 +64,21 @@
 - Two-level dispatch: vector table ($12–$1A) → handler offsets ($92–$9A)
 - See [project_mouse.md](project_mouse.md) and Documentation/MOUSE.md for full details
 
+## Joystick / Paddle
+
+- Xbox controller mapped to Apple II paddles via IOU timer model
+- PTRIG ($C070–$C07D) handled symmetrically as read and write; $C07E/$C07F excluded (IOUDISON/OFF)
+- See [project_joystick.md](project_joystick.md) and Documentation/JOYSTICK.md
+
+## Active Work
+
+- External IRQ/NMI delivery being implemented — prerequisite for interrupt-driven mouse support
+- See [project_interrupt.md](project_interrupt.md)
+
 ## Memory Entries
 
 - [project_mouse.md](project_mouse.md) — Mouse card implementation status and design
+- [project_joystick.md](project_joystick.md) — Xbox controller / paddle implementation
+- [project_interrupt.md](project_interrupt.md) — IRQ/NMI delivery work in progress
 - [feedback_intercept_model.md](feedback_intercept_model.md) — CPU intercept handler bool return convention
 - [feedback_rely_on_source.md](feedback_rely_on_source.md) — Use Apple hardware manuals, not secondary sources
