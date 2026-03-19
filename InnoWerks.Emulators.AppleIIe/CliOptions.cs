@@ -19,5 +19,8 @@ namespace InnoWerks.Emulators.AppleIIe
 
         [Option("monochrome", HelpText = "Display in monochrome: green, amber, or white. Omit for color mode.")]
         public string Monochrome { get; set; }
+
+        [Option("mouse", HelpText = "Enable Apple Mouse Interface Card in slot 4.")]
+        public bool Mouse { get; set; }
     }
 }

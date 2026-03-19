@@ -141,6 +141,11 @@ namespace InnoWerks.Disassemblers
                 case Processors.AddressingMode.ZeroPageIndirect:
                 case Processors.AddressingMode.XIndexedIndirect:
                 case Processors.AddressingMode.IndirectYIndexed:
+                    if (pc + 1 >= bytes.Length)
+                    {
+                        return "out of data";
+                    }
+
                     return $"{op:X2}{bytes[pc + 1]:X2}";
 
                 case Processors.AddressingMode.Absolute:
@@ -148,6 +153,11 @@ namespace InnoWerks.Disassemblers
                 case Processors.AddressingMode.AbsoluteYIndexed:
                 case Processors.AddressingMode.AbsoluteIndexedIndirect:
                 case Processors.AddressingMode.AbsoluteIndirect:
+                    if (pc + 1 >= bytes.Length || pc + 2 >= bytes.Length)
+                    {
+                        return "out of data";
+                    }
+
                     return $"{op:X2}{bytes[pc + 1]:X2}{bytes[pc + 2]:X2}";
             }
 

@@ -21,7 +21,7 @@
       "program": "${workspaceFolder}/ConsoleTools/Dasm6502/bin/Debug/net10.0/Dasm6502.dll",
       "args": [
         "--input",
-        "${workspaceFolder}/ConsoleTools/Emu6502/roms/apple2e.rom",
+        "${workspaceFolder}/InnoWerks.Emulators.AppleIIe/roms/mouse.rom",
         "--output",
         "-"
       ],
@@ -85,14 +85,7 @@
       "preLaunchTask": "build",
       "program": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe/bin/Debug/net10.0/InnoWerks.Emulators.AppleIIe.dll",
       "cwd": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe",
-      "args": [
-        "--disk1",
-        "disks/dos33.dsk",
-        "--disk2",
-        "disks/blank.dsk",
-        "--profile",
-        "disks/profile.dsk"
-      ],
+      "args": ["--disk1", "disks/dos33.dsk", "--mouse"],
       "stopAtEntry": false,
       "requireExactSource": false
     },
@@ -180,7 +173,8 @@
         "--harddisk1",
         "disks/A2DeskTop-1.5-en_32MB.hdv",
         "--monochrome",
-        "amber"
+        "amber",
+        "--mouse"
       ],
       "stopAtEntry": false,
       "requireExactSource": false

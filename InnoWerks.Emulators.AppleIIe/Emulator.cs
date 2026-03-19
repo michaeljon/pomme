@@ -80,6 +80,11 @@ namespace InnoWerks.Emulators.AppleIIe
         private HostLayout hostLayout;
 
         //
+        // mouse card
+        //
+        private MouseSlotDevice mouseDevice;
+
+        //
         // state stuff
         //
         private KeyboardState previousKeyboardState;
@@ -147,7 +152,11 @@ namespace InnoWerks.Emulators.AppleIIe
 
             cpu = new Cpu65C02(
                 appleBus,
-                (cpu, programCounter) => { },
+                (cpu, programCounter) =>
+                {
+                    // if (programCounter >= 0xC400 && programCounter <= 0xC4FF)
+                    //     Console.WriteLine($"Slot4 ROM exec: {programCounter:X4}");
+                },
                 (cpu) => { });
 
             // later, move rom loading into device
@@ -171,6 +180,11 @@ namespace InnoWerks.Emulators.AppleIIe
             if (string.IsNullOrEmpty(cliOptions.HardDisk2) == false)
             {
                 hardDrive.InsertDisk(cliOptions.HardDisk2, 1);
+            }
+
+            if (cliOptions.Mouse)
+            {
+                mouseDevice = new MouseSlotDevice(4, cpu, appleBus, machineState);
             }
 
             appleBus.LoadProgramToRom(mainRom);
@@ -201,7 +215,26 @@ namespace InnoWerks.Emulators.AppleIIe
             ArgumentNullException.ThrowIfNull(gameTime);
 
             var mouse = Mouse.GetState();
-            if (mouse.LeftButton == ButtonState.Pressed && prevMouse.LeftButton == ButtonState.Released)
+            var leftButtonJustPressed = mouse.LeftButton == ButtonState.Pressed && prevMouse.LeftButton == ButtonState.Released;
+            var inAppleDisplay = hostLayout.AppleDisplay.Contains(mouse.Position);
+
+            if (mouseDevice != null)
+            {
+                mouseDevice.UpdateFromHost(
+                    mouse.X, mouse.Y, mouse.LeftButton == ButtonState.Pressed,
+                    hostLayout.AppleDisplay.X, hostLayout.AppleDisplay.Y,
+                    hostLayout.AppleDisplay.Width, hostLayout.AppleDisplay.Height);
+
+                // Level detection: fires the first frame the button is down in the Apple
+                // display area.  Once captured, IsMouseCaptured gates this off.
+                if (mouse.LeftButton == ButtonState.Pressed && inAppleDisplay && !mouseDevice.IsMouseCaptured)
+                {
+                    mouseDevice.Capture();
+                    IsMouseVisible = false;
+                }
+            }
+
+            if (leftButtonJustPressed && !inAppleDisplay)
             {
                 var cpuTraceEntry = display.HandleTraceClick(hostLayout, cpuTraceBuffer, mouse.Position);
 
@@ -213,6 +246,7 @@ namespace InnoWerks.Emulators.AppleIIe
                     }
                 }
             }
+
             prevMouse = mouse;
 
             // see if we want to do anything here with the emulator keys
@@ -357,6 +391,21 @@ namespace InnoWerks.Emulators.AppleIIe
             if (IsJustPressed(Keys.F11))
             {
                 graphicsDeviceManager.ToggleFullScreen();
+            }
+
+            // F12: Toggle mouse capture
+            if (IsJustPressed(Keys.F12) && mouseDevice != null)
+            {
+                if (mouseDevice.IsMouseCaptured)
+                {
+                    mouseDevice.Release();
+                    IsMouseVisible = true;
+                }
+                else
+                {
+                    mouseDevice.Capture();
+                    IsMouseVisible = false;
+                }
             }
         }
 

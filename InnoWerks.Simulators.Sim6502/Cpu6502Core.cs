@@ -150,7 +150,11 @@ namespace InnoWerks.Simulators
             // and if so we'll call it.
             if (intercepts.TryGetValue(Registers.ProgramCounter, out var handler))
             {
-                handler?.Invoke(this, bus);
+                if (handler != null)
+                {
+                    // SimDebugger.Info($"Intercept ${Registers.ProgramCounter:X4} is being called\n");
+                    handler.Invoke(this, bus);
+                }
             }
 
             // for debugging we're just going to peek at the next
