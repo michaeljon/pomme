@@ -111,6 +111,9 @@ namespace InnoWerks.Computers.Apple
             MachineState machineState)
             : base(slot, "ProDOS Controller", cpu, bus, machineState)
         {
+            ArgumentNullException.ThrowIfNull(cpu, nameof(cpu));
+            ArgumentNullException.ThrowIfNull(bus, nameof(bus));
+
             HasRom = true;
             Rom = new byte[MemoryPage.PageSize];
 
@@ -143,10 +146,8 @@ namespace InnoWerks.Computers.Apple
             // drive entry point
             Rom[0xFF] = EntryPoint;
 
-            ArgumentNullException.ThrowIfNull(bus, nameof(bus));
             bus.AddDevice(this);
 
-            ArgumentNullException.ThrowIfNull(cpu, nameof(cpu));
             cpu.AddIntercept(0xC000 + EntryPoint + slot * 0x100, HandleIntercept);
 
             /*

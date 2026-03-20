@@ -556,10 +556,12 @@ namespace InnoWerks.Computers.Apple
 
             for (var page = 0; page < 2048 / MemoryPage.PageSize; page++)
             {
-                var memoryPage = new MemoryPage(MemoryPageType.CardRom, $"slot{slot}-c8", (byte)(0xC8 + page));
-                Array.Copy(objectCode, 0, memoryPage.Block, 0, 256);
+                var memoryPage = new MemoryPage(MemoryPageType.CardRom, $"slot{slot}-c8", (byte)(0xC8 + page))
+                {
+                    Slot = slot
+                };
 
-                memoryPage.Slot = slot;
+                Array.Copy(objectCode, 0, memoryPage.Block, 0, 256);
 
                 hiSlotRom[slot][page] = memoryPage;
             }

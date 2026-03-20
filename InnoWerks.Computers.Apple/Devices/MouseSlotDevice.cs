@@ -96,7 +96,6 @@ namespace InnoWerks.Computers.Apple
             HasRom = true;
             Rom = new byte[MemoryPage.PageSize];
 
-            // Fill with RTS ($60) as a safe fallback for any unintercepted reads
             Array.Fill(Rom, (byte)0x00);
 
             // Identification bytes — scanned by ProDOS and applications like A2DeskTop

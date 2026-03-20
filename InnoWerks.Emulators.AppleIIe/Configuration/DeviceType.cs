@@ -13,5 +13,7 @@ namespace InnoWerks.Emulators.AppleIIe
         HardDisk,
 
         DiskII,
+
+        ThunderClock,
     }
 }

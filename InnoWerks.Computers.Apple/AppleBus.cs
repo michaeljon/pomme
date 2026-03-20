@@ -53,12 +53,13 @@ namespace InnoWerks.Computers.Apple
         public void AddDevice(ISlotDevice device)
         {
             ArgumentNullException.ThrowIfNull(device, nameof(device));
-            device.Reset();
 
             if (slotDevices[device.Slot] != null)
             {
                 throw new ArgumentException($"There is already a device {slotDevices[device.Slot].Name} in slot {device.Slot}");
             }
+
+            device.Reset();
 
             var slotDevice = (SlotRomDevice)device;
             slotDevices[device.Slot] = slotDevice;
@@ -137,11 +138,6 @@ namespace InnoWerks.Computers.Apple
                     var slot = (address >> 8) & 7;
                     var slotDevice = slotDevices[slot];
 
-                    // if (slot != 6)
-                    // {
-                    //     SimDebugger.Info($"Read slot {slot} ROM address {address:X4}\n");
-                    // }
-
                     if (slotDevice?.HandlesRead(address) == true)
                     {
                         return slotDevice.Read(address);
@@ -197,11 +193,6 @@ namespace InnoWerks.Computers.Apple
                 {
                     var slot = (address >> 8) & 7;
                     var slotDevice = slotDevices[slot];
-
-                    // if (slot != 6)
-                    // {
-                    //     SimDebugger.Info($"Write slot {slot} ROM address {address:X4}\n");
-                    // }
 
                     if (slotDevice?.HandlesWrite(address) == true)
                     {

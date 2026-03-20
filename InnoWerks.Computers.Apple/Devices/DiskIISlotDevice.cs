@@ -24,6 +24,9 @@ namespace InnoWerks.Computers.Apple
             MachineState machineState)
             : base(slot, "Disk II Controller", cpu, bus, machineState)
         {
+            ArgumentNullException.ThrowIfNull(cpu, nameof(cpu));
+            ArgumentNullException.ThrowIfNull(bus, nameof(bus));
+
             currentDrive = drive1;
 
             HasRom = true;
@@ -32,7 +35,6 @@ namespace InnoWerks.Computers.Apple
             var diskIIRom = File.ReadAllBytes("roms/DiskII.rom");
             Array.Copy(diskIIRom, Rom, diskIIRom.Length);
 
-            ArgumentNullException.ThrowIfNull(bus, nameof(bus));
             bus.AddDevice(this);
         }
 

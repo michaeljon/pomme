@@ -14,12 +14,12 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+#pragma warning disable CA1823 // Avoid unused private fields
 #pragma warning disable CA2213 // Disposable fields should be disposed
 #pragma warning disable CS0169 // Make field read-only
+#pragma warning disable IDE0044 // Add readonly modifier
 #pragma warning disable IDE0051 // Make field read-only
 #pragma warning disable RCS1169 // Make field read-only
-#pragma warning disable CA1823 // Avoid unused private fields
-#pragma warning disable IDE0044 // Add readonly modifier
 #pragma warning disable RCS1213 // Remove unused member declaration
 
 namespace InnoWerks.Emulators.AppleIIe
@@ -46,6 +46,7 @@ namespace InnoWerks.Emulators.AppleIIe
         private IOU iou;
         private MMU mmu;
         private Cpu65C02 cpu;
+        private MouseSlotDevice mouseDevice;
 
         //
         // debug, etc.
@@ -79,11 +80,6 @@ namespace InnoWerks.Emulators.AppleIIe
         // layout stuff
         //
         private HostLayout hostLayout;
-
-        //
-        // mouse card
-        //
-        private MouseSlotDevice mouseDevice;
 
         //
         // state stuff
@@ -207,6 +203,10 @@ namespace InnoWerks.Emulators.AppleIIe
                             floppyDrive.GetDrive(1).InsertDisk(diskiiDevice.DriveTwo.Image);
                         }
 
+                        break;
+
+                    case DeviceType.ThunderClock:
+                        _ = new ThunderClockSlotDevice(slot.SlotNumber, cpu, appleBus, machineState);
                         break;
                 }
             }

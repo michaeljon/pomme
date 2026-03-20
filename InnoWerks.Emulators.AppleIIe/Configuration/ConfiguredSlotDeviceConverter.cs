@@ -17,6 +17,7 @@ namespace InnoWerks.Emulators.AppleIIe
                 "mouse" => JsonSerializer.Deserialize<ConfiguredMouse>(root.GetRawText(), options),
                 "hardDisk" => JsonSerializer.Deserialize<ConfiguredHardDisk>(root.GetRawText(), options),
                 "diskii" => JsonSerializer.Deserialize<ConfiguredDiskIIDevice>(root.GetRawText(), options),
+                "thunderClock" => JsonSerializer.Deserialize<ConfiguredThunderClock>(root.GetRawText(), options),
 
                 // Alternatively throw an Exception
                 _ => JsonSerializer.Deserialize<ConfiguredSlotDevice>(root.GetRawText(), options)
