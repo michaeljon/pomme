@@ -95,5 +95,11 @@ namespace InnoWerks.Simulators
         /// </summary>
         /// <returns></returns>
         byte StackPop();
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="nmi"></param>
+        public void InjectInterrupt(bool nmi);
     }
 }

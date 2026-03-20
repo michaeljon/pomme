@@ -146,12 +146,12 @@ namespace Emu6502
 
                     case 'I':
                     case 'i':
-                        cpu.IRQ();
+                        cpu.InjectInterrupt(false);
                         break;
 
                     case 'N':
                     case 'n':
-                        cpu.NMI();
+                        cpu.InjectInterrupt(true);
                         break;
 
                     case 'R':

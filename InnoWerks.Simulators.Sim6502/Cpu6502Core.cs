@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using InnoWerks.Processors;
-using Microsoft.VisualBasic;
-
 //
 // things to note: http://www.6502.org/tutorials/65c02opcodes.html
 //                 https://xotmatrix.github.io/6502/6502-single-cycle-execution.html
@@ -44,6 +42,10 @@ namespace InnoWerks.Simulators
 
         protected Dictionary<ushort, Func<ICpu, IBus, bool>> intercepts { get; } = [];
 
+        private bool irqPending;
+
+        private bool nmiPending;
+
         protected Cpu6502Core(IBus bus,
                                      Action<ICpu, ushort> preExecutionCallback,
                                      Action<ICpu> postExecutionCallback)
@@ -71,6 +73,9 @@ namespace InnoWerks.Simulators
         {
             Registers.Reset();
 
+            nmiPending = false;
+            irqPending = false;
+
             // this needs to reset the soft switches via the bus
             bus.Reset();
 
@@ -81,40 +86,16 @@ namespace InnoWerks.Simulators
             Registers.ProgramCounter = RegisterMath.MakeShort(pch, pcl);
         }
 
-        public void NMI()
+        public void InjectInterrupt(bool nmi)
         {
-            StackPushWord(Registers.ProgramCounter);
-            StackPush((byte)((Registers.ProcessorStatus & 0xef) | (byte)ProcessorStatusBit.Unused));
-
-            // 65c02 clears the decimal flag, 6502 leaves is undefined
-            if (CpuClass == CpuClass.WDC65C02)
+            if (nmi == true)
             {
-                Registers.Decimal = false;
+                nmiPending = true;
             }
-
-            Registers.Interrupt = true;
-
-            // load PC from reset vector
-            byte pcl = bus.Read(NmiVectorL);
-            byte pch = bus.Read(NmiVectorH);
-
-            Registers.ProgramCounter = RegisterMath.MakeShort(pch, pcl);
-        }
-
-        public void IRQ()
-        {
-            if (Registers.Interrupt == true)
+            else
             {
-                NMI();
+                irqPending = true;
             }
-
-            // todo: finish this case to support apple iie ref p. 151
-        }
-
-        public void PrintStatus()
-        {
-            Console.Write($"PC:{Registers.ProgramCounter:X4} {Registers.GetRegisterDisplay} ");
-            Console.WriteLine(Registers.GetFlagsDisplay);
         }
 
         public void StackPush(byte b)
@@ -145,6 +126,27 @@ namespace InnoWerks.Simulators
         public int Step(bool returnPriorToBreak = false)
         {
             bus.BeginTransaction();
+
+            //
+            // see if we've been interrupted by external forces
+            // and handle accordingly. these don't completely
+            // handle the case where an interrupt can occur during
+            // an interrupt, but they're close
+            //
+            // on return from these setup calls the stack, ps, and
+            // pc will be ready to "handle" the interrupt. that is,
+            // the pc will be set to the correct interrupt vector
+            // so that as we fall-through we'll just pick up
+            // in the right location
+            //
+            if (nmiPending == true)
+            {
+                HandleNMI();
+            }
+            else if (irqPending == true && Registers.Interrupt == false)
+            {
+                HandleIRQ();
+            }
 
             // we're going to see if there's an intercept registered
             // and if so we'll call it.
@@ -1486,13 +1488,6 @@ namespace InnoWerks.Simulators
             Registers.SetNZ(Registers.A);
         }
 
-        /// <summary>
-        /// Dummy operator, eats one opcode and increments the PC
-        /// </summary>
-        public void IllegalInstruction(ushort _1, byte _2)
-        {
-        }
-
         public void WAI(ushort _1, byte _2)
         {
             throw new NotImplementedException();
@@ -1502,6 +1497,14 @@ namespace InnoWerks.Simulators
         {
             throw new NotImplementedException();
         }
+
+        /// <summary>
+        /// Dummy operator, eats one opcode and increments the PC
+        /// </summary>
+        public void IllegalInstruction(ushort _1, byte _2)
+        {
+        }
+        #endregion
 
         private void DoBranch(bool condition, ushort addr, byte offset)
         {
@@ -1552,6 +1555,49 @@ namespace InnoWerks.Simulators
                 Registers.ProgramCounter = addr;
             }
         }
-        #endregion
+
+        private void HandleNMI()
+        {
+            StackPushWord(Registers.ProgramCounter);
+            StackPush((byte)((Registers.ProcessorStatus & 0xef) | (byte)ProcessorStatusBit.Unused));
+
+            // 65c02 clears the decimal flag, 6502 leaves is undefined
+            if (CpuClass == CpuClass.WDC65C02)
+            {
+                Registers.Decimal = false;
+            }
+
+            Registers.Interrupt = true;
+
+            // load PC from interrupt vector
+            byte pcl = bus.Read(NmiVectorL);
+            byte pch = bus.Read(NmiVectorH);
+
+            Registers.ProgramCounter = RegisterMath.MakeShort(pch, pcl);
+
+            nmiPending = false;
+        }
+
+        private void HandleIRQ()
+        {
+            StackPushWord(Registers.ProgramCounter);
+            StackPush((byte)((Registers.ProcessorStatus & 0xef) | (byte)ProcessorStatusBit.Unused));
+
+            // 65c02 clears the decimal flag, 6502 leaves is undefined
+            if (CpuClass == CpuClass.WDC65C02)
+            {
+                Registers.Decimal = false;
+            }
+
+            Registers.Interrupt = true;
+
+            // load PC from interrupt vector
+            byte pcl = bus.Read(IrqVectorL);
+            byte pch = bus.Read(IrqVectorH);
+
+            Registers.ProgramCounter = RegisterMath.MakeShort(pch, pcl);
+
+            irqPending = false;
+        }
     }
 }
