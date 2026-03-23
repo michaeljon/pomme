@@ -2,15 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Net.NetworkInformation;
-using System.Reflection.PortableExecutable;
-using CommandLine;
-using InnoWerks.Assemblers;
 using InnoWerks.Computers.Apple;
 using InnoWerks.Processors;
 using InnoWerks.Simulators;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
@@ -213,6 +208,12 @@ namespace InnoWerks.Emulators.AppleIIe
 
             appleBus.LoadProgramToRom(mainRom);
 
+            // load any breakpoints
+            foreach (var bp in emulatorConfiguration.Breakpoints)
+            {
+                breakpoints.Add(bp);
+            }
+
             cpu.Reset();
 
             base.Initialize();
@@ -322,9 +323,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
             while (appleBus.CycleCount < targetCycles)
             {
-                var nextInstruction = cpu.PeekInstruction();
-
-                if (breakpoints.Contains(nextInstruction.ProgramCounter))
+                if (breakpoints.Contains(cpu.Registers.ProgramCounter))
                 {
                     cpuPaused = true;
                     break;

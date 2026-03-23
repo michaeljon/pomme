@@ -1,9 +1,7 @@
-#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
-
-using Microsoft.Xna.Framework;
-
 namespace InnoWerks.Emulators.AppleIIe
 {
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
     public sealed class HiresBuffer
     {
         private readonly byte[,] bytes = new byte[192, DisplayCharacteristics.HiresAppleWidth];

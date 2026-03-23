@@ -1,19 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Net.NetworkInformation;
-using System.Reflection.PortableExecutable;
 using InnoWerks.Computers.Apple;
-using InnoWerks.Processors;
 using InnoWerks.Simulators;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 
 #pragma warning disable CA1859 // Use concrete types when possible for improved performance
 

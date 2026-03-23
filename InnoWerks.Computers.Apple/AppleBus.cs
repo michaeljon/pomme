@@ -1,11 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Linq;
-using System.Net;
-using System.Transactions;
-using InnoWerks.Processors;
 using InnoWerks.Simulators;
 
 namespace InnoWerks.Computers.Apple
@@ -61,7 +55,11 @@ namespace InnoWerks.Computers.Apple
 
             device.Reset();
 
-            var slotDevice = (SlotRomDevice)device;
+            if (device is not SlotRomDevice slotDevice)
+            {
+                throw new ArgumentNullException($"Device being added implements ISlotDevice but is not a SlotRomDevice");
+            }
+
             slotDevices[device.Slot] = slotDevice;
 
             memoryBlocks.LoadSlotCxRom(device.Slot, slotDevice.Rom);
@@ -112,7 +110,7 @@ namespace InnoWerks.Computers.Apple
 
                 return 0x00;
             }
-            else if (address >= 0xC090 && address < 0xC0FF)
+            else if (address >= 0xC090 && address <= 0xC0FF)
             {
                 var slot = (address >> 4) & 7;
                 var slotDevice = slotDevices[slot];
@@ -166,7 +164,7 @@ namespace InnoWerks.Computers.Apple
 
                 return;
             }
-            else if (address >= 0xC090 && address < 0xC0FF)
+            else if (address >= 0xC090 && address <= 0xC0FF)
             {
                 var slot = (address >> 4) & 7;
                 var slotDevice = slotDevices[slot];
@@ -238,6 +236,7 @@ namespace InnoWerks.Computers.Apple
             {
                 device.Reset();
             }
+            intC8Handler.Reset();
 
             for (var slot = 0; slot < slotDevices.Length; slot++)
             {
@@ -254,10 +253,11 @@ namespace InnoWerks.Computers.Apple
         {
             CycleCount += (ulong)cycles;
 
-            foreach (var device in softSwitchDevices)
-            {
-                device.Tick(cycles);
-            }
+            // foreach (var device in softSwitchDevices)
+            // {
+            //     device.Tick(cycles);
+            // }
+            // intC8Handler.Tick();
 
             for (var slot = 0; slot < slotDevices.Length; slot++)
             {

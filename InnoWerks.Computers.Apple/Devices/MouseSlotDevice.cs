@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using InnoWerks.Processors;
 using InnoWerks.Simulators;
 
 namespace InnoWerks.Computers.Apple

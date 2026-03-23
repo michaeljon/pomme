@@ -2,10 +2,6 @@
 // #define DEBUG_WRITE
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Channels;
-using InnoWerks.Processors;
 using InnoWerks.Simulators;
 
 namespace InnoWerks.Computers.Apple
@@ -111,8 +107,8 @@ namespace InnoWerks.Computers.Apple
 
         public void Reset()
         {
-            machineState.State[SoftSwitch.IntC8RomEnabled] = true;
-            machineState.State[SoftSwitch.IntCxRomEnabled] = true;
+            machineState.State[SoftSwitch.IntC8RomEnabled] = false;
+            machineState.State[SoftSwitch.IntCxRomEnabled] = false;
 
             machineState.CurrentSlot = 0;
             machineState.ExpansionRomType = ExpansionRomType.ExpRomInternal;

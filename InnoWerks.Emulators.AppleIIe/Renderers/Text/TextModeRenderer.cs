@@ -4,7 +4,6 @@ using System.IO;
 using InnoWerks.Computers.Apple;
 using InnoWerks.Simulators;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
 #pragma warning disable CA2213 // Disposable fields should be disposed
@@ -73,7 +72,7 @@ namespace InnoWerks.Emulators.AppleIIe
             count /= DisplayCharacteristics.AppleCellHeight;
 
             var textBuffer = new TextBuffer(cols);
-            textMemoryReader.ReadTextPage(textBuffer, count - start);
+            textMemoryReader.ReadTextPage(textBuffer, start, count);
 
             for (var row = start; row < start + count; row++)
             {

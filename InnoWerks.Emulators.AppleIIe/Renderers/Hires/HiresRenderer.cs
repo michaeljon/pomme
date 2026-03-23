@@ -1,11 +1,8 @@
 using System;
 using System.Diagnostics;
-using System.IO;
-using System.Threading;
 using InnoWerks.Computers.Apple;
 using InnoWerks.Simulators;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
 #pragma warning disable CA2213 // Disposable fields should be disposed

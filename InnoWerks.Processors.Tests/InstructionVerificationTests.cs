@@ -77,13 +77,13 @@ namespace InnoWerks.Processors.Tests
         [TestMethod]
         public void Verify6502InstructionCount()
         {
-            Assert.AreEqual(256, CpuInstructions.OpCode6502.Count);
+            Assert.AreEqual(256, CpuInstructions.OpCode6502.Length);
         }
 
         [TestMethod]
         public void Verify65C02InstructionCount()
         {
-            Assert.AreEqual(256, CpuInstructions.OpCode65C02.Count);
+            Assert.AreEqual(256, CpuInstructions.OpCode65C02.Length);
         }
     }
 }

@@ -24,7 +24,7 @@ namespace InnoWerks.Simulators
             bus.SetCpu(this);
         }
 
-        protected override InstructionSet InstructionSet => CpuInstructions.OpCode6502;
+        protected override OpCodeDefinition[] InstructionSet => CpuInstructions.OpCode6502;
 
         protected override void Dispatch(OpCodeDefinition opCodeDefinition)
         {
@@ -725,7 +725,8 @@ namespace InnoWerks.Simulators
                         var offset = bus.Read(Registers.ProgramCounter + 1);
 
                         // T2 - T3
-                        var addr = (ushort)(Registers.ProgramCounter + 2 + ((sbyte)offset < 0 ? (sbyte)offset : offset));
+                        // TODO: verify this does not break tests
+                        var addr = (ushort)(Registers.ProgramCounter + 2 + (sbyte)offset);
                         opCodeDefinition.Execute(this, addr, offset);
                     }
                     break;

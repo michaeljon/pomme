@@ -4,9 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using InnoWerks.Processors;
 using InnoWerks.Simulators;
 
 namespace InnoWerks.Computers.Apple
@@ -21,7 +18,7 @@ namespace InnoWerks.Computers.Apple
 
         private readonly MachineState machineState;
 
-        private readonly List<ushort> handlesRead =
+        private readonly HashSet<ushort> handlesRead =
         [
             //
             // LANGUAGE CARD
@@ -48,7 +45,7 @@ namespace InnoWerks.Computers.Apple
             0xC084, 0xC085, 0xC086, 0xC087,    0xC08C, 0xC08D, 0xC08E, 0xC08F,
         ];
 
-        private readonly List<ushort> handlesWrite =
+        private readonly HashSet<ushort> handlesWrite =
         [
             //
             // LANGUAGE CARD

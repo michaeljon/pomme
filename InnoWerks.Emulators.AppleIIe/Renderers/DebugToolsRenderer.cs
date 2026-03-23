@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using InnoWerks.Computers.Apple;
 using InnoWerks.Simulators;

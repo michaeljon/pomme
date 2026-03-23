@@ -1,12 +1,9 @@
 using System;
-using System.Buffers;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CommandLine;
-using InnoWerks.Assemblers;
 using InnoWerks.Computers.Apple;
 using InnoWerks.Processors;
 using InnoWerks.Simulators;

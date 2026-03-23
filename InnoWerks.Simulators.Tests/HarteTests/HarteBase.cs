@@ -154,8 +154,8 @@ namespace InnoWerks.Simulators.Tests
 
                 if (test.Final.S != cpu.Registers.StackPointer) { testFailed = true; results.Add($"{test.Name}: StackPointer expected {test.Final.S:X2} actual {cpu.Registers.StackPointer:X2}"); }
                 if (test.Final.A != cpu.Registers.A) { testFailed = true; results.Add($"{test.Name}: A expected {test.Final.A:X2} actual {cpu.Registers.A:X2}"); }
-                if (test.Final.X != cpu.Registers.X) { testFailed = true; results.Add($"{test.Name}: X expected {test.Final.X:X2} actual {cpu.Registers.Y:X2}"); }
-                if (test.Final.Y != cpu.Registers.Y) { testFailed = true; results.Add($"{test.Name}: Y expected {test.Final.Y:X2} actual {cpu.Registers.X:X2}"); }
+                if (test.Final.X != cpu.Registers.X) { testFailed = true; results.Add($"{test.Name}: X expected {test.Final.X:X2} actual {cpu.Registers.X:X2}"); }
+                if (test.Final.Y != cpu.Registers.Y) { testFailed = true; results.Add($"{test.Name}: Y expected {test.Final.Y:X2} actual {cpu.Registers.Y:X2}"); }
                 if (test.Final.P != cpu.Registers.ProcessorStatus) { testFailed = true; results.Add($"{test.Name}: ProcessorStatus expected {test.Final.P:X2} actual {cpu.Registers.ProcessorStatus:X2}"); }
 
 #if POST_STEP_MEMORY

@@ -1,4 +1,3 @@
-using System;
 using InnoWerks.Processors;
 
 namespace InnoWerks.Computers.Apple

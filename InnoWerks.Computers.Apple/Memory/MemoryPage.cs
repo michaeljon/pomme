@@ -1,11 +1,10 @@
 using System;
-using System.Net.NetworkInformation;
 
 namespace InnoWerks.Computers.Apple
 {
     public enum MemoryPageType
     {
-        Undefined,
+        ReadOnly,
 
         Ram,
 
@@ -32,27 +31,10 @@ namespace InnoWerks.Computers.Apple
 
         public int Slot { get; set; }
 
-        private static readonly byte[] zeros = new byte[PageSize];
-        private static readonly byte[] ffs = new byte[PageSize];
-
-        private static readonly MemoryPage zeroValuePage = new(MemoryPageType.Undefined, "0x00", 0x00);
-        private static readonly MemoryPage ffValuePage = new(MemoryPageType.Undefined, "0xff", 0x00);
-
-        static MemoryPage()
-        {
-            for (var i = 0; i < PageSize; i++)
-            {
-                zeros[i] = 0;
-                ffs[i] = 0;
-            }
-
-            Array.Copy(ffs, zeroValuePage.Block, PageSize);
-            Array.Copy(ffs, ffValuePage.Block, PageSize);
-        }
-
-        public MemoryPage(MemoryPageType memoryPageType, string description, byte pageNumber)
+        public MemoryPage(MemoryPageType memoryPageType, string description, byte pageNumber, byte fill = 0x00)
         {
             Block = new byte[PageSize];
+            Array.Fill(Block, fill);
 
             MemoryPageType = memoryPageType;
             Description = description;
@@ -66,17 +48,7 @@ namespace InnoWerks.Computers.Apple
 
         public void ZeroOut()
         {
-            Array.Copy(zeros, Block, PageSize);
-        }
-
-        public static MemoryPage Zeros(MemoryPageType memoryPageType, byte pageNumber)
-        {
-            return zeroValuePage;
-        }
-
-        public static MemoryPage FFs(MemoryPageType memoryPageType, byte pageNumber)
-        {
-            return ffValuePage;
+            Array.Fill(Block, (byte)0x00);
         }
     }
 }

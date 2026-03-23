@@ -3,9 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Channels;
-using InnoWerks.Processors;
 using InnoWerks.Simulators;
 
 namespace InnoWerks.Computers.Apple
@@ -27,7 +24,7 @@ namespace InnoWerks.Computers.Apple
         // Bus cycle count when PTRIG was last fired; -1 means not yet triggered
         private long paddleTimerStartCycle = -1;
 
-        private readonly List<ushort> handlesRead = [
+        private readonly HashSet<ushort> handlesRead = [
             //
             // DISPLAY
             //
@@ -110,7 +107,7 @@ namespace InnoWerks.Computers.Apple
             SoftSwitchAddress.RDIOUDIS
         ];
 
-        private readonly List<ushort> handlesWrite =
+        private readonly HashSet<ushort> handlesWrite =
         [
             //
             // DISPLAY

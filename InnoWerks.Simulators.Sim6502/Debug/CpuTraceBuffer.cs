@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.Serialization;
-using InnoWerks.Processors;
 
 namespace InnoWerks.Simulators
 {

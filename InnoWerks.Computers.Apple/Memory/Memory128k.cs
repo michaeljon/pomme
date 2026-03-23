@@ -1,8 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Reflection.PortableExecutable;
-using InnoWerks.Processors;
 
 #pragma warning disable CA1822
 
@@ -133,8 +130,10 @@ namespace InnoWerks.Computers.Apple
             // cx slot rom, one page per slot, $C100-$C7FF
             for (var slot = 0; slot < 8; slot++)
             {
-                loSlotRom[slot] = MemoryPage.Zeros(MemoryPageType.CardRom, (byte)(0xC0 + slot));
-                loSlotRom[slot].Slot = slot;
+                loSlotRom[slot] = new MemoryPage(MemoryPageType.CardRom, $"slot-${slot} ROM", (byte)(0xC0 + slot))
+                {
+                    Slot = slot
+                };
             }
 
             // c8 slot rom, one page per slot, $C800-$CFFF
@@ -144,8 +143,10 @@ namespace InnoWerks.Computers.Apple
 
                 for (var page = 0; page < 2048 / MemoryPage.PageSize; page++)
                 {
-                    hiSlotRom[slot][page] = MemoryPage.Zeros(MemoryPageType.CardRom, (byte)(0xC8 + page));
-                    hiSlotRom[slot][page].Slot = slot;
+                    hiSlotRom[slot][page] = new MemoryPage(MemoryPageType.CardRom, $"slot-${slot} ROM", (byte)(0xC8 + page))
+                    {
+                        Slot = slot
+                    };
                 }
             }
 
@@ -170,7 +171,7 @@ namespace InnoWerks.Computers.Apple
             for (var p = 0; p < languageCardBank2.Length; p++)
             {
                 languageCardBank2[p].ZeroOut();
-                languageCardBank2[p].ZeroOut();
+                auxLanguageCardBank2[p].ZeroOut();
             }
 
             Remap();
@@ -298,7 +299,7 @@ namespace InnoWerks.Computers.Apple
                 {
                     for (var loop = 0xC8; loop < 0xD0; loop++)
                     {
-                        activeRead[loop] = MemoryPage.Zeros(MemoryPageType.Undefined, (byte)loop);
+                        activeRead[loop] = null;
                     }
                 }
                 else
@@ -420,7 +421,7 @@ namespace InnoWerks.Computers.Apple
             foreach (var memoryPage in memoryPages)
             {
                 activeRead[memoryPage.PageNumber] = memoryPage;
-                activeWrite[memoryPage.PageNumber] = MemoryPage.FFs(memoryPage.MemoryPageType, memoryPage.PageNumber);
+                activeWrite[memoryPage.PageNumber] = null;
             }
         }
 
@@ -561,7 +562,7 @@ namespace InnoWerks.Computers.Apple
                     Slot = slot
                 };
 
-                Array.Copy(objectCode, 0, memoryPage.Block, 0, 256);
+                Array.Copy(objectCode, page * MemoryPage.PageSize, memoryPage.Block, 0, 256);
 
                 hiSlotRom[slot][page] = memoryPage;
             }
@@ -675,12 +676,7 @@ namespace InnoWerks.Computers.Apple
         public void ZeroMain(ushort address)
         {
             var page = GetPage(address);
-            var offset = GetOffset(address);
-
-            for (var b = 0; b < MemoryPage.PageSize; b++)
-            {
-                mainMemory[page].Block[offset] = 0x00;
-            }
+            Array.Fill(mainMemory[page].Block, (byte)0x00);
         }
 
         /// <summary>
@@ -724,12 +720,7 @@ namespace InnoWerks.Computers.Apple
         public void ZeroAux(ushort address)
         {
             var page = GetPage(address);
-            var offset = GetOffset(address);
-
-            for (var b = 0; b < MemoryPage.PageSize; b++)
-            {
-                auxMemory[page].Block[offset] = 0x00;
-            }
+            Array.Fill(auxMemory[page].Block, (byte)0x00);
         }
 
         internal void DumpPage(MemoryPage memoryPage)

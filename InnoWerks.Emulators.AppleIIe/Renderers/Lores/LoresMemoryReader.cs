@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.InteropServices;
 using InnoWerks.Computers.Apple;
 
 #pragma warning disable CA1819 // Properties should not return arrays

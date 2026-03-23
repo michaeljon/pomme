@@ -1,6 +1,4 @@
 using System;
-using System.Runtime.InteropServices;
-using System.Text;
 using InnoWerks.Computers.Apple;
 
 #pragma warning disable CA1819 // Properties should not return arrays
@@ -43,25 +41,25 @@ namespace InnoWerks.Emulators.AppleIIe
             }
         }
 
-        public void ReadTextPage(TextBuffer textBuffer, int rows = 24)
+        public void ReadTextPage(TextBuffer textBuffer, int start = 0, int count = 24)
         {
             ArgumentNullException.ThrowIfNull(textBuffer);
 
             if (eightyColumnMode == false)
             {
-                Read40Column(textBuffer, rows);
+                Read40Column(textBuffer, start, count);
             }
             else
             {
-                Read80Column(textBuffer, rows);
+                Read80Column(textBuffer, start, count);
             }
         }
 
-        private void Read40Column(TextBuffer textBuffer, int rows = 24)
+        private void Read40Column(TextBuffer textBuffer, int start = 0, int count = 24)
         {
             var memory = ram.Read((byte)(page == 2 ? 0x08 : 0x04), 4);
 
-            for (var row = 0; row < rows; row++)
+            for (var row = start; row < start + count; row++)
             {
                 for (var col = 0; col < 40; col++)
                 {
@@ -72,12 +70,12 @@ namespace InnoWerks.Emulators.AppleIIe
             }
         }
 
-        private void Read80Column(TextBuffer textBuffer, int rows = 24)
+        private void Read80Column(TextBuffer textBuffer, int start = 0, int count = 24)
         {
             var main = ram.GetMain(0x04, 4);
             var aux = ram.GetAux(0x04, 4);
 
-            for (var row = 0; row < rows; row++)
+            for (var row = start; row < start + count; row++)
             {
                 for (var col = 0; col < 40; col++)
                 {

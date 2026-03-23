@@ -1,7 +1,4 @@
 
-using System;
-using System.Diagnostics;
-using InnoWerks.Processors;
 namespace InnoWerks.Computers.Apple
 {
 #pragma warning disable CA1822 // Mark members as static

@@ -216,7 +216,7 @@ namespace InnoWerks.Simulators
                 Length = 2,
                 OpCodeValue = oc,
                 Operand1 = o1,
-                Display = $"(${o1:X2},X)",
+                Display = $"${o1:X2},X",
             };
         }
 
@@ -242,7 +242,7 @@ namespace InnoWerks.Simulators
                 Length = 2,
                 OpCodeValue = oc,
                 Operand1 = o1,
-                Display = $"(${o1:X2},Y",
+                Display = $"${o1:X2},Y",
             };
         }
 

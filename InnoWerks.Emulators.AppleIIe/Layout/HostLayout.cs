@@ -1,5 +1,4 @@
 using System;
-using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework;
 
 namespace InnoWerks.Emulators.AppleIIe

@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
 using InnoWerks.Processors;
 //
 // things to note: http://www.6502.org/tutorials/65c02opcodes.html
@@ -12,6 +10,8 @@ using InnoWerks.Processors;
 
 namespace InnoWerks.Simulators
 {
+#pragma warning disable CA1819 // Properties should not return arrays
+
     public abstract class Cpu6502Core : ICpu
     {
         // IRQ, reset, NMI vectors
@@ -46,6 +46,10 @@ namespace InnoWerks.Simulators
 
         private bool nmiPending;
 
+        private bool waiting;
+
+        private bool stopped;
+
         protected Cpu6502Core(IBus bus,
                                      Action<ICpu, ushort> preExecutionCallback,
                                      Action<ICpu> postExecutionCallback)
@@ -62,7 +66,7 @@ namespace InnoWerks.Simulators
 
         protected abstract void Dispatch(OpCodeDefinition opCodeDefinition);
 
-        protected abstract InstructionSet InstructionSet { get; }
+        protected abstract OpCodeDefinition[] InstructionSet { get; }
 
         protected virtual OpCodeDefinition GetOpCodeDefinition(byte operation)
         {
@@ -75,6 +79,8 @@ namespace InnoWerks.Simulators
 
             nmiPending = false;
             irqPending = false;
+            waiting = false;
+            stopped = false;
 
             // this needs to reset the soft switches via the bus
             bus.Reset();
@@ -120,11 +126,31 @@ namespace InnoWerks.Simulators
 
         public ushort StackPopWord()
         {
-            return (ushort)((0xff & StackPop()) | (0xff00 & (StackPop() << 8)));
+            return (ushort)(StackPop() | (StackPop() << 8));
         }
 
         public int Step(bool returnPriorToBreak = false)
         {
+            if (waiting)
+            {
+                // WAI resumes when an interrupt arrives; clear the flag and fall through
+                // so the interrupt check below services it. If no interrupt is pending,
+                // burn one cycle and stay in the waiting state.
+                if (nmiPending || (irqPending && !Registers.Interrupt))
+                {
+                    waiting = false;
+                }
+                else
+                {
+                    return 1;
+                }
+            }
+
+            if (stopped)
+            {
+                throw new ProcessorStoppedException(Registers.ProgramCounter);
+            }
+
             bus.BeginTransaction();
 
             //
@@ -316,7 +342,8 @@ namespace InnoWerks.Simulators
             var offset = bus.Read(Registers.ProgramCounter + 2);
 
             // T2 - T3
-            var addr = (ushort)(Registers.ProgramCounter + 3 + ((sbyte)offset < 0 ? (sbyte)offset : offset));
+            // TODO: verify this does not break tests
+            var addr = (ushort)(Registers.ProgramCounter + 3 + (sbyte)offset);
 
             DoBranch65C02((value & (0x01 << bit)) == 0, addr, 0);
         }
@@ -354,7 +381,8 @@ namespace InnoWerks.Simulators
             var offset = bus.Read(Registers.ProgramCounter + 2);
 
             // T2 - T3
-            var addr = (ushort)(Registers.ProgramCounter + 3 + ((sbyte)offset < 0 ? (sbyte)offset : offset));
+            // TODO: verify this does not break tests
+            var addr = (ushort)(Registers.ProgramCounter + 3 + (sbyte)offset);
 
             DoBranch65C02((value & (0x01 << bit)) != 0, addr, 0);
         }
@@ -522,7 +550,7 @@ namespace InnoWerks.Simulators
         }
 
         /// <summary>
-        /// <para>BBR - Branch on Overflow Clear</para>
+        /// <para>BVC - Branch on Overflow Clear</para>
         /// <code>
         /// Flags affected: --------
         /// Branch not taken:
@@ -538,7 +566,7 @@ namespace InnoWerks.Simulators
         }
 
         /// <summary>
-        /// <para>BBR - Branch on Overflow Set</para>
+        /// <para>BVS - Branch on Overflow Set</para>
         /// <code>
         /// Flags affected: --------
         /// Branch not taken:
@@ -773,7 +801,7 @@ namespace InnoWerks.Simulators
         }
 
         /// <summary>
-        /// <para>INX - Increment Accumulator</para>
+        /// <para>INA - Increment Accumulator</para>
         /// <code>
         /// Flags affected: n-----z-
         ///
@@ -1460,11 +1488,9 @@ namespace InnoWerks.Simulators
         /// <summary>
         /// <para>TXS - Transfer X to Stack Pointer</para>
         /// <code>
-        /// Flags affected: n-----z-
+        /// Flags affected: --------
         ///
         /// S ← X
-        /// n ← Most significant bit of the transferred value
-        /// z ← Set if the transferred value is zero
         /// </code>
         /// </summary>
         public void TXS(ushort _1, byte _2)
@@ -1490,12 +1516,12 @@ namespace InnoWerks.Simulators
 
         public void WAI(ushort _1, byte _2)
         {
-            throw new NotImplementedException();
+            waiting = true;
         }
 
         public void STP(ushort _1, byte _2)
         {
-            throw new NotImplementedException();
+            stopped = true;
         }
 
         /// <summary>
