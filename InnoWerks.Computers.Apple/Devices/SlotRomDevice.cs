@@ -1,8 +1,6 @@
 using System;
-using System.Reflection.PortableExecutable;
 using InnoWerks.Processors;
 using InnoWerks.Simulators;
-using Microsoft.VisualBasic;
 
 namespace InnoWerks.Computers.Apple
 {
@@ -130,12 +128,12 @@ namespace InnoWerks.Computers.Apple
             return machineState.FloatingValue;
         }
 
-        public bool Write(ushort address, byte value)
+        public void Write(ushort address, byte value)
         {
             if (address >= IoBaseAddressLo && address <= IoBaseAddressHi)
             {
                 DoIo(CardIoType.Write, (byte)(address & 0x0F), value);
-                return false;
+                return;
             }
             else if (address >= RomBaseAddressLo && address <= RomBaseAddressHi)
             {
@@ -155,8 +153,6 @@ namespace InnoWerks.Computers.Apple
                     DoC8(CardIoType.Write, address, value);
                 }
             }
-
-            return false;
         }
 
         public abstract void Tick(int cycles);

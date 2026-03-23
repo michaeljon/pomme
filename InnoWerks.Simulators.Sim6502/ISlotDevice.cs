@@ -12,7 +12,7 @@ namespace InnoWerks.Simulators
 
         byte Read(ushort address);
 
-        bool Write(ushort address, byte value);
+        void Write(ushort address, byte value);
 
         void Tick(int cycles);
 
