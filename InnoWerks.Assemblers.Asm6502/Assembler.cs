@@ -597,7 +597,7 @@ namespace InnoWerks.Assemblers
             if (indexedIndirectRegex.IsMatch(addressString) == true)
             {
                 var captures = indexedIndirectRegex.MatchNamedCaptures(addressString);
-                return (AddressingMode.AbsoluteIndirect, captures["arg"]);
+                return (AddressingMode.AbsoluteIndexedIndirect, captures["arg"]);
             }
 
             if (zeroPageIndexedDirectRegex.IsMatch(addressString) == true)
@@ -641,7 +641,7 @@ namespace InnoWerks.Assemblers
             if (indirectRegex.IsMatch(addressString) == true)
             {
                 var captures = indirectRegex.MatchNamedCaptures(addressString);
-                return (AddressingMode.AbsoluteIndexedIndirect, captures["arg"]);
+                return (AddressingMode.AbsoluteIndirect, captures["arg"]);
             }
 
             return (AddressingMode.Unknown, null);

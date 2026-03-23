@@ -21,6 +21,7 @@ namespace InnoWerks.Processors
             AddressingMode.Absolute,
             AddressingMode.AbsoluteXIndexed,
             AddressingMode.AbsoluteYIndexed,
+            AddressingMode.AbsoluteIndirect,
             AddressingMode.AbsoluteIndexedIndirect
         };
 
