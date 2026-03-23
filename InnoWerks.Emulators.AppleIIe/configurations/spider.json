@@ -1,0 +1,21 @@
+{
+  "appleModel": "appleIIeEnhanced",
+  "showInternals": true,
+  "breakpoints": [],
+  "slots": [
+    {
+      "deviceType": "mouse",
+      "slotNumber": 4
+    },
+    {
+      "deviceType": "diskii",
+      "slotNumber": 6,
+      "driveOne": {
+        "image": "disks/apple_cider_spider.dsk",
+        "readOnly": false
+      }
+    }
+  ],
+  "monochrome": false,
+  "color": "white"
+}
