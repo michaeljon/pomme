@@ -24,7 +24,7 @@ namespace InnoWerks.Simulators
             bus.SetCpu(this);
         }
 
-        protected override InstructionSet InstructionSet => CpuInstructions.OpCode65C02;
+        protected override OpCodeDefinition[] InstructionSet => CpuInstructions.OpCode65C02;
 
         protected override void Dispatch(OpCodeDefinition opCodeDefinition)
         {
@@ -35,23 +35,80 @@ namespace InnoWerks.Simulators
                 // This is the case where we're running into an unknown or undocumented
                 // opcode. What we need to do is handle the bus access and cycle counting
                 // correctly for the addressing mode.
+                //
+                // In general the 65C02 will treat an unknown opcode as a NOP with
+                // varying cycle counts and either one or two bytes consumed
                 case OpCode.Unknown:
-                    switch (opCodeDefinition.AddressingMode)
+                    if (opCodeDefinition.OpCodeValue == 0x5C)
                     {
-                        case AddressingMode.Immediate:
-                            bus.Read(Registers.ProgramCounter + 1);
-                            bus.Read(Registers.ProgramCounter + 2);
+                        // T1
+                        bus.Read(Registers.ProgramCounter + 1);
+                        // T2
+                        bus.Read(Registers.ProgramCounter + 2);
+                        // T3
+                        bus.Read(Registers.ProgramCounter + 2);
 
-                            Registers.ProgramCounter += 2;
+                        Registers.ProgramCounter += 3;
+                    }
+                    else if ((opCodeDefinition.OpCodeValue & 0x0F) == 0x02)
+                    {
+                        // T1
+                        bus.Read(Registers.ProgramCounter + 1);
 
-                            break;
+                        Registers.ProgramCounter += 2;
+                    }
+                    else if ((opCodeDefinition.OpCodeValue & 0x0F) == 0x03 || (opCodeDefinition.OpCodeValue & 0x0F) == 0x0B)
+                    {
+                        Registers.ProgramCounter++;
+                    }
+                    else
+                    {
+                        switch (opCodeDefinition.AddressingMode)
+                        {
+                            case AddressingMode.Absolute:
+                                {
+                                    // T1
+                                    bus.Read(Registers.ProgramCounter + 1);
+                                    // T2
+                                    bus.Read(Registers.ProgramCounter + 2);
+                                    // T3
+                                    bus.Read(Registers.ProgramCounter + 2);
 
-                        case AddressingMode.Implicit:
-                            bus.Read(Registers.ProgramCounter + 1);
+                                    Registers.ProgramCounter += 3;
+                                }
+                                break;
 
-                            Registers.ProgramCounter++;
+                            // A. 2.6. Zero Page, X or Zero Page, Y Addressing Modes (4 Cycles)
+                            case AddressingMode.ZeroPageXIndexed:
+                            case AddressingMode.ZeroPageYIndexed:
+                                {
+                                    // T1
+                                    var bal = bus.Read(Registers.ProgramCounter + 1);
+                                    // T2
+                                    /* var discarded = */
+                                    bus.Read(bal);
+                                    // T3
+                                    var index = opCodeDefinition.AddressingMode == AddressingMode.ZeroPageXIndexed ?
+                                        Registers.X :
+                                        Registers.Y;
+                                    /* var discarded = */
+                                    bus.Read((bal + index) & 0xff);
 
-                            break;
+                                    Registers.ProgramCounter += 2;
+                                }
+                                break;
+
+                            case AddressingMode.ZeroPage:
+                                {
+                                    // T1
+                                    var adl = bus.Read(Registers.ProgramCounter + 1);
+                                    // T2
+                                    var data = bus.Read(adl);
+
+                                    Registers.ProgramCounter += 2;
+                                }
+                                break;
+                        }
                     }
 
                     break;

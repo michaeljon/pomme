@@ -8,7 +8,9 @@ using InnoWerks.Processors;
 //                 https://xotmatrix.github.io/6502/6502-single-cycle-execution.html
 //
 
-#pragma warning disable RCS1163, IDE0060, CA1707, CA1822
+#pragma warning disable CA1707 // Identifiers should not contain underscores
+#pragma warning disable CA1819 // Properties should not return arrays
+#pragma warning disable CA1822 // Mark members as static
 
 namespace InnoWerks.Simulators
 {
@@ -62,7 +64,7 @@ namespace InnoWerks.Simulators
 
         protected abstract void Dispatch(OpCodeDefinition opCodeDefinition);
 
-        protected abstract InstructionSet InstructionSet { get; }
+        protected abstract OpCodeDefinition[] InstructionSet { get; }
 
         protected virtual OpCodeDefinition GetOpCodeDefinition(byte operation)
         {
@@ -216,18 +218,12 @@ namespace InnoWerks.Simulators
             OpCodeDefinition opCodeDefinition = InstructionSet[operation];
 
             // decode the operand based on the opcode and addressing mode
-            if (opCodeDefinition.AddressingMode == AddressingMode.Unknown)
+            if (opCodeDefinition.AddressingMode == AddressingMode.Unknown && opCodeDefinition.Bytes == 0)
             {
-                if (opCodeDefinition.Bytes == 0)
-                {
-                    illegalInstructionEncountered = true;
+                illegalInstructionEncountered = true;
 
-                    // This is a JAM / KIL
-                    throw new IllegalOpCodeException(Registers.ProgramCounter, operation);
-                }
-
-                // all we can do is move the PC
-                Registers.ProgramCounter = (ushort)(Registers.ProgramCounter + opCodeDefinition.Bytes);
+                // This is a JAM / KIL
+                throw new IllegalOpCodeException(Registers.ProgramCounter, operation);
             }
 
             return opCodeDefinition;
