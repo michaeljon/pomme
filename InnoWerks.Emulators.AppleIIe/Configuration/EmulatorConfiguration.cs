@@ -29,6 +29,8 @@ namespace InnoWerks.Emulators.AppleIIe
         /// </summary>
         public List<ConfiguredSlotDevice> Slots { get; set; }
 
+        public bool JoystickInverted { get; set; } = true;
+
         /// <summary>
         /// Set to true to turn on monochrome mode. Recommended
         /// for A2Desktop and some other applications. Uses the

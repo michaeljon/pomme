@@ -90,6 +90,8 @@ namespace InnoWerks.Emulators.AppleIIe
         //
         private KeyboardState previousKeyboardState;
         private MouseState prevMouse;
+        private bool joystickButton0;
+        private bool joystickButton1;
         private bool appleCapsLock = true;
 
         private double lastTimer;
@@ -271,11 +273,14 @@ namespace InnoWerks.Emulators.AppleIIe
 
             prevMouse = mouse;
 
+            UpdateGamepad(GamePad.GetState(PlayerIndex.One));
+
             // see if we want to do anything here with the emulator keys
             KeyboardState currentState = Keyboard.GetState();
             UpdateHostControls(currentState, previousKeyboardState);
 
             RunEmulator();
+
             // Toggle flashing every 100ms - should be about 1 in 10 frames,
             // this would be much better handled by tracking number of cycles,
             // which is closer to frame count and possibly VBL state
@@ -431,6 +436,36 @@ namespace InnoWerks.Emulators.AppleIIe
             }
         }
 
+        private void UpdateGamepad(GamePadState current)
+        {
+            if (!current.IsConnected)
+                return;
+
+            int pdl1;
+            int pdl3;
+
+            if (emulatorConfiguration.JoystickInverted)
+            {
+                pdl1 = (int)((-current.ThumbSticks.Left.Y + 1.0f) / 2.0f * 255);
+                pdl3 = (int)((-current.ThumbSticks.Right.Y + 1.0f) / 2.0f * 255);
+            }
+            else
+            {
+                pdl1 = (int)((current.ThumbSticks.Left.Y + 1.0f) / 2.0f * 255);
+                pdl3 = (int)((current.ThumbSticks.Right.Y + 1.0f) / 2.0f * 255);
+            }
+            // if ! inverted
+
+            // Map left thumbstick axes (-1..1) to Apple II paddle range (0..255)
+            int pdl0 = (int)((current.ThumbSticks.Left.X + 1.0f) / 2.0f * 255);
+            int pdl2 = (int)((current.ThumbSticks.Right.X + 1.0f) / 2.0f * 255);
+
+            joystickButton0 = current.Buttons.A == ButtonState.Pressed;
+            joystickButton1 = current.Buttons.B == ButtonState.Pressed;
+
+            iou.UpdateJoystick(pdl0, pdl1, pdl2, pdl3, joystickButton0, joystickButton1);
+        }
+
         public void UpdateKeyboard(KeyboardState currentState, KeyboardState previousState)
         {
             bool IsJustPressed(Keys key) => currentState.IsKeyDown(key) && !previousState.IsKeyDown(key);
@@ -451,9 +486,9 @@ namespace InnoWerks.Emulators.AppleIIe
             if (IsJustPressed(Keys.Down)) iou.InjectKey(0x8A);
             if (IsJustPressed(Keys.Up)) iou.InjectKey(0x8B);
 
-            // --- OPEN / SOLID APPLE ---
-            iou.OpenApple(currentState.IsKeyDown(Keys.LeftAlt));
-            iou.SolidApple(currentState.IsKeyDown(Keys.RightAlt));
+            // --- OPEN / SOLID APPLE (keyboard OR joystick button) ---
+            iou.OpenApple(currentState.IsKeyDown(Keys.LeftAlt) || joystickButton0);
+            iou.SolidApple(currentState.IsKeyDown(Keys.RightAlt) || joystickButton1);
         }
 
         private void HandleResize(object sender, EventArgs e)

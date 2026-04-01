@@ -12,11 +12,20 @@ namespace InnoWerks.Computers.Apple
 {
     public class IOU : ISoftSwitchDevice
     {
+        // Apple II paddle timing: each PDL unit ≈ 11 µs at 1 MHz ≈ 11 cycles
+        private const int CyclesPerPaddleUnit = 11;
+
         private readonly IBus bus;
 
         private readonly Memory128k memoryBlocks;
 
         private readonly MachineState machineState;
+
+        // Analog paddle values (0–255), updated each frame from the host joystick
+        private readonly int[] paddleValues = new int[4];
+
+        // Bus cycle count when PTRIG was last fired; -1 means not yet triggered
+        private long paddleTimerStartCycle = -1;
 
         private readonly List<ushort> handlesRead = [
             //
@@ -85,7 +94,11 @@ namespace InnoWerks.Computers.Apple
             SoftSwitchAddress.PADDLE1,
             SoftSwitchAddress.PADDLE2,
             SoftSwitchAddress.PADDLE3,
-            SoftSwitchAddress.PTRIG,
+
+            // SoftSwitchAddress.PTRIG,
+            0xC070, 0xC071, 0xC072, 0xC073, 0xC074, 0xC075, 0xC076, 0xC077,
+            0xC078, 0xC079, 0xC07A, 0xC07B, 0xC07C, 0xC07D,
+
             // SoftSwitchAddress.BUTTON0,
             // SoftSwitchAddress.BUTTON1,
             // SoftSwitchAddress.BUTTON2,
@@ -134,6 +147,13 @@ namespace InnoWerks.Computers.Apple
             SoftSwitchAddress.SETAN2,
             // SoftSwitchAddress.CLRAN3,
             // SoftSwitchAddress.SETAN3,
+
+            //
+            // PADDLES
+            //
+            // SoftSwitchAddress.PTRIG,
+            0xC070, 0xC071, 0xC072, 0xC073, 0xC074, 0xC075, 0xC076, 0xC077,
+            0xC078, 0xC079, 0xC07A, 0xC07B, 0xC07C, 0xC07D,
 
             //
             // IOU
@@ -279,11 +299,10 @@ namespace InnoWerks.Computers.Apple
                 //
                 // PADDLES AND BUTTONS
                 //
-                case SoftSwitchAddress.PADDLE0: return (byte)(machineState.State[SoftSwitch.Paddle0] ? 0x80 : 0x00);
-                case SoftSwitchAddress.PADDLE1: return (byte)(machineState.State[SoftSwitch.Paddle1] ? 0x80 : 0x00);
-                case SoftSwitchAddress.PADDLE2: return (byte)(machineState.State[SoftSwitch.Paddle2] ? 0x80 : 0x00);
-                case SoftSwitchAddress.PADDLE3: return (byte)(machineState.State[SoftSwitch.Paddle3] ? 0x80 : 0x00);
-                case SoftSwitchAddress.PTRIG: return 0x00;
+                case SoftSwitchAddress.PADDLE0: return PaddleRead(0);
+                case SoftSwitchAddress.PADDLE1: return PaddleRead(1);
+                case SoftSwitchAddress.PADDLE2: return PaddleRead(2);
+                case SoftSwitchAddress.PADDLE3: return PaddleRead(3);
 
                 // case SoftSwitchAddress.BUTTON0: return (byte)(machineState.State[SoftSwitch.Button0] ? 0x80 : 0x00);
                 // case SoftSwitchAddress.BUTTON1: return (byte)(machineState.State[SoftSwitch.Button1] ? 0x80 : 0x00);
@@ -297,10 +316,17 @@ namespace InnoWerks.Computers.Apple
                 // IOU
                 //
                 case SoftSwitchAddress.RDIOUDIS: return (byte)(machineState.State[SoftSwitch.IOUDisabled] ? 0x80 : 0x00);
-
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(address), $"Read {address:X4} is not supported in this device");
             }
+
+            //
+            // PADDLES
+            //
+            if (address >= 0xC070 && address <= 0xC07D)
+            {
+                paddleTimerStartCycle = (long)bus.CycleCount;
+            }
+
+            return 0x00;
         }
 
         public void Write(ushort address, byte value)
@@ -369,9 +395,14 @@ namespace InnoWerks.Computers.Apple
                 //
                 case SoftSwitchAddress.IOUDISON: machineState.State[SoftSwitch.IOUDisabled] = true; break;
                 case SoftSwitchAddress.IOUDISOFF: machineState.State[SoftSwitch.IOUDisabled] = false; break;
+            }
 
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(address), $"Write {address:X4} is not supported in this device");
+            //
+            // PADDLES
+            //
+            if (address >= 0xC070 && address <= 0xC07D)
+            {
+                paddleTimerStartCycle = (long)bus.CycleCount;
             }
         }
 
@@ -383,9 +414,6 @@ namespace InnoWerks.Computers.Apple
 
             machineState.State[SoftSwitch.TextMode] = true;
             machineState.State[SoftSwitch.IOUDisabled] = true;
-
-            // OpenApple();
-            // SolidApple();
         }
 
         private byte InVerticalBlank()
@@ -398,6 +426,32 @@ namespace InnoWerks.Computers.Apple
             // SimDebugger.Info($" --> busCycle={bus.CycleCount}, frame#={frameIndex}, frameCycle={frameCycle}, inVbl=={inVbl}\n");
 
             return inVbl ? (byte)0x00 : (byte)0x80;
+        }
+
+        private byte PaddleRead(int index)
+        {
+            if (paddleTimerStartCycle < 0)
+                return 0x00;
+
+            long elapsed = (long)bus.CycleCount - paddleTimerStartCycle;
+            long threshold = (long)paddleValues[index] * CyclesPerPaddleUnit;
+            return elapsed < threshold ? (byte)0x80 : (byte)0x00;
+        }
+
+        /// <summary>
+        /// Updates the joystick/paddle state from the host each frame.
+        /// pdl0–pdl3 are 0–255; button0 and button1 map to PB0/PB1.
+        /// </summary>
+        public void UpdateJoystick(int pdl0, int pdl1, int pdl2, int pdl3, bool button0, bool button1)
+        {
+            paddleValues[0] = pdl0;
+            paddleValues[1] = pdl1;
+            paddleValues[2] = pdl2;
+            paddleValues[3] = pdl3;
+
+            // PB0 = OpenApple, PB1 = SolidApple — OR'd with keyboard in Emulator
+            machineState.State[SoftSwitch.Button0] = button0;
+            machineState.State[SoftSwitch.Button1] = button1;
         }
 
         /// <summary>

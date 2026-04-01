@@ -32,5 +32,5 @@ namespace InnoWerks.Emulators.AppleIIe
         public DiskImage DriveFour { get; set; }
     }
 
-    public class ConfiguredMouse : ConfiguredSlotDevice;
+    public class ConfiguredMouse : ConfiguredSlotDevice { }
 }
