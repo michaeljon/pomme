@@ -11,18 +11,17 @@ namespace InnoWerks.Simulators.Tests
 
         protected override CpuClass CpuClass => CpuClass.WDC6502;
 
-        // [Ignore]
+        [Ignore]
         [TestMethod]
         public void RunAll6502Tests()
         {
-            RunAllBatches();
+            RunBatched(false);
         }
 
-        // [Ignore]
         [TestMethod]
         public void RunSampled6502Tests()
         {
-            RunAllBatchesWithRandomSampling();
+            RunBatched(true);
         }
 
         [TestMethod]

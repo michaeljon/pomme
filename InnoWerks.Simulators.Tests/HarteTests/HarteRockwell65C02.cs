@@ -4,7 +4,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace InnoWerks.Simulators.Tests
 {
-    [Ignore]
     [TestClass]
     public class HarteRockwell65C02 : HarteBase
     {
@@ -12,25 +11,23 @@ namespace InnoWerks.Simulators.Tests
 
         protected override CpuClass CpuClass => CpuClass.Rockwell65C02;
 
-        // [Ignore]
+        [Ignore]
         [TestMethod]
         public void RunAllRockwell65C02Tests()
         {
-            RunAllBatches();
+            RunBatched(false);
         }
 
-        // [Ignore]
         [TestMethod]
         public void RunSampledRockwell65C02Tests()
         {
-            RunAllBatchesWithRandomSampling();
+            RunBatched(true);
         }
 
-        [Ignore]
         [TestMethod]
         public void RunNamedRockwell65C02Test()
         {
-            RunNamedTest("e9 331");
+            RunNamedTest("cb cb 06");
         }
 
         [TestMethod]

@@ -96,19 +96,11 @@ namespace InnoWerks.Simulators.Tests
             // set up initial memory state
             bus.Initialize(test.Initial.Ram);
 
-            ICpu cpu = CpuClass == CpuClass.WDC6502 ?
-                new Cpu6502(
-                    bus,
-                    // (cpu, pc) => FlagsTraceCallback(cpu, pc, memory),
-                    // (cpu) => FlagsLoggerCallback(cpu, memory, 0))
-                    (cpu, pc) => DummyTraceCallback(cpu, pc, bus),
-                    (cpu) => DummyLoggerCallback(cpu, bus, 0)) :
-                new Cpu65C02(
-                    bus,
-                    // (cpu, pc) => FlagsTraceCallback(cpu, pc, memory),
-                    // (cpu) => FlagsLoggerCallback(cpu, memory, 0))
-                    (cpu, pc) => DummyTraceCallback(cpu, pc, bus),
-                    (cpu) => DummyLoggerCallback(cpu, bus, 0));
+            var cpu = Cpu6502Factory.Construct(
+                CpuClass,
+                bus,
+                (cpu, pc) => DummyTraceCallback(cpu, pc, bus),
+                (cpu) => DummyLoggerCallback(cpu, bus, 0));
 
             cpu.Reset();
 
@@ -254,47 +246,7 @@ namespace InnoWerks.Simulators.Tests
             Assert.AreEqual(0, results.Count, $"Failed some tests");
         }
 
-        protected void RunAllBatches()
-        {
-            bool[] ignored = LoadIgnored();
-            List<string> results = [];
-
-            var files = Directory
-                .GetFiles(BasePath, "*.json")
-                .OrderBy(f => f);
-
-            Parallel.ForEach(files, file =>
-            {
-                using (var fs = File.OpenRead(file))
-                {
-                    if (fs.Length == 0)
-                    {
-                        return;
-                    }
-
-                    var index = byte.Parse(Path.GetFileNameWithoutExtension(file), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
-
-                    if (ignored[index] == false)
-                    {
-                        foreach (var test in JsonSerializer.Deserialize<List<JsonHarteTestStructure>>(fs, SerializerOptions))
-                        {
-                            RunIndividualTest(test, results);
-                        }
-                    }
-                }
-            });
-
-#if VERBOSE_BATCH_OUTPUT
-            foreach (var result in results)
-            {
-                TestContext.WriteLine(result);
-            }
-#endif
-
-            Assert.AreEqual(0, results.Count, $"Failed some tests");
-        }
-
-        protected void RunAllBatchesWithRandomSampling()
+        protected void RunBatched(bool randomSampled)
         {
             bool[] ignored = LoadIgnored();
             List<string> results = [];
@@ -328,8 +280,14 @@ namespace InnoWerks.Simulators.Tests
                         // below, which can run in parallel, will test the entire 10,000
                         // tests in the batch
                         var tests = JsonSerializer.Deserialize<List<JsonHarteTestStructure>>(fs, SerializerOptions)
-                            .OrderBy(_ => Guid.NewGuid())
-                            .Take(1000);
+                            .ToList();
+
+                        if (randomSampled == true)
+                        {
+                            tests = [.. tests
+                                .OrderBy(_ => Guid.NewGuid())
+                                .Take(1000)];
+                        }
 
                         List<string> testResults = [];
                         foreach (var test in tests)

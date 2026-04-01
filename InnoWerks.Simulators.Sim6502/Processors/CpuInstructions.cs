@@ -10,20 +10,14 @@ namespace InnoWerks.Simulators
     {
         public static OpCodeDefinition[] GetInstructionSet(CpuClass cpuClass)
         {
-            switch (cpuClass)
+            return cpuClass switch
             {
-                case CpuClass.Undefined:
-                    throw new ArgumentOutOfRangeException(nameof(cpuClass), cpuClass, "CpuClass.Undefined is obviously not supported.");
+                CpuClass.Undefined => throw new ArgumentOutOfRangeException(nameof(cpuClass), cpuClass, "CpuClass.Undefined is obviously not supported."),
+                CpuClass.WDC6502 => OpCode6502,
+                CpuClass.WDC65C02 or CpuClass.Synertek65C02 or CpuClass.Rockwell65C02 => OpCode65C02,
 
-                case CpuClass.WDC6502:
-                    return OpCode6502;
-
-                case CpuClass.WDC65C02:
-                    return OpCode65C02;
-
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(cpuClass), cpuClass, "CpuClass is not currently supported");
-            }
+                _ => throw new ArgumentOutOfRangeException(nameof(cpuClass), cpuClass, "CpuClass is not currently supported"),
+            };
         }
 
         //

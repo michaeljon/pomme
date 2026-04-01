@@ -4,7 +4,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace InnoWerks.Simulators.Tests
 {
-    [Ignore]
     [TestClass]
     public class HarteSynertek65C02 : HarteBase
     {
@@ -12,25 +11,23 @@ namespace InnoWerks.Simulators.Tests
 
         protected override CpuClass CpuClass => CpuClass.Synertek65C02;
 
-        // [Ignore]
+        [Ignore]
         [TestMethod]
         public void RunAllSynertek65C02Tests()
         {
-            RunAllBatches();
+            RunBatched(false);
         }
 
-        // [Ignore]
         [TestMethod]
         public void RunSampledSynertek65C02Tests()
         {
-            RunAllBatchesWithRandomSampling();
+            RunBatched(true);
         }
 
-        // [Ignore]
         [TestMethod]
         public void RunNamedSynertek65C02Test()
         {
-            RunNamedTest("69 e9 6f");
+            RunNamedTest("cb 4a 20");
         }
 
         [TestMethod]

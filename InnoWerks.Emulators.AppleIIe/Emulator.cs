@@ -145,7 +145,8 @@ namespace InnoWerks.Emulators.AppleIIe
             iou = new IOU(memoryBlocks, machineState, appleBus);
             mmu = new MMU(memoryBlocks, machineState, appleBus);
 
-            cpu = new Cpu65C02(
+            cpu = Cpu6502Factory.Construct<Cpu65C02>(
+                CpuClass.WDC65C02,
                 appleBus,
                 (cpu, programCounter) => { },
                 (cpu) => { });

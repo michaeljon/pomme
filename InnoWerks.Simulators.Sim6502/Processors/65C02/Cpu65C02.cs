@@ -993,6 +993,19 @@ namespace InnoWerks.Simulators
                     }
                     break;
 
+                case OpCode.WAI:
+                case OpCode.STP:
+                    {
+                        // T1
+                        var offset = bus.Read(Registers.ProgramCounter + 1);
+
+                        opCodeDefinition.Execute(this, 0, 0);
+
+                        Registers.ProgramCounter++;
+                    }
+                    break;
+
+
                 default:
                     // this is unexpected...
                     throw new IllegalOpCodeException(Registers.ProgramCounter, opCodeDefinition.OpCodeValue);
