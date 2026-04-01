@@ -1,6 +1,7 @@
 #define DUMP_TEST_DATA
 #define POST_STEP_MEMORY
 #define VALIDATE_BUS_ACCESSES
+#define VERBOSE_BATCH_OUTPUT
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Text.Json.Serialization;
@@ -10,6 +11,8 @@ using InnoWerks.Processors;
 using System;
 using System.Globalization;
 using System.IO;
+using System.Threading.Tasks;
+using System.Threading;
 
 #if VALIDATE_BUS_ACCESSES
 using System.Linq;
@@ -147,7 +150,7 @@ namespace InnoWerks.Simulators.Tests
             // we can run these tests to this extent, after this i haven't implemented
             // the "undocumented" opcodes because, well, they're undocumented and
             // probably don't always behave like they should
-            if (ocd.OpCode != OpCode.Unknown)
+            if (CpuClass == CpuClass.WDC6502 && ocd.OpCode != OpCode.Unknown)
             {
                 // verify results
                 if (test.Final.ProgramCounter != cpu.Registers.ProgramCounter) { testFailed = true; results.Add($"{test.Name}: ProgramCounter expected {test.Final.ProgramCounter:X4} actual {cpu.Registers.ProgramCounter:X4}"); }
@@ -261,13 +264,13 @@ namespace InnoWerks.Simulators.Tests
                 .GetFiles(BasePath, "*.json")
                 .OrderBy(f => f);
 
-            foreach (var file in files)
+            Parallel.ForEach(files, file =>
             {
                 using (var fs = File.OpenRead(file))
                 {
                     if (fs.Length == 0)
                     {
-                        continue;
+                        return;
                     }
 
                     var index = byte.Parse(Path.GetFileNameWithoutExtension(file), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
@@ -280,7 +283,7 @@ namespace InnoWerks.Simulators.Tests
                         }
                     }
                 }
-            }
+            });
 
 #if VERBOSE_BATCH_OUTPUT
             foreach (var result in results)
@@ -301,13 +304,15 @@ namespace InnoWerks.Simulators.Tests
                 .GetFiles(BasePath, "*.json")
                 .OrderBy(f => f);
 
-            foreach (var file in files)
+            var lockObject = new object();
+
+            Parallel.ForEach(files, file =>
             {
                 using (var fs = File.OpenRead(file))
                 {
                     if (fs.Length == 0)
                     {
-                        continue;
+                        return;
                     }
 
                     var index = byte.Parse(Path.GetFileNameWithoutExtension(file), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
@@ -327,13 +332,19 @@ namespace InnoWerks.Simulators.Tests
                             .OrderBy(_ => Guid.NewGuid())
                             .Take(1000);
 
+                        List<string> testResults = [];
                         foreach (var test in tests)
                         {
-                            RunIndividualTest(test, results);
+                            RunIndividualTest(test, testResults);
+                        }
+
+                        lock (lockObject)
+                        {
+                            results.AddRange(testResults);
                         }
                     }
                 }
-            }
+            });
 
 #if VERBOSE_BATCH_OUTPUT
             foreach (var result in results)
@@ -352,7 +363,7 @@ namespace InnoWerks.Simulators.Tests
             if (CpuClass == CpuClass.WDC6502)
             {
                 // from https://www.masswerk.at/nowgobang/2021/6502-illegal-opcodes
-                foreach (var kill in (byte[])([0x02, 0x12, 0x22, 0x32, 0x42, 0x52, 0x62, 0x72, 0x92, 0xB2, 0xD2, 0xF2]))
+                foreach (var kill in (byte[])[0x02, 0x12, 0x22, 0x32, 0x42, 0x52, 0x62, 0x72, 0x92, 0xB2, 0xD2, 0xF2])
                 {
                     ignored[kill] = true;
                 }

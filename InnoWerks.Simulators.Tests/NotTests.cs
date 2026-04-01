@@ -200,7 +200,7 @@ namespace InnoWerks.Simulators.Tests
             );
         }
 
-        private void GenerateOpTable(InstructionSet opCodeTable)
+        private void GenerateOpTable(OpCodeDefinition[] opCodeTable)
         {
             TestContext.WriteLine("\r");
             GenerateHeaderFooter();

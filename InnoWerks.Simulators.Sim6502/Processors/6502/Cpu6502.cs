@@ -24,7 +24,7 @@ namespace InnoWerks.Simulators
             bus.SetCpu(this);
         }
 
-        protected override InstructionSet InstructionSet => CpuInstructions.OpCode6502;
+        protected override OpCodeDefinition[] InstructionSet => CpuInstructions.OpCode6502;
 
         protected override void Dispatch(OpCodeDefinition opCodeDefinition)
         {
