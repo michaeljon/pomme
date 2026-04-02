@@ -10,13 +10,13 @@ using InnoWerks.Processors;
 
 namespace InnoWerks.Simulators
 {
-    public class Cpu65C02 : Cpu6502Core
+    public class Cpu65SC02 : Cpu6502Core
     {
-        public override CpuClass CpuClass => CpuClass.WDC65C02;
+        public override CpuClass CpuClass => CpuClass.Synertek65C02;
 
         private readonly OpCodeDefinition[] instructionSet;
 
-        public Cpu65C02(IBus bus,
+        public Cpu65SC02(IBus bus,
                         Action<ICpu, ushort> preExecutionCallback,
                         Action<ICpu> postExecutionCallback)
             : base(bus, preExecutionCallback, postExecutionCallback)
@@ -43,6 +43,9 @@ namespace InnoWerks.Simulators
                 // In general the 65C02 will treat an unknown opcode as a NOP with
                 // varying cycle counts and either one or two bytes consumed
                 case OpCode.Unknown:
+                    var lo = opCodeDefinition.OpCodeValue & 0x0F;
+                    // var hi = (opCodeDefinition.OpCodeValue & 0xF0) >> 4;
+
                     if (opCodeDefinition.OpCodeValue == 0x5C)
                     {
                         // T1
@@ -54,14 +57,18 @@ namespace InnoWerks.Simulators
 
                         Registers.ProgramCounter += 3;
                     }
-                    else if ((opCodeDefinition.OpCodeValue & 0x0F) == 0x02)
+                    else if (lo == 0x02)
                     {
                         // T1
                         bus.Read(Registers.ProgramCounter + 1);
 
                         Registers.ProgramCounter += 2;
                     }
-                    else if ((opCodeDefinition.OpCodeValue & 0x0F) == 0x03 || (opCodeDefinition.OpCodeValue & 0x0F) == 0x0B)
+                    else if (lo == 0x03)
+                    {
+                        Registers.ProgramCounter++;
+                    }
+                    else if (lo == 0x0B)
                     {
                         Registers.ProgramCounter++;
                     }
@@ -908,82 +915,6 @@ namespace InnoWerks.Simulators
                     }
                     break;
 
-                case OpCode.BBR0:
-                case OpCode.BBR1:
-                case OpCode.BBR2:
-                case OpCode.BBR3:
-                case OpCode.BBR4:
-                case OpCode.BBR5:
-                case OpCode.BBR6:
-                case OpCode.BBR7:
-
-                case OpCode.BBS0:
-                case OpCode.BBS1:
-                case OpCode.BBS2:
-                case OpCode.BBS3:
-                case OpCode.BBS4:
-                case OpCode.BBS5:
-                case OpCode.BBS6:
-                case OpCode.BBS7:
-                    if (CpuClass == CpuClass.WDC65C02 || CpuClass == CpuClass.Rockwell65C02)
-                    {
-                        // T1
-                        var zp = bus.Read(Registers.ProgramCounter + 1);
-
-                        // T2
-                        /* discarded */
-                        bus.Read(zp);
-                        var data = bus.Read(zp);
-
-                        // T3 - T5
-                        opCodeDefinition.Execute(this, 0, data);
-                    }
-                    else
-                    {
-                        // no-op
-                    }
-                    break;
-
-                case OpCode.SMB0:
-                case OpCode.SMB1:
-                case OpCode.SMB2:
-                case OpCode.SMB3:
-                case OpCode.SMB4:
-                case OpCode.SMB5:
-                case OpCode.SMB6:
-                case OpCode.SMB7:
-
-                case OpCode.RMB0:
-                case OpCode.RMB1:
-                case OpCode.RMB2:
-                case OpCode.RMB3:
-                case OpCode.RMB4:
-                case OpCode.RMB5:
-                case OpCode.RMB6:
-                case OpCode.RMB7:
-                    if (CpuClass == CpuClass.WDC65C02 || CpuClass == CpuClass.Rockwell65C02)
-                    {
-                        var addr = bus.Read(Registers.ProgramCounter + 1);
-
-                        /* dicarded */
-                        bus.Read(addr);
-
-                        var value = bus.Read(addr);
-
-                        opCodeDefinition.Execute(this, addr, value);
-
-                        Registers.ProgramCounter += 2;
-                    }
-                    else
-                    {
-                        // no-op
-                        var addr = bus.Read(Registers.ProgramCounter + 1);
-
-                        /* dicarded */
-                        bus.Read(addr);
-                    }
-                    break;
-
                 case OpCode.TSB:
                 case OpCode.TRB:
                     switch (opCodeDefinition.AddressingMode)
@@ -1033,15 +964,27 @@ namespace InnoWerks.Simulators
                     }
                     break;
 
-                case OpCode.STP:
                 case OpCode.WAI:
                     {
                         // T1
-                        var offset = bus.Read(Registers.ProgramCounter + 1);
-
-                        opCodeDefinition.Execute(this, 0, 0);
+                        var bal = bus.Read(Registers.ProgramCounter + 1);
 
                         Registers.ProgramCounter++;
+                    }
+                    break;
+
+                case OpCode.STP:
+                    {
+                        // T1
+                        var bal = bus.Read(Registers.ProgramCounter + 1);
+                        // T2
+                        /* var discarded = */
+                        bus.Read(bal);
+                        // T3
+                        var ad = (ushort)((bal + Registers.X) & 0xff);
+                        var data = bus.Read(ad);
+
+                        Registers.ProgramCounter += 2;
                     }
                     break;
 
@@ -1156,144 +1099,6 @@ namespace InnoWerks.Simulators
                 val += w;
                 Registers.A = RegisterMath.TruncateToByte(val);
                 Registers.SetNZ(Registers.A);
-            }
-        }
-
-        /// <summary>
-        /// <para>RMB - Reset Memory Bit</para>
-        /// <code>
-        /// Flags affected: -------
-        ///
-        /// Clear the specified bit in the zero page memory location
-        /// specified in the operand. The bit to clear is specified
-        /// by a number (0 through 7) concatenated to the end of the
-        /// mnemonic.
-        /// </code>
-        /// </summary>
-        public void RMB(ushort addr, byte value, byte bit)
-        {
-            int flag = 0x01 << bit;
-            value &= (byte)~flag;
-
-            bus.Write(addr, value);
-        }
-
-        /// <summary>
-        /// <para>SMB - Set Memory Bit</para>
-        /// <code>
-        /// Flags affected: n------ ?
-        /// </code>
-        ///
-        /// Clear the specified bit in the zero page memory location
-        /// specified in the operand. The bit to clear is specified
-        /// by a number (0 through 7) concatenated to the end of the
-        /// mnemonic.
-        /// </summary>
-        public void SMB(ushort addr, byte value, byte bit)
-        {
-            int flag = 0x01 << bit;
-            value |= (byte)flag;
-
-            bus.Write(addr, value);
-        }
-
-        /// <summary>
-        /// <para>BBR - Branch on Bit Reset</para>
-        /// <code>
-        /// Flags affected: --------
-        /// Branch not taken:
-        /// —
-        ///
-        /// Branch taken:
-        /// PC ← PC + sign-extend(near)
-        /// </code>
-        ///
-        /// <para>The specified bit in the zero page location specified in the
-        /// operand is tested. If it is clear (reset), a branch is taken; if it is
-        /// set, the instruction immediately following the two-byte BBRx instruction
-        /// is executed. The bit is specified by a number (0 through 7)
-        /// concatenated to the end of the mnemonic.</para>
-        ///
-        /// <para>If the branch is performed, the third byte of the instruction is used
-        /// as a signed displacement from the program counter; that is, it is added
-        /// to the program counter: a positive value(numbers less than or equal to
-        /// $80; that is, numbers with the high-order bit clear) results in a branch
-        /// to a higher location; a negative value(greater than $80, with the
-        /// high-order bit set) results in a branch to a lower location.Once the branch
-        /// address is calculated, the result is loaded into the program counter,
-        /// transferring control to that location.</para>
-        /// </summary>
-        public void BBR(ushort _, byte value, byte bit)
-        {
-            // T3
-            var offset = bus.Read(Registers.ProgramCounter + 2);
-
-            // T2 - T3
-            // TODO: verify this does not break tests
-            var addr = (ushort)(Registers.ProgramCounter + 3 + (sbyte)offset);
-
-            DoBranch65C02((value & (0x01 << bit)) == 0, addr, 0);
-        }
-
-        /// <summary>
-        /// <para>BBS - Branch on Bit Set</para>
-        /// <code>
-        /// Flags affected: --------
-        /// Branch not taken:
-        /// —
-        ///
-        /// Branch taken:
-        /// PC ← PC + sign-extend(near)
-        /// </code>
-        ///
-        /// <para>The specified bit in the zero page location specified in the
-        /// operand is tested. If it is set, a branch is taken; if it is
-        /// clear (reset), the instructions immediately following the
-        /// two-byte BBSx instruction is executed. The bit is specified
-        /// by a number (0 through 7) concatenated to the end of the mnemonic.</para>
-        ///
-        /// <para>If the branch is performed, the third byte of the instruction
-        /// is used as a signed displacement from the program counter; that
-        /// is, it is added to the program counter: a positive value (numbers
-        /// less than or equal to $80; that is, numbers with the high order
-        /// bit clear) results in a branch to a higher location; a negative
-        /// value (greater than $80, with the high- order bit set) results in
-        /// a branch to a lower location. Once the branch address is calculated,
-        /// the result is loaded into the program counter, transferring control
-        /// to that location.</para>
-        /// </summary>
-        public void BBS(ushort _, byte value, byte bit)
-        {
-            // T3
-            var offset = bus.Read(Registers.ProgramCounter + 2);
-
-            // T2 - T3
-            // TODO: verify this does not break tests
-            var addr = (ushort)(Registers.ProgramCounter + 3 + (sbyte)offset);
-
-            DoBranch65C02((value & (0x01 << bit)) != 0, addr, 0);
-        }
-
-        private void DoBranch65C02(bool condition, ushort addr, byte offset)
-        {
-            ushort next = 3;
-            ushort pc = (ushort)(Registers.ProgramCounter + next);
-
-            if (condition == false)
-            {
-                Registers.ProgramCounter += next;
-            }
-            else
-            {
-                /* discarded */
-                bus.Read(pc);
-
-                if ((addr & 0xff00) != (pc & 0xff00))
-                {
-                    bus.Read(pc);
-                }
-
-                Registers.ProgramCounter = addr;
             }
         }
     }

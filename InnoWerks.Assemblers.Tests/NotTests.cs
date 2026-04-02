@@ -13,7 +13,7 @@ namespace InnoWerks.Assemblers.Tests
             var instructions = new (OpCode opCode, AddressingMode addressingMode)[256];
             foreach (var (k, v) in InstructionInformation.Instructions)
             {
-                instructions[v.code] = k;
+                instructions[v] = k;
             }
 
             TestContext.WriteLine("\r");

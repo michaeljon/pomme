@@ -27,7 +27,7 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void RunNamedSynertek65C02Test()
         {
-            RunNamedTest("cb 4a 20");
+            RunNamedTest("f7 b9 46");
         }
 
         [TestMethod]

@@ -307,83 +307,6 @@ namespace InnoWerks.Simulators
         }
 
         /// <summary>
-        /// <para>BBR - Branch on Bit Reset</para>
-        /// <code>
-        /// Flags affected: --------
-        /// Branch not taken:
-        /// —
-        ///
-        /// Branch taken:
-        /// PC ← PC + sign-extend(near)
-        /// </code>
-        ///
-        /// <para>The specified bit in the zero page location specified in the
-        /// operand is tested. If it is clear (reset), a branch is taken; if it is
-        /// set, the instruction immediately following the two-byte BBRx instruction
-        /// is executed. The bit is specified by a number (0 through 7)
-        /// concatenated to the end of the mnemonic.</para>
-        ///
-        /// <para>If the branch is performed, the third byte of the instruction is used
-        /// as a signed displacement from the program counter; that is, it is added
-        /// to the program counter: a positive value(numbers less than or equal to
-        /// $80; that is, numbers with the high-order bit clear) results in a branch
-        /// to a higher location; a negative value(greater than $80, with the
-        /// high-order bit set) results in a branch to a lower location.Once the branch
-        /// address is calculated, the result is loaded into the program counter,
-        /// transferring control to that location.</para>
-        /// </summary>
-        public void BBR(ushort _, byte value, byte bit)
-        {
-            // T3
-            var offset = bus.Read(Registers.ProgramCounter + 2);
-
-            // T2 - T3
-            // TODO: verify this does not break tests
-            var addr = (ushort)(Registers.ProgramCounter + 3 + (sbyte)offset);
-
-            DoBranch65C02((value & (0x01 << bit)) == 0, addr, 0);
-        }
-
-        /// <summary>
-        /// <para>BBS - Branch on Bit Set</para>
-        /// <code>
-        /// Flags affected: --------
-        /// Branch not taken:
-        /// —
-        ///
-        /// Branch taken:
-        /// PC ← PC + sign-extend(near)
-        /// </code>
-        ///
-        /// <para>The specified bit in the zero page location specified in the
-        /// operand is tested. If it is set, a branch is taken; if it is
-        /// clear (reset), the instructions immediately following the
-        /// two-byte BBSx instruction is executed. The bit is specified
-        /// by a number (0 through 7) concatenated to the end of the mnemonic.</para>
-        ///
-        /// <para>If the branch is performed, the third byte of the instruction
-        /// is used as a signed displacement from the program counter; that
-        /// is, it is added to the program counter: a positive value (numbers
-        /// less than or equal to $80; that is, numbers with the high order
-        /// bit clear) results in a branch to a higher location; a negative
-        /// value (greater than $80, with the high- order bit set) results in
-        /// a branch to a lower location. Once the branch address is calculated,
-        /// the result is loaded into the program counter, transferring control
-        /// to that location.</para>
-        /// </summary>
-        public void BBS(ushort _, byte value, byte bit)
-        {
-            // T3
-            var offset = bus.Read(Registers.ProgramCounter + 2);
-
-            // T2 - T3
-            // TODO: verify this does not break tests
-            var addr = (ushort)(Registers.ProgramCounter + 3 + (sbyte)offset);
-
-            DoBranch65C02((value & (0x01 << bit)) != 0, addr, 0);
-        }
-
-        /// <summary>
         /// <para>BCC - Branch on Carry Clear</para>
         /// <code>
         /// Flags affected: --------
@@ -536,7 +459,7 @@ namespace InnoWerks.Simulators
         public void BRK(ushort addr, byte _2)
         {
             // 65c02 clears the decimal flag, 6502 leaves is undefined
-            if (CpuClass == CpuClass.WDC65C02)
+            if (CpuClass == CpuClass.WDC65C02 || CpuClass == CpuClass.Rockwell65C02)
             {
                 Registers.Decimal = false;
             }
@@ -1123,25 +1046,6 @@ namespace InnoWerks.Simulators
         }
 
         /// <summary>
-        /// <para>RMB - Reset Memory Bit</para>
-        /// <code>
-        /// Flags affected: -------
-        ///
-        /// Clear the specified bit in the zero page memory location
-        /// specified in the operand. The bit to clear is specified
-        /// by a number (0 through 7) concatenated to the end of the
-        /// mnemonic.
-        /// </code>
-        /// </summary>
-        public void RMB(ushort addr, byte value, byte bit)
-        {
-            int flag = 0x01 << bit;
-            value &= (byte)~flag;
-
-            bus.Write(addr, value);
-        }
-
-        /// <summary>
         /// <para>ROL - Rotate Left</para>
         /// <code>
         /// Flags affected: n-----zc
@@ -1287,25 +1191,6 @@ namespace InnoWerks.Simulators
         public void SEI(ushort _1, byte _2)
         {
             Registers.Interrupt = true;
-        }
-
-        /// <summary>
-        /// <para>SMB - Set Memory Bit</para>
-        /// <code>
-        /// Flags affected: n------ ?
-        /// </code>
-        ///
-        /// Clear the specified bit in the zero page memory location
-        /// specified in the operand. The bit to clear is specified
-        /// by a number (0 through 7) concatenated to the end of the
-        /// mnemonic.
-        /// </summary>
-        public void SMB(ushort addr, byte value, byte bit)
-        {
-            int flag = 0x01 << bit;
-            value |= (byte)flag;
-
-            bus.Write(addr, value);
         }
 
         /// <summary>
@@ -1555,36 +1440,13 @@ namespace InnoWerks.Simulators
             }
         }
 
-        private void DoBranch65C02(bool condition, ushort addr, byte offset)
-        {
-            ushort next = 3;
-            ushort pc = (ushort)(Registers.ProgramCounter + next);
-
-            if (condition == false)
-            {
-                Registers.ProgramCounter += next;
-            }
-            else
-            {
-                /* discarded */
-                bus.Read(pc);
-
-                if ((addr & 0xff00) != (pc & 0xff00))
-                {
-                    bus.Read(pc);
-                }
-
-                Registers.ProgramCounter = addr;
-            }
-        }
-
         private void HandleNMI()
         {
             StackPushWord(Registers.ProgramCounter);
             StackPush((byte)((Registers.ProcessorStatus & 0xef) | (byte)ProcessorStatusBit.Unused));
 
             // 65c02 clears the decimal flag, 6502 leaves is undefined
-            if (CpuClass == CpuClass.WDC65C02)
+            if (CpuClass == CpuClass.WDC65C02 || CpuClass == CpuClass.Rockwell65C02)
             {
                 Registers.Decimal = false;
             }
@@ -1606,7 +1468,7 @@ namespace InnoWerks.Simulators
             StackPush((byte)((Registers.ProcessorStatus & 0xef) | (byte)ProcessorStatusBit.Unused));
 
             // 65c02 clears the decimal flag, 6502 leaves is undefined
-            if (CpuClass == CpuClass.WDC65C02)
+            if (CpuClass == CpuClass.WDC65C02 || CpuClass == CpuClass.Rockwell65C02)
             {
                 Registers.Decimal = false;
             }

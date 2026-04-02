@@ -28,7 +28,7 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void RunNamedWDC65C02Test()
         {
-            RunNamedTest("03 84 c7");
+            RunNamedTest("82 09 7d");
         }
 
         [TestMethod]

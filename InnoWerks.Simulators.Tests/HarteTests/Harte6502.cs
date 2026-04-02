@@ -43,7 +43,6 @@ namespace InnoWerks.Simulators.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(IllegalOpCodeException))]
         public void RunIndividual6502Test02()
         {
             RunNamedBatch("02");
@@ -140,7 +139,6 @@ namespace InnoWerks.Simulators.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(IllegalOpCodeException))]
         public void RunIndividual6502Test12()
         {
             RunNamedBatch("12");
@@ -237,7 +235,6 @@ namespace InnoWerks.Simulators.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(IllegalOpCodeException))]
         public void RunIndividual6502Test22()
         {
             RunNamedBatch("22");
@@ -334,7 +331,6 @@ namespace InnoWerks.Simulators.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(IllegalOpCodeException))]
         public void RunIndividual6502Test32()
         {
             RunNamedBatch("32");
@@ -431,7 +427,6 @@ namespace InnoWerks.Simulators.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(IllegalOpCodeException))]
         public void RunIndividual6502Test42()
         {
             RunNamedBatch("42");
@@ -528,7 +523,6 @@ namespace InnoWerks.Simulators.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(IllegalOpCodeException))]
         public void RunIndividual6502Test52()
         {
             RunNamedBatch("52");
@@ -625,7 +619,6 @@ namespace InnoWerks.Simulators.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(IllegalOpCodeException))]
         public void RunIndividual6502Test62()
         {
             RunNamedBatch("62");
@@ -722,7 +715,6 @@ namespace InnoWerks.Simulators.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(IllegalOpCodeException))]
         public void RunIndividual6502Test72()
         {
             RunNamedBatch("72");
@@ -915,7 +907,6 @@ namespace InnoWerks.Simulators.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(IllegalOpCodeException))]
         public void RunIndividual6502Test92()
         {
             RunNamedBatch("92");
@@ -1108,7 +1099,6 @@ namespace InnoWerks.Simulators.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(IllegalOpCodeException))]
         public void RunIndividual6502TestB2()
         {
             RunNamedBatch("b2");
@@ -1301,7 +1291,6 @@ namespace InnoWerks.Simulators.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(IllegalOpCodeException))]
         public void RunIndividual6502TestD2()
         {
             RunNamedBatch("d2");
@@ -1494,7 +1483,6 @@ namespace InnoWerks.Simulators.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(IllegalOpCodeException))]
         public void RunIndividual6502TestF2()
         {
             RunNamedBatch("f2");

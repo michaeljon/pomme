@@ -27,7 +27,10 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void RunNamedRockwell65C02Test()
         {
-            RunNamedTest("cb cb 06");
+            // 69 81 2c
+            // 69 e5 69 - decimal? ends with 89
+            // e9 6161
+            RunNamedTest("e9 6161");
         }
 
         [TestMethod]
