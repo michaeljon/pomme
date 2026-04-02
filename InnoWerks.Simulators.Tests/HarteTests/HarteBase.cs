@@ -178,6 +178,14 @@ namespace InnoWerks.Simulators.Tests
                 TestContext.WriteLine($"Expected registers   {finalRegisters}");
                 TestContext.WriteLine($"Computed registers   {cpu.Registers}");
 
+                var a = (ocd.OpCodeValue >> 5) & 0x07;
+                var b = (ocd.OpCodeValue >> 2) & 0x07;
+                var c = ocd.OpCodeValue & 0x03;
+
+                TestContext.WriteLine($"A   {a:X2}");
+                TestContext.WriteLine($"B   {b:X2}");
+                TestContext.WriteLine($"C   {c:X2}");
+
                 TestContext.WriteLine("Expected bus accesses");
                 var time = 0;
                 foreach (var busAccess in test.BusAccesses)
@@ -277,7 +285,7 @@ namespace InnoWerks.Simulators.Tests
                     {
                         tests = [.. tests
                             .OrderBy(_ => Guid.NewGuid())
-                            .Take(100)];
+                            .Take(1000)];
                     }
 
                     List<string> testResults = [];

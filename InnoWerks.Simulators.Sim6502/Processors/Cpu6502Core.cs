@@ -459,7 +459,7 @@ namespace InnoWerks.Simulators
         public void BRK(ushort addr, byte _2)
         {
             // 65c02 clears the decimal flag, 6502 leaves is undefined
-            if (CpuClass == CpuClass.WDC65C02 || CpuClass == CpuClass.Rockwell65C02)
+            if (CpuClass != CpuClass.WDC6502)
             {
                 Registers.Decimal = false;
             }

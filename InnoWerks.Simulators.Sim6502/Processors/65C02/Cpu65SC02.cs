@@ -36,16 +36,15 @@ namespace InnoWerks.Simulators
 
             switch (opCodeDefinition.OpCode)
             {
-                // This is the case where we're running into an unknown or undocumented
-                // opcode. What we need to do is handle the bus access and cycle counting
-                // correctly for the addressing mode.
+                // The 65SC02 treats unimplemented opcodes as NOPs with varying
+                // byte counts and cycle counts determined by the PLA decode.
                 //
-                // In general the 65C02 will treat an unknown opcode as a NOP with
-                // varying cycle counts and either one or two bytes consumed
+                // The addressing mode in the opcode table determines the bus cycle
+                // pattern. For the Relative mode (xF: BBR/BBS slots), BBS opcodes
+                // (b bit 2 set) add an extra re-read cycle.
+                //
+                // Special case: $5C is a 3-byte, 8-cycle NOP with unique timing.
                 case OpCode.Unknown:
-                    var lo = opCodeDefinition.OpCodeValue & 0x0F;
-                    // var hi = (opCodeDefinition.OpCodeValue & 0xF0) >> 4;
-
                     if (opCodeDefinition.OpCodeValue == 0x5C)
                     {
                         // T1
@@ -57,26 +56,48 @@ namespace InnoWerks.Simulators
 
                         Registers.ProgramCounter += 3;
                     }
-                    else if (lo == 0x02)
+                    else if (opCodeDefinition.Bytes == 1)
                     {
-                        // T1
-                        bus.Read(Registers.ProgramCounter + 1);
-
-                        Registers.ProgramCounter += 2;
-                    }
-                    else if (lo == 0x03)
-                    {
-                        Registers.ProgramCounter++;
-                    }
-                    else if (lo == 0x0B)
-                    {
+                        // 1-byte, 1-cycle NOP (x3/xB slots)
                         Registers.ProgramCounter++;
                     }
                     else
                     {
                         switch (opCodeDefinition.AddressingMode)
                         {
+                            case AddressingMode.Immediate:
+                                // T1
+                                bus.Read(Registers.ProgramCounter + 1);
+
+                                Registers.ProgramCounter += 2;
+                                break;
+
+                            case AddressingMode.ZeroPage:
+                                {
+                                    // T1
+                                    var adl = bus.Read(Registers.ProgramCounter + 1);
+                                    // T2
+                                    bus.Read(adl);
+
+                                    Registers.ProgramCounter += 2;
+                                }
+                                break;
+
+                            case AddressingMode.ZeroPageXIndexed:
+                                {
+                                    // T1
+                                    var bal = bus.Read(Registers.ProgramCounter + 1);
+                                    // T2
+                                    bus.Read(bal);
+                                    // T3
+                                    bus.Read((bal + Registers.X) & 0xff);
+
+                                    Registers.ProgramCounter += 2;
+                                }
+                                break;
+
                             case AddressingMode.Absolute:
+                            case AddressingMode.AbsoluteXIndexed:
                                 {
                                     // T1
                                     bus.Read(Registers.ProgramCounter + 1);
@@ -89,36 +110,28 @@ namespace InnoWerks.Simulators
                                 }
                                 break;
 
-                            // A. 2.6. Zero Page, X or Zero Page, Y Addressing Modes (4 Cycles)
-                            case AddressingMode.ZeroPageXIndexed:
-                            case AddressingMode.ZeroPageYIndexed:
+                            case AddressingMode.Relative:
                                 {
-                                    // T1
-                                    var bal = bus.Read(Registers.ProgramCounter + 1);
-                                    // T2
-                                    /* var discarded = */
-                                    bus.Read(bal);
-                                    // T3
-                                    var index = opCodeDefinition.AddressingMode == AddressingMode.ZeroPageXIndexed ?
-                                        Registers.X :
-                                        Registers.Y;
-                                    /* var discarded = */
-                                    bus.Read((bal + index) & 0xff);
+                                    var b = (opCodeDefinition.OpCodeValue >> 2) & 0x07;
 
-                                    Registers.ProgramCounter += 2;
+                                    // T1
+                                    bus.Read(Registers.ProgramCounter + 1);
+                                    // T2
+                                    bus.Read(Registers.ProgramCounter + 2);
+
+                                    // BBS slots (b bit 2 set) re-read the last fetched byte
+                                    if ((b & 0x04) != 0)
+                                    {
+                                        // T3
+                                        bus.Read(Registers.ProgramCounter + 2);
+                                    }
+
+                                    Registers.ProgramCounter += 3;
                                 }
                                 break;
 
-                            case AddressingMode.ZeroPage:
-                                {
-                                    // T1
-                                    var adl = bus.Read(Registers.ProgramCounter + 1);
-                                    // T2
-                                    var data = bus.Read(adl);
-
-                                    Registers.ProgramCounter += 2;
-                                }
-                                break;
+                            default:
+                                throw new UnhandledAddressingModeException(Registers.ProgramCounter, opCodeDefinition.OpCodeValue, opCodeDefinition.OpCode, opCodeDefinition.AddressingMode);
                         }
                     }
 
@@ -220,24 +233,13 @@ namespace InnoWerks.Simulators
                                 {
                                     if (opCodeDefinition.OpCode == OpCode.ADC)
                                     {
-                                        if (CpuClass == CpuClass.WDC65C02)
-                                        {
-                                            /* discard */
-                                            bus.Read(127);
-                                        }
-                                        else if (CpuClass == CpuClass.Rockwell65C02)
-                                        {
-                                            /* discard */
-                                            bus.Read(89);
-                                        }
+                                        /* discard */
+                                        bus.Read(86);
                                     }
                                     else if (opCodeDefinition.OpCode == OpCode.SBC)
                                     {
-                                        if (CpuClass == CpuClass.WDC65C02 || CpuClass == CpuClass.Rockwell65C02)
-                                        {
-                                            /* discard */
-                                            bus.Read(0);
-                                        }
+                                        /* discard */
+                                        bus.Read(0);
                                     }
                                 }
 
