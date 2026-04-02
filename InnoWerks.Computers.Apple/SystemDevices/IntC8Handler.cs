@@ -8,7 +8,7 @@ namespace InnoWerks.Computers.Apple
 {
     public class IntC8Handler : ISoftSwitchDevice
     {
-        private readonly IBus bus;
+        private readonly IAppleBus bus;
 
         private readonly Memory128k memoryBlocks;
 
@@ -16,7 +16,7 @@ namespace InnoWerks.Computers.Apple
 
         public string Name => $"IntC8Handler";
 
-        public IntC8Handler(Memory128k memoryBlocks, MachineState machineState, IBus bus)
+        public IntC8Handler(Memory128k memoryBlocks, MachineState machineState, IAppleBus bus)
         {
             ArgumentNullException.ThrowIfNull(machineState, nameof(machineState));
             ArgumentNullException.ThrowIfNull(memoryBlocks, nameof(memoryBlocks));

@@ -2,10 +2,6 @@ namespace InnoWerks.Simulators
 {
     public interface IBus
     {
-        void AddDevice(ISoftSwitchDevice device);
-
-        void AddDevice(ISlotDevice slotDevice);
-
         /// <summary>
         /// Starts a memory transaction to record a single
         /// CPU step's cycle count. Initializes the transaction

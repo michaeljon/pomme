@@ -4,7 +4,7 @@ using InnoWerks.Simulators;
 
 namespace InnoWerks.Computers.Apple
 {
-    public class AppleBus : IBus
+    public class AppleBus : IAppleBus
     {
         private readonly AppleConfiguration configuration;
 

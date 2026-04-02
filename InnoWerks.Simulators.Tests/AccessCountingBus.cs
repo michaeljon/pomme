@@ -21,10 +21,6 @@ namespace InnoWerks.Simulators.Tests
 
         private int transactionCycles;
 
-        public void AddDevice(ISoftSwitchDevice device) { }
-
-        public void AddDevice(ISlotDevice device) { }
-
         public void BeginTransaction()
         {
             transactionCycles = 0;

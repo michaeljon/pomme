@@ -16,7 +16,7 @@ namespace InnoWerks.Computers.Apple
         public DiskIISlotDevice(
             int slot,
             ICpu cpu,
-            IBus bus,
+            IAppleBus bus,
             MachineState machineState)
             : base(slot, "Disk II Controller", cpu, bus, machineState)
         {

@@ -39,11 +39,11 @@ namespace InnoWerks.Computers.Apple
         private int ticks;
 
         private readonly ICpu cpu;
-        private readonly IBus bus;
+        private readonly IAppleBus bus;
 
         private readonly Stack<bool> bitBuffer = new Stack<bool>();
 
-        public ThunderClockSlotDevice(int slot, ICpu cpu, IBus bus, MachineState machineState)
+        public ThunderClockSlotDevice(int slot, ICpu cpu, IAppleBus bus, MachineState machineState)
             : base(slot, "ThunderClock Plus", cpu, bus, machineState)
         {
             ArgumentNullException.ThrowIfNull(cpu, nameof(cpu));

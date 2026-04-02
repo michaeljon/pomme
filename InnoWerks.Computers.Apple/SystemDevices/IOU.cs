@@ -12,7 +12,7 @@ namespace InnoWerks.Computers.Apple
         // Apple II paddle timing: each PDL unit ≈ 11 µs at 1 MHz ≈ 11 cycles
         private const int CyclesPerPaddleUnit = 11;
 
-        private readonly IBus bus;
+        private readonly IAppleBus bus;
 
         private readonly Memory128k memoryBlocks;
 
@@ -161,7 +161,7 @@ namespace InnoWerks.Computers.Apple
 
         public string Name => $"IOU";
 
-        public IOU(Memory128k memoryBlocks, MachineState machineState, IBus bus)
+        public IOU(Memory128k memoryBlocks, MachineState machineState, IAppleBus bus)
         {
             ArgumentNullException.ThrowIfNull(machineState, nameof(machineState));
             ArgumentNullException.ThrowIfNull(memoryBlocks, nameof(memoryBlocks));

@@ -32,7 +32,7 @@ namespace InnoWerks.Computers.Apple
     {
         private readonly ICpu cpu;
 
-        private readonly IBus bus;
+        private readonly IAppleBus bus;
 
         public const ushort IO_BASE_ADDR = 0xC080;
 
@@ -48,13 +48,13 @@ namespace InnoWerks.Computers.Apple
 
 #pragma warning restore CA1819 // Properties should not return arrays
 
-        protected SlotRomDevice(int slot, string name, ICpu cpu, IBus bus, MachineState machineState)
+        protected SlotRomDevice(int slot, string name, ICpu cpu, IAppleBus bus, MachineState machineState)
             : this(slot, name, cpu, bus, machineState, null, null) { }
 
-        protected SlotRomDevice(int slot, string name, ICpu cpu, IBus bus, MachineState machineState, byte[] romImage)
+        protected SlotRomDevice(int slot, string name, ICpu cpu, IAppleBus bus, MachineState machineState, byte[] romImage)
             : this(slot, name, cpu, bus, machineState, romImage, null) { }
 
-        protected SlotRomDevice(int slot, string name, ICpu cpu, IBus bus, MachineState machineState, byte[] cxRom, byte[] c8Rom)
+        protected SlotRomDevice(int slot, string name, ICpu cpu, IAppleBus bus, MachineState machineState, byte[] cxRom, byte[] c8Rom)
         {
             ArgumentOutOfRangeException.ThrowIfGreaterThan(slot, 7, nameof(slot));
             ArgumentOutOfRangeException.ThrowIfLessThan(slot, 0, nameof(slot));

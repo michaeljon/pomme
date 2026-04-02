@@ -107,7 +107,7 @@ namespace InnoWerks.Computers.Apple
         public ProDOSSlotDevice(
             int slot,
             ICpu cpu,
-            IBus bus,
+            IAppleBus bus,
             MachineState machineState)
             : base(slot, "ProDOS Controller", cpu, bus, machineState)
         {

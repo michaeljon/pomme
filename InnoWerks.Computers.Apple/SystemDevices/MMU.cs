@@ -12,7 +12,7 @@ namespace InnoWerks.Computers.Apple
     {
         private bool preWrite;
 
-        private readonly IBus bus;
+        private readonly IAppleBus bus;
 
         private readonly Memory128k memoryBlocks;
 
@@ -80,7 +80,7 @@ namespace InnoWerks.Computers.Apple
 
         public string Name => $"MMU";
 
-        public MMU(Memory128k memoryBlocks, MachineState machineState, IBus bus)
+        public MMU(Memory128k memoryBlocks, MachineState machineState, IAppleBus bus)
         {
             ArgumentNullException.ThrowIfNull(machineState, nameof(machineState));
             ArgumentNullException.ThrowIfNull(memoryBlocks, nameof(memoryBlocks));

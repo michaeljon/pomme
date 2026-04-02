@@ -10,7 +10,7 @@ namespace InnoWerks.Computers.Apple.Tests
     /// <c>AccessCountingBus</c> from InnoWerks.Simulators.Tests but without
     /// any dependency on the JSON Harte test infrastructure.
     /// </summary>
-    public class AppleBusTestDouble : IBus
+    public class AppleBusTestDouble : IAppleBus
     {
         private readonly byte[] memory = new byte[64 * 1024];
 

@@ -72,7 +72,7 @@ namespace InnoWerks.Computers.Apple
 
         public bool IsMouseCaptured { get; private set; }
 
-        public MouseSlotDevice(int slot, ICpu cpu, IBus bus, MachineState machineState)
+        public MouseSlotDevice(int slot, ICpu cpu, IAppleBus bus, MachineState machineState)
             : base(slot, "Apple Mouse Interface Card", cpu, bus, machineState)
         {
             ArgumentNullException.ThrowIfNull(cpu, nameof(cpu));
