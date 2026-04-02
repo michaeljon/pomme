@@ -206,7 +206,6 @@ namespace InnoWerks.Simulators
 
             postExecutionCallback?.Invoke(this);
 
-            // hard-coded BRK, if hit we'll tell the caller that we saw and executed a break
             return bus.EndTransaction();
         }
 
@@ -459,7 +458,7 @@ namespace InnoWerks.Simulators
         public void BRK(ushort addr, byte _2)
         {
             // 65c02 clears the decimal flag, 6502 leaves is undefined
-            if (CpuClass != CpuClass.WDC6502)
+            if (CpuClass != CpuClass.WDC6502 && CpuClass != CpuClass.Nes6502)
             {
                 Registers.Decimal = false;
             }
