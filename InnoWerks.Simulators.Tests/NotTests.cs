@@ -42,13 +42,25 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void Generate6502OpCodeTable()
         {
-            GenerateOpTable(CpuInstructions.OpCode6502);
+            GenerateOpTable(CpuInstructions.GetInstructionSet(CpuClass.WDC6502));
         }
 
         [TestMethod]
         public void Generate65C02OpCodeTable()
         {
-            GenerateOpTable(CpuInstructions.OpCode65C02);
+            GenerateOpTable(CpuInstructions.GetInstructionSet(CpuClass.WDC65C02));
+        }
+
+        [TestMethod]
+        public void Generate65SC02OpCodeTable()
+        {
+            GenerateOpTable(CpuInstructions.GetInstructionSet(CpuClass.Synertek65C02));
+        }
+
+        [TestMethod]
+        public void GenerateR65C02OpCodeTable()
+        {
+            GenerateOpTable(CpuInstructions.GetInstructionSet(CpuClass.Rockwell65C02));
         }
 
         [TestMethod]

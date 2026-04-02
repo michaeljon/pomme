@@ -58,7 +58,8 @@ namespace Emu6502
             var iou = new IOU(memoryBlocks, machineState, bus);
             var mmu = new MMU(memoryBlocks, machineState, bus);
 
-            var cpu = new Cpu65C02(
+            var cpu = Cpu6502Factory.Construct(
+                CpuClass.WDC65C02,
                 bus,
                 (cpu, programCounter) => { },
                 (cpu) =>

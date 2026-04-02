@@ -91,23 +91,15 @@ namespace Sim6502
             bus.Poke(Cpu6502Core.RstVectorH, (byte)((options.Origin & 0xff00) >> 8));
             bus.Poke(Cpu6502Core.RstVectorL, (byte)(options.Origin & 0xff));
 
-            ICpu cpu = options.CpuClass == CpuClass.WDC6502 ?
-                new Cpu6502(
-                    bus,
-                    (cpu, programCounter) => { },
-                    (cpu) =>
-                    {
-                        Console.WriteLine();
-                        Console.WriteLine($"PC:{cpu.Registers.ProgramCounter:X4} {cpu.Registers.GetRegisterDisplay} {cpu.Registers.InternalGetFlagsDisplay}");
-                    }) :
-                new Cpu65C02(
-                    bus,
-                    (cpu, programCounter) => { },
-                    (cpu) =>
-                    {
-                        Console.WriteLine();
-                        Console.WriteLine($"PC:{cpu.Registers.ProgramCounter:X4} {cpu.Registers.GetRegisterDisplay} {cpu.Registers.InternalGetFlagsDisplay}");
-                    });
+            var cpu = Cpu6502Factory.Construct(
+                options.CpuClass,
+                bus,
+                (cpu, programCounter) => { },
+                (cpu) =>
+                {
+                    Console.WriteLine();
+                    Console.WriteLine($"PC:{cpu.Registers.ProgramCounter:X4} {cpu.Registers.GetRegisterDisplay} {cpu.Registers.InternalGetFlagsDisplay}");
+                });
 
             cpu.Reset();
 

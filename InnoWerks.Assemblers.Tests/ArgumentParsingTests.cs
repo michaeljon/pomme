@@ -24,7 +24,7 @@ namespace InnoWerks.Assemblers.Tests
                 Assert.AreEqual(AddressingMode.Implicit, lineInformation.AddressingMode);
                 Assert.IsNull(lineInformation.Value);
 
-                var expectedInstructionCode = InstructionInformation.Instructions[(opCode, lineInformation.AddressingMode)].code;
+                var expectedInstructionCode = InstructionInformation.Instructions[(opCode, lineInformation.AddressingMode)];
                 CollectionAssert.AreEqual(new byte[] { expectedInstructionCode }, assembler.ObjectCode);
             }
         }
@@ -61,7 +61,7 @@ namespace InnoWerks.Assemblers.Tests
                 Assert.AreEqual(AddressingMode.Accumulator, lineInformation.AddressingMode);
                 Assert.IsNull(lineInformation.Value);
 
-                var expectedOperation = InstructionInformation.Instructions[(expectedOpCode, AddressingMode.Accumulator)].code;
+                var expectedOperation = InstructionInformation.Instructions[(expectedOpCode, AddressingMode.Accumulator)];
                 CollectionAssert.AreEqual(new byte[] { expectedOperation }, assembler.ObjectCode);
             }
         }
@@ -97,7 +97,7 @@ namespace InnoWerks.Assemblers.Tests
                 Assert.AreEqual(AddressingMode.Accumulator, lineInformation.AddressingMode);
                 Assert.IsNull(lineInformation.Value);
 
-                var expectedOperation = InstructionInformation.Instructions[(expectedOpCode, AddressingMode.Accumulator)].code;
+                var expectedOperation = InstructionInformation.Instructions[(expectedOpCode, AddressingMode.Accumulator)];
                 CollectionAssert.AreEqual(new byte[] { expectedOperation }, assembler.ObjectCode);
             }
         }
@@ -121,7 +121,7 @@ namespace InnoWerks.Assemblers.Tests
                 Assert.AreEqual(AddressingMode.Stack, lineInformation.AddressingMode);
                 Assert.IsNull(lineInformation.Value);
 
-                var expectedInstructionCode = InstructionInformation.Instructions[(opCode, lineInformation.AddressingMode)].code;
+                var expectedInstructionCode = InstructionInformation.Instructions[(opCode, lineInformation.AddressingMode)];
                 CollectionAssert.AreEqual(new byte[] { expectedInstructionCode }, assembler.ObjectCode);
             }
         }

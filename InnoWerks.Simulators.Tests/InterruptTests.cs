@@ -45,9 +45,9 @@ namespace InnoWerks.Simulators.Tests
 
         private static ICpu CreateCpu(AccessCountingBus bus, CpuClass cpuClass)
         {
-            ICpu cpu = cpuClass == CpuClass.WDC6502
-                ? new Cpu6502(bus, null, null)
-                : new Cpu65C02(bus, null, null);
+            var cpu = Cpu6502Factory.Construct(
+                cpuClass, bus, null, null
+            );
 
             cpu.Reset();
 

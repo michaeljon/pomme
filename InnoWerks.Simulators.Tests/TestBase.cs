@@ -70,15 +70,11 @@ namespace InnoWerks.Simulators.Tests
             bus.Poke(Cpu6502Core.RstVectorH, 0x00);
             bus.Poke(Cpu6502Core.RstVectorL, 0x00);
 
-            ICpu cpu = cpuClass == CpuClass.WDC6502 ?
-                new Cpu6502(
-                    bus,
-                    (cpu, pc) => DummyTraceCallback(cpu, pc, bus, code),
-                    (cpu) => DummyLoggerCallback(cpu, bus, lines)) :
-                new Cpu65C02(
-                    bus,
-                    (cpu, pc) => DummyTraceCallback(cpu, pc, bus, code),
-                    (cpu) => DummyLoggerCallback(cpu, bus, lines));
+            var cpu = Cpu6502Factory.Construct(
+                cpuClass,
+                bus,
+                (cpu, pc) => DummyTraceCallback(cpu, pc, bus, code),
+                (cpu) => DummyLoggerCallback(cpu, bus, lines));
 
             cpu.Reset();
             if (code != null)

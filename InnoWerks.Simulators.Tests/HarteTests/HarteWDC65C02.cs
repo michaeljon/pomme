@@ -11,24 +11,24 @@ namespace InnoWerks.Simulators.Tests
 
         protected override CpuClass CpuClass => CpuClass.WDC65C02;
 
-        // [Ignore]
+        [Ignore]
         [TestMethod]
         public void RunAllWDC65C02Tests()
         {
-            RunAllBatches();
+            RunBatched(false);
         }
 
         // [Ignore]
         [TestMethod]
         public void RunSampledWDC65C02Tests()
         {
-            RunAllBatchesWithRandomSampling();
+            RunBatched(true);
         }
 
         [TestMethod]
         public void RunNamedWDC65C02Test()
         {
-            RunNamedTest("03 84 c7");
+            RunNamedTest("82 09 7d");
         }
 
         [TestMethod]

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using InnoWerks.Assemblers;
+using InnoWerks.Processors;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace InnoWerks.Simulators.Tests
@@ -29,7 +30,8 @@ namespace InnoWerks.Simulators.Tests
             bus.Poke(Cpu6502Core.RstVectorH, (byte)((InitializationVector & 0xff00) >> 8));
             bus.Poke(Cpu6502Core.RstVectorL, (byte)(InitializationVector & 0xff));
 
-            var cpu = new Cpu65C02(
+            var cpu = Cpu6502Factory.Construct(
+                CpuClass.WDC65C02,
                 bus,
                 (cpu, pc) => TraceCallback(cpu, pc, bus, null),
                 (cpu) => LoggerCallback(cpu, bus, 0));
@@ -64,7 +66,8 @@ namespace InnoWerks.Simulators.Tests
             bus.Poke(Cpu6502Core.RstVectorH, (byte)((InitializationVector & 0xff00) >> 8));
             bus.Poke(Cpu6502Core.RstVectorL, (byte)(InitializationVector & 0xff));
 
-            var cpu = new Cpu6502(
+            var cpu = Cpu6502Factory.Construct(
+                CpuClass.WDC6502,
                 bus,
                 (cpu, pc) => TraceCallback(cpu, pc, bus, null),
                 (cpu) => LoggerCallback(cpu, bus, 0));

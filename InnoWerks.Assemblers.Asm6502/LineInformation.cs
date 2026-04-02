@@ -113,7 +113,7 @@ namespace InnoWerks.Assemblers
                 // todo: make sure to return the correct value, or blow up
                 // if the target doesn't include the instruction
 
-                return InstructionInformation.Instructions[(OpCode, AddressingMode)].code;
+                return InstructionInformation.Instructions[(OpCode, AddressingMode)];
             }
         }
 

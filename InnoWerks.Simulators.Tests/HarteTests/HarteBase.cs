@@ -96,19 +96,11 @@ namespace InnoWerks.Simulators.Tests
             // set up initial memory state
             bus.Initialize(test.Initial.Ram);
 
-            ICpu cpu = CpuClass == CpuClass.WDC6502 ?
-                new Cpu6502(
-                    bus,
-                    // (cpu, pc) => FlagsTraceCallback(cpu, pc, memory),
-                    // (cpu) => FlagsLoggerCallback(cpu, memory, 0))
-                    (cpu, pc) => DummyTraceCallback(cpu, pc, bus),
-                    (cpu) => DummyLoggerCallback(cpu, bus, 0)) :
-                new Cpu65C02(
-                    bus,
-                    // (cpu, pc) => FlagsTraceCallback(cpu, pc, memory),
-                    // (cpu) => FlagsLoggerCallback(cpu, memory, 0))
-                    (cpu, pc) => DummyTraceCallback(cpu, pc, bus),
-                    (cpu) => DummyLoggerCallback(cpu, bus, 0));
+            var cpu = Cpu6502Factory.Construct(
+                CpuClass,
+                bus,
+                (cpu, pc) => DummyTraceCallback(cpu, pc, bus),
+                (cpu) => DummyLoggerCallback(cpu, bus, 0));
 
             cpu.Reset();
 
@@ -146,41 +138,35 @@ namespace InnoWerks.Simulators.Tests
 
             var testFailed = false;
 
-            // we can run these tests to this extent, after this i haven't implemented
-            // the "undocumented" opcodes because, well, they're undocumented and
-            // probably don't always behave like they should
-            if (CpuClass == CpuClass.WDC6502 && ocd.OpCode != OpCode.Unknown)
-            {
-                // verify results
-                if (test.Final.ProgramCounter != cpu.Registers.ProgramCounter) { testFailed = true; results.Add($"{test.Name}: ProgramCounter expected {test.Final.ProgramCounter:X4} actual {cpu.Registers.ProgramCounter:X4}"); }
+            // verify results
+            if (test.Final.ProgramCounter != cpu.Registers.ProgramCounter) { testFailed = true; results.Add($"{test.Name}: ProgramCounter expected {test.Final.ProgramCounter:X4} actual {cpu.Registers.ProgramCounter:X4}"); }
 
-                if (test.Final.S != cpu.Registers.StackPointer) { testFailed = true; results.Add($"{test.Name}: StackPointer expected {test.Final.S:X2} actual {cpu.Registers.StackPointer:X2}"); }
-                if (test.Final.A != cpu.Registers.A) { testFailed = true; results.Add($"{test.Name}: A expected {test.Final.A:X2} actual {cpu.Registers.A:X2}"); }
-                if (test.Final.X != cpu.Registers.X) { testFailed = true; results.Add($"{test.Name}: X expected {test.Final.X:X2} actual {cpu.Registers.X:X2}"); }
-                if (test.Final.Y != cpu.Registers.Y) { testFailed = true; results.Add($"{test.Name}: Y expected {test.Final.Y:X2} actual {cpu.Registers.Y:X2}"); }
-                if (test.Final.P != cpu.Registers.ProcessorStatus) { testFailed = true; results.Add($"{test.Name}: ProcessorStatus expected {test.Final.P:X2} actual {cpu.Registers.ProcessorStatus:X2}"); }
+            if (test.Final.S != cpu.Registers.StackPointer) { testFailed = true; results.Add($"{test.Name}: StackPointer expected {test.Final.S:X2} actual {cpu.Registers.StackPointer:X2}"); }
+            if (test.Final.A != cpu.Registers.A) { testFailed = true; results.Add($"{test.Name}: A expected {test.Final.A:X2} actual {cpu.Registers.A:X2}"); }
+            if (test.Final.X != cpu.Registers.X) { testFailed = true; results.Add($"{test.Name}: X expected {test.Final.X:X2} actual {cpu.Registers.X:X2}"); }
+            if (test.Final.Y != cpu.Registers.Y) { testFailed = true; results.Add($"{test.Name}: Y expected {test.Final.Y:X2} actual {cpu.Registers.Y:X2}"); }
+            if (test.Final.P != cpu.Registers.ProcessorStatus) { testFailed = true; results.Add($"{test.Name}: ProcessorStatus expected {test.Final.P:X2} actual {cpu.Registers.ProcessorStatus:X2}"); }
 
 #if POST_STEP_MEMORY
-                // verify memory
-                (var ramMatches, var ramDiffersAtAddr, byte ramExpectedValue, byte ramActualValue) =
-                    bus.ValidateMemory(test.Final.Ram);
-                if (ramMatches == false) { testFailed = true; results.Add($"{test.Name}: Expected memory at {ramDiffersAtAddr} to be {ramExpectedValue} but is {ramActualValue}"); }
+            // verify memory
+            (var ramMatches, var ramDiffersAtAddr, byte ramExpectedValue, byte ramActualValue) =
+                bus.ValidateMemory(test.Final.Ram);
+            if (ramMatches == false) { testFailed = true; results.Add($"{test.Name}: Expected memory at {ramDiffersAtAddr} to be {ramExpectedValue} but is {ramActualValue}"); }
 #endif
 
 #if VALIDATE_BUS_ACCESSES
-                // verify bus accesses
-                if (test.BusAccesses.Count() != bus.BusAccesses.Count)
-                {
-                    { testFailed = true; results.Add($"{test.Name}: Expected {test.BusAccesses.Count()} memory accesses but got {bus.BusAccesses.Count} instead "); }
-                }
-                else
-                {
-                    (var cyclesMatches, var cyclesDiffersAtAddr, var cyclesExpectedValue, var cyclesActualValue) =
-                        bus.ValidateCycles(test.BusAccesses);
-                    if (cyclesMatches == false) { testFailed = true; results.Add($"{test.Name}: Expected access at {cyclesDiffersAtAddr} to be {cyclesExpectedValue} but is {cyclesActualValue}"); }
-                }
-#endif
+            // verify bus accesses
+            if (test.BusAccesses.Count() != bus.BusAccesses.Count)
+            {
+                { testFailed = true; results.Add($"{test.Name}: Expected {test.BusAccesses.Count()} memory accesses but got {bus.BusAccesses.Count} instead "); }
             }
+            else
+            {
+                (var cyclesMatches, var cyclesDiffersAtAddr, var cyclesExpectedValue, var cyclesActualValue) =
+                    bus.ValidateCycles(test.BusAccesses);
+                if (cyclesMatches == false) { testFailed = true; results.Add($"{test.Name}: Expected access at {cyclesDiffersAtAddr} to be {cyclesExpectedValue} but is {cyclesActualValue}"); }
+            }
+#endif
 
 #if DUMP_TEST_DATA
             if (testFailed == true)
@@ -191,6 +177,14 @@ namespace InnoWerks.Simulators.Tests
                 TestContext.WriteLine($"Initial registers    {initialRegisters}");
                 TestContext.WriteLine($"Expected registers   {finalRegisters}");
                 TestContext.WriteLine($"Computed registers   {cpu.Registers}");
+
+                var a = (ocd.OpCodeValue >> 5) & 0x07;
+                var b = (ocd.OpCodeValue >> 2) & 0x07;
+                var c = ocd.OpCodeValue & 0x03;
+
+                TestContext.WriteLine($"A   {a:X2}");
+                TestContext.WriteLine($"B   {b:X2}");
+                TestContext.WriteLine($"C   {c:X2}");
 
                 TestContext.WriteLine("Expected bus accesses");
                 var time = 0;
@@ -254,49 +248,8 @@ namespace InnoWerks.Simulators.Tests
             Assert.AreEqual(0, results.Count, $"Failed some tests");
         }
 
-        protected void RunAllBatches()
+        protected void RunBatched(bool randomSampled)
         {
-            bool[] ignored = LoadIgnored();
-            List<string> results = [];
-
-            var files = Directory
-                .GetFiles(BasePath, "*.json")
-                .OrderBy(f => f);
-
-            Parallel.ForEach(files, file =>
-            {
-                using (var fs = File.OpenRead(file))
-                {
-                    if (fs.Length == 0)
-                    {
-                        return;
-                    }
-
-                    var index = byte.Parse(Path.GetFileNameWithoutExtension(file), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
-
-                    if (ignored[index] == false)
-                    {
-                        foreach (var test in JsonSerializer.Deserialize<List<JsonHarteTestStructure>>(fs, SerializerOptions))
-                        {
-                            RunIndividualTest(test, results);
-                        }
-                    }
-                }
-            });
-
-#if VERBOSE_BATCH_OUTPUT
-            foreach (var result in results)
-            {
-                TestContext.WriteLine(result);
-            }
-#endif
-
-            Assert.AreEqual(0, results.Count, $"Failed some tests");
-        }
-
-        protected void RunAllBatchesWithRandomSampling()
-        {
-            bool[] ignored = LoadIgnored();
             List<string> results = [];
 
             var files = Directory
@@ -316,31 +269,34 @@ namespace InnoWerks.Simulators.Tests
 
                     var index = byte.Parse(Path.GetFileNameWithoutExtension(file), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
 
-                    if (ignored[index] == false)
+                    // note:
+                    // this test can take upwards of 30 minutes to run if we go through all
+                    // possible opcodes and all 10,000 tests per opcode. this trick selects
+                    // a random samples from the test. we still hit all the opcodes, but we
+                    // run just 1/10th of the tests. big time savings...
+                    //
+                    // and no, we aren't skipping tests. all of the individual "batch" tests
+                    // below, which can run in parallel, will test the entire 10,000
+                    // tests in the batch
+                    var tests = JsonSerializer.Deserialize<List<JsonHarteTestStructure>>(fs, SerializerOptions)
+                        .ToList();
+
+                    if (randomSampled == true)
                     {
-                        // note:
-                        // this test can take upwards of 30 minutes to run if we go through all
-                        // possible opcodes and all 10,000 tests per opcode. this trick selects
-                        // a random samples from the test. we still hit all the opcodes, but we
-                        // run just 1/10th of the tests. big time savings...
-                        //
-                        // and no, we aren't skipping tests. all of the individual "batch" tests
-                        // below, which can run in parallel, will test the entire 10,000
-                        // tests in the batch
-                        var tests = JsonSerializer.Deserialize<List<JsonHarteTestStructure>>(fs, SerializerOptions)
+                        tests = [.. tests
                             .OrderBy(_ => Guid.NewGuid())
-                            .Take(1000);
+                            .Take(1000)];
+                    }
 
-                        List<string> testResults = [];
-                        foreach (var test in tests)
-                        {
-                            RunIndividualTest(test, testResults);
-                        }
+                    List<string> testResults = [];
+                    foreach (var test in tests)
+                    {
+                        RunIndividualTest(test, testResults);
+                    }
 
-                        lock (lockObject)
-                        {
-                            results.AddRange(testResults);
-                        }
+                    lock (lockObject)
+                    {
+                        results.AddRange(testResults);
                     }
                 }
             });
@@ -353,22 +309,6 @@ namespace InnoWerks.Simulators.Tests
 #endif
 
             Assert.AreEqual(0, results.Count, $"Failed some tests");
-        }
-
-        protected bool[] LoadIgnored()
-        {
-            var ignored = new bool[256];
-
-            if (CpuClass == CpuClass.WDC6502)
-            {
-                // from https://www.masswerk.at/nowgobang/2021/6502-illegal-opcodes
-                foreach (var kill in (byte[])[0x02, 0x12, 0x22, 0x32, 0x42, 0x52, 0x62, 0x72, 0x92, 0xB2, 0xD2, 0xF2])
-                {
-                    ignored[kill] = true;
-                }
-            }
-
-            return ignored;
         }
     }
 }

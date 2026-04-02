@@ -10,13 +10,13 @@ using InnoWerks.Processors;
 
 namespace InnoWerks.Simulators
 {
-    public class Cpu65C02 : Cpu6502Core
+    public class CpuR65C02 : Cpu6502Core
     {
-        public override CpuClass CpuClass => CpuClass.WDC65C02;
+        public override CpuClass CpuClass => CpuClass.Rockwell65C02;
 
         private readonly OpCodeDefinition[] instructionSet;
 
-        public Cpu65C02(IBus bus,
+        public CpuR65C02(IBus bus,
                         Action<ICpu, ushort> preExecutionCallback,
                         Action<ICpu> postExecutionCallback)
             : base(bus, preExecutionCallback, postExecutionCallback)
@@ -36,15 +36,16 @@ namespace InnoWerks.Simulators
 
             switch (opCodeDefinition.OpCode)
             {
-                // The WDC 65C02 treats unimplemented opcodes as NOPs with varying
+                // The R65C02 treats unimplemented opcodes as NOPs with varying
                 // byte counts and cycle counts determined by the PLA decode.
-                // Since the WDC implements BBR/BBS/RMB/SMB natively, only
+                // Since the Rockwell implements BBR/BBS/RMB/SMB natively, only
                 // the x3/xB (1-byte NOPs) and the standard NOP variants reach here.
                 //
                 // Special case: $5C is a 3-byte, 8-cycle NOP with unique timing.
                 case OpCode.Unknown:
                     if (opCodeDefinition.OpCodeValue == 0x5C)
                     {
+                        // $5C: 3-byte, 8-cycle NOP - unique timing
                         // T1
                         bus.Read(Registers.ProgramCounter + 1);
                         // T2
@@ -212,7 +213,7 @@ namespace InnoWerks.Simulators
                                     if (opCodeDefinition.OpCode == OpCode.ADC)
                                     {
                                         /* discard */
-                                        bus.Read(127);
+                                        bus.Read(89);
                                     }
                                     else if (opCodeDefinition.OpCode == OpCode.SBC)
                                     {
@@ -1006,15 +1007,27 @@ namespace InnoWerks.Simulators
                     }
                     break;
 
-                case OpCode.STP:
                 case OpCode.WAI:
                     {
                         // T1
-                        var offset = bus.Read(Registers.ProgramCounter + 1);
-
-                        opCodeDefinition.Execute(this, 0, 0);
+                        var bal = bus.Read(Registers.ProgramCounter + 1);
 
                         Registers.ProgramCounter++;
+                    }
+                    break;
+
+                case OpCode.STP:
+                    {
+                        // T1
+                        var bal = bus.Read(Registers.ProgramCounter + 1);
+                        // T2
+                        /* var discarded = */
+                        bus.Read(bal);
+                        // T3
+                        var ad = (ushort)((bal + Registers.X) & 0xff);
+                        var data = bus.Read(ad);
+
+                        Registers.ProgramCounter += 2;
                     }
                     break;
 
@@ -1205,7 +1218,7 @@ namespace InnoWerks.Simulators
             // TODO: verify this does not break tests
             var addr = (ushort)(Registers.ProgramCounter + 3 + (sbyte)offset);
 
-            DoBranch65C02((value & (0x01 << bit)) == 0, addr, 0);
+            DoBranchR65C02((value & (0x01 << bit)) == 0, addr, 0);
         }
 
         /// <summary>
@@ -1244,10 +1257,10 @@ namespace InnoWerks.Simulators
             // TODO: verify this does not break tests
             var addr = (ushort)(Registers.ProgramCounter + 3 + (sbyte)offset);
 
-            DoBranch65C02((value & (0x01 << bit)) != 0, addr, 0);
+            DoBranchR65C02((value & (0x01 << bit)) != 0, addr, 0);
         }
 
-        private void DoBranch65C02(bool condition, ushort addr, byte offset)
+        private void DoBranchR65C02(bool condition, ushort addr, byte offset)
         {
             ushort next = 3;
             ushort pc = (ushort)(Registers.ProgramCounter + next);
