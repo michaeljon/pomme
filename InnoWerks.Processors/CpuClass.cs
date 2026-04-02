@@ -14,5 +14,7 @@ namespace InnoWerks.Processors
         Synertek65C02 = 3,
 
         Rockwell65C02 = 4,
+
+        Nes6502 = 5
     }
 }

@@ -17,6 +17,7 @@ namespace InnoWerks.Simulators
                 CpuClass.WDC65C02 => new Cpu65C02(bus, preExecutionCallback, postExecutionCallback),
                 CpuClass.Synertek65C02 => new Cpu65SC02(bus, preExecutionCallback, postExecutionCallback),
                 CpuClass.Rockwell65C02 => new CpuR65C02(bus, preExecutionCallback, postExecutionCallback),
+                CpuClass.Nes6502 => new CpuNes6502(bus, preExecutionCallback, postExecutionCallback),
 
                 _ => throw new ArgumentOutOfRangeException(nameof(cpuClass), "Constructing CpuClass not (yet) supported")
             };
@@ -34,6 +35,7 @@ namespace InnoWerks.Simulators
                 CpuClass.WDC65C02 => new Cpu65C02(bus, preExecutionCallback, postExecutionCallback) as T,
                 CpuClass.Synertek65C02 => new Cpu65SC02(bus, preExecutionCallback, postExecutionCallback) as T,
                 CpuClass.Rockwell65C02 => new CpuR65C02(bus, preExecutionCallback, postExecutionCallback) as T,
+                CpuClass.Nes6502 => new CpuNes6502(bus, preExecutionCallback, postExecutionCallback) as T,
 
                 _ => throw new ArgumentOutOfRangeException(nameof(cpuClass), "Constructing CpuClass not (yet) supported")
             };
