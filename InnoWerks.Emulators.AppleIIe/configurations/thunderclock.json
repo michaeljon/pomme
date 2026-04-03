@@ -4,24 +4,20 @@
   "breakpoints": [],
   "slots": [
     {
-      "deviceType": "mouse",
-      "slotNumber": 2
-    },
-    {
-      "deviceType": "mockingboard",
+      "deviceType": "thunderClock",
       "slotNumber": 4
     },
     {
-      "deviceType": "hardDisk",
-      "slotNumber": 7,
+      "deviceType": "diskii",
+      "slotNumber": 6,
       "driveOne": {
-        "image": "disks/A2DeskTop-1.5-en_32MB.hdv",
+        "image": "disks/thunderclock1.dsk",
+        "readOnly": false
+      },
+      "driveTwo": {
+        "image": "disks/thunderclock2.dsk",
         "readOnly": false
       }
-      // },
-      // {
-      //   "deviceType": "thunderClock",
-      //   "slotNumber": 5
     }
   ],
   "monochrome": true,

@@ -138,7 +138,11 @@ namespace InnoWerks.Computers.Apple
                 // Any access to $Cn00-$CnFF selects this slot for subsequent
                 // $C800-$CFFF expansion ROM routing, regardless of soft switch state
                 var slot = (address >> 8) & 7;
-                machineState.CurrentSlot = slot;
+                if (machineState.CurrentSlot != slot)
+                {
+                    machineState.CurrentSlot = slot;
+                    memoryBlocks.Remap();
+                }
 
                 if (machineState.State[SoftSwitch.IntCxRomEnabled] == false)
                 {
@@ -212,7 +216,11 @@ namespace InnoWerks.Computers.Apple
             else if ((address >= 0xC100 && address <= 0xC2FF) || (address >= 0xC400 && address <= 0xC7FF))
             {
                 var slot = (address >> 8) & 7;
-                machineState.CurrentSlot = slot;
+                if (machineState.CurrentSlot != slot)
+                {
+                    machineState.CurrentSlot = slot;
+                    memoryBlocks.Remap();
+                }
 
                 if (machineState.State[SoftSwitch.IntCxRomEnabled] == false)
                 {

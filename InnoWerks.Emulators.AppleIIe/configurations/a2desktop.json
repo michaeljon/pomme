@@ -4,6 +4,10 @@
   "breakpoints": [],
   "slots": [
     {
+      "deviceType": "thunderClock",
+      "slotNumber": 1
+    },
+    {
       "deviceType": "mouse",
       "slotNumber": 2
     },
