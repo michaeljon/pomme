@@ -15,5 +15,7 @@ namespace InnoWerks.Emulators.AppleIIe
         DiskII,
 
         ThunderClock,
+
+        Mockingboard,
     }
 }

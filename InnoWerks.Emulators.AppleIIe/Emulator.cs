@@ -42,6 +42,7 @@ namespace InnoWerks.Emulators.AppleIIe
         private MMU mmu;
         private Cpu65C02 cpu;
         private MouseSlotDevice mouseDevice;
+        private MockingboardSlotDevice mockingboardDevice;
 
         //
         // debug, etc.
@@ -204,6 +205,10 @@ namespace InnoWerks.Emulators.AppleIIe
                     case DeviceType.ThunderClock:
                         _ = new ThunderClockSlotDevice(slot.SlotNumber, cpu, appleBus, machineState);
                         break;
+
+                    case DeviceType.Mockingboard:
+                        mockingboardDevice = new MockingboardSlotDevice(slot.SlotNumber, cpu, appleBus, machineState);
+                        break;
                 }
             }
 
@@ -298,7 +303,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
             // send other keys on to the "computer"
             UpdateKeyboard(currentState, previousKeyboardState);
-            audioRenderer.UpdateAudio(appleBus.CycleCount, audioSource);
+            audioRenderer.UpdateAudio(appleBus.CycleCount, audioSource, mockingboardDevice);
 
             previousKeyboardState = currentState;
 

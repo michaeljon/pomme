@@ -62,7 +62,11 @@ namespace InnoWerks.Computers.Apple
 
             slotDevices[device.Slot] = slotDevice;
 
-            memoryBlocks.LoadSlotCxRom(device.Slot, slotDevice.Rom);
+            if (slotDevice.HasRom)
+            {
+                memoryBlocks.LoadSlotCxRom(device.Slot, slotDevice.Rom);
+            }
+
             if (slotDevice.ExpansionRom != null)
             {
                 memoryBlocks.LoadSlotC8Rom(device.Slot, slotDevice.ExpansionRom);
@@ -142,6 +146,22 @@ namespace InnoWerks.Computers.Apple
                     }
                 }
             }
+            else if (address >= 0xC800 && address <= 0xCFFF)
+            {
+                if (machineState.State[SoftSwitch.IntCxRomEnabled] == false && machineState.State[SoftSwitch.IntC8RomEnabled] == false)
+                {
+                    var slot = machineState.CurrentSlot;
+                    if (slot != 0)
+                    {
+                        var slotDevice = slotDevices[slot];
+
+                        if (slotDevice?.HandlesRead(address) == true)
+                        {
+                            return slotDevice.Read(address);
+                        }
+                    }
+                }
+            }
 
             return memoryBlocks.Read(address);
         }
@@ -196,6 +216,23 @@ namespace InnoWerks.Computers.Apple
                     {
                         slotDevice.Write(address, value);
                         return;
+                    }
+                }
+            }
+            else if (address >= 0xC800 && address <= 0xCFFF)
+            {
+                if (machineState.State[SoftSwitch.IntCxRomEnabled] == false && machineState.State[SoftSwitch.IntC8RomEnabled] == false)
+                {
+                    var slot = machineState.CurrentSlot;
+                    if (slot != 0)
+                    {
+                        var slotDevice = slotDevices[slot];
+
+                        if (slotDevice?.HandlesWrite(address) == true)
+                        {
+                            slotDevice.Write(address, value);
+                            return;
+                        }
                     }
                 }
             }

@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using InnoWerks.Processors;
 
 #pragma warning disable CA1822
 
@@ -143,10 +144,7 @@ namespace InnoWerks.Computers.Apple
 
                 for (var page = 0; page < 2048 / MemoryPage.PageSize; page++)
                 {
-                    hiSlotRom[slot][page] = new MemoryPage(MemoryPageType.CardRom, $"slot-${slot} ROM", (byte)(0xC8 + page))
-                    {
-                        Slot = slot
-                    };
+                    hiSlotRom[slot][page] = null;
                 }
             }
 
@@ -306,7 +304,7 @@ namespace InnoWerks.Computers.Apple
                 {
                     if (hiSlotRom[machineState.CurrentSlot] != null)
                     {
-                        InjectRom(hiSlotRom[machineState.CurrentSlot]);
+                        InjectSlotRom(hiSlotRom[machineState.CurrentSlot], 0xC8, 0xD0);
                     }
                 }
 
@@ -422,6 +420,15 @@ namespace InnoWerks.Computers.Apple
             {
                 activeRead[memoryPage.PageNumber] = memoryPage;
                 activeWrite[memoryPage.PageNumber] = null;
+            }
+        }
+
+        private void InjectSlotRom(MemoryPage[] memoryPages, int from, int to)
+        {
+            for (var p = from; p < to; p++)
+            {
+                activeRead[p] = memoryPages[p - from];
+                activeWrite[p] = null;
             }
         }
 
@@ -594,6 +601,11 @@ namespace InnoWerks.Computers.Apple
 
             if (activeRead[page] != null)
             {
+                if (page >= 0xC8 && activeRead[page].MemoryPageType == MemoryPageType.CardRom)
+                {
+                    SimDebugger.Info($"Asked for a ROM read at {address:X4}\n");
+                }
+
                 return activeRead[page].Block[offset];
             }
 
@@ -630,6 +642,11 @@ namespace InnoWerks.Computers.Apple
             if (activeWrite[page] == null)
             {
                 return;
+            }
+
+            if (page >= 0xC8 && activeWrite[page].MemoryPageType == MemoryPageType.CardRom)
+            {
+                SimDebugger.Info($"Asked for a ROM read at {address:X4}\n");
             }
 
             activeWrite[page]?.Block[offset] = value;

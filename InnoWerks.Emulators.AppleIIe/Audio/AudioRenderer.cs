@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using InnoWerks.Computers.Apple;
 using Microsoft.Xna.Framework.Audio;
 
 namespace InnoWerks.Emulators.AppleIIe
@@ -10,6 +11,10 @@ namespace InnoWerks.Emulators.AppleIIe
 
         private const double CyclesPerSecond = 1020484.0;
         private const int SampleRate = 44100;
+
+        // Number of PSG clock ticks per audio sample
+        // The AY-3-8910 on the Mockingboard is clocked at the Apple II system clock (1.0227 MHz)
+        private const double CyclesPerSample = CyclesPerSecond / SampleRate;
 
         // We render one frame worth of audio at a time (e.g. 1/60th sec)
         private float[] floatBuffer = new float[2048];
@@ -23,6 +28,9 @@ namespace InnoWerks.Emulators.AppleIIe
         // DSP State
         private float smoothedValue;
         private float capacitorCharge;
+
+        // Mockingboard PSG clocking accumulator (fractional cycle tracking)
+        private double mockingboardClockAccumulator;
 
         public AudioRenderer()
         {
@@ -40,9 +48,10 @@ namespace InnoWerks.Emulators.AppleIIe
 
             smoothedValue = 0.0f;
             capacitorCharge = 0.0f;
+            mockingboardClockAccumulator = 0.0;
         }
 
-        public void UpdateAudio(ulong currentCpuCycle, AppleIIAudioSource source)
+        public void UpdateAudio(ulong currentCpuCycle, AppleIIAudioSource source, MockingboardSlotDevice mockingboard = null)
         {
             ArgumentNullException.ThrowIfNull(source);
 
@@ -51,6 +60,7 @@ namespace InnoWerks.Emulators.AppleIIe
             {
                 totalSamplesGenerated = 0;
                 pendingToggles.Clear();
+                mockingboardClockAccumulator = 0;
                 // Recalculate samples from t=0
             }
 
@@ -118,20 +128,37 @@ namespace InnoWerks.Emulators.AppleIIe
                 // Average
                 float sampleValue = energySum / (float)(sampleEndCycle - sampleStartCycle);
 
+                // --- Mockingboard mixing ---
+                // Clock the PSGs the correct number of times for this sample period
+                // and mix the result with the speaker signal
+                float mockingboardSample = 0f;
+                if (mockingboard != null)
+                {
+                    mockingboardClockAccumulator += CyclesPerSample;
+                    int ticks = (int)mockingboardClockAccumulator;
+                    mockingboardClockAccumulator -= ticks;
+
+                    // clock the PSGs and take the last sample
+                    for (int t = 0; t < ticks; t++)
+                    {
+                        mockingboardSample = mockingboard.GenerateSample();
+                    }
+                }
+
                 // --- DSP CHAIN ---
-                // 1. Low Pass (Smoothing)
+                // 1. Low Pass (Smoothing) - speaker only
                 smoothedValue += (sampleValue - smoothedValue) * 0.50f;
 
-                // 2. High Pass (DC Blocker)
+                // 2. High Pass (DC Blocker) - speaker only
                 capacitorCharge = (smoothedValue * 0.005f) + (capacitorCharge * 0.995f);
-                float finalSample = (smoothedValue - capacitorCharge);
+                float speakerSample = smoothedValue - capacitorCharge;
 
                 // 3. Silence Snap
                 // If the signal is extremely quiet, snap to 0 to prevent "floating bit" buzzing
-                if (Math.Abs(finalSample) < 0.001f) finalSample = 0;
+                if (Math.Abs(speakerSample) < 0.001f) speakerSample = 0;
 
-                // 4. Volume & Clamp
-                finalSample *= 0.25f;
+                // 4. Mix speaker + mockingboard, volume & clamp
+                float finalSample = (speakerSample * 0.25f) + (mockingboardSample * 0.75f);
                 floatBuffer[i] = Math.Clamp(finalSample, -1.0f, 1.0f);
             }
 

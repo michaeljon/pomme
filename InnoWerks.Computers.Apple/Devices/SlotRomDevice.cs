@@ -133,7 +133,6 @@ namespace InnoWerks.Computers.Apple
             if (address >= IoBaseAddressLo && address <= IoBaseAddressHi)
             {
                 DoIo(CardIoType.Write, (byte)(address & 0x0F), value);
-                return;
             }
             else if (address >= RomBaseAddressLo && address <= RomBaseAddressHi)
             {
@@ -189,16 +188,13 @@ namespace InnoWerks.Computers.Apple
         {
             SimDebugger.Info("Slot {0} IsRomReadRequest({1:X4})\n", Slot, address);
 
-            if (Slot > 0 && Slot <= 4)
+            if (Slot > 0)
             {
                 // allow for expansion rom
                 return (RomBaseAddressLo <= address && address <= RomBaseAddressHi) || (ExpansionBaseAddressLo <= address && address <= ExpansionBaseAddressHi);
             }
-            else
-            {
-                // this is just a regular rom read
-                return RomBaseAddressLo <= address && address <= RomBaseAddressHi;
-            }
+
+            return false;
         }
     }
 #pragma warning restore CA1716, CA1707, CA1822

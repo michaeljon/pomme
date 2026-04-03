@@ -35,4 +35,6 @@ namespace InnoWerks.Emulators.AppleIIe
     public class ConfiguredMouse : ConfiguredSlotDevice { }
 
     public class ConfiguredThunderClock : ConfiguredSlotDevice { }
+
+    public class ConfiguredMockingboard : ConfiguredSlotDevice { }
 }
