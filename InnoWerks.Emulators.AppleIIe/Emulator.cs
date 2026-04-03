@@ -162,7 +162,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
                     case DeviceType.HardDisk:
                         var hdDevice = slot as ConfiguredHardDisk;
-                        var hardDrive = new ProDOSSlotDevice(slot.SlotNumber, cpu, appleBus, machineState);
+                        var hardDrive = new ProDOSSlotDevice(slot.SlotNumber, hdDevice.Smartport, cpu, appleBus, machineState);
 
                         if (hdDevice.DriveOne != null && string.IsNullOrEmpty(hdDevice.DriveOne.Image) == false)
                         {

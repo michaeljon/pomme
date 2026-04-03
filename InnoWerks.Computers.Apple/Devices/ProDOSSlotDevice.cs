@@ -23,14 +23,28 @@ namespace InnoWerks.Computers.Apple
         private readonly string[] drivePaths = new string[NumberOfDrives];
         private readonly long[] fileStreamLength = new long[NumberOfDrives];
 
-        private const byte Success = 0x00;
-        private const byte IOError = 0x27;
-        private const byte NoDevice = 0x28;
-        private const byte WriteProtected = 0x29;
 
-        // private const byte DiskDrive = 0x3C;
-        // private const byte SmartPort = 0x00;
-        // private const ushort DriveTypeOffset = 0x07;
+        private enum HarddiskErrors
+        {
+            Success = 0x00,
+            IOError = 0x27,
+            NoDevice = 0x28,
+            WriteProtected = 0x29,
+        }
+
+        private enum SmartPortErrors
+        {
+            Success = 0,
+            InvalidCommand = 0x01,
+            BadParameterCount = 0x04,
+            InvalidUnit = 0x011,
+            InvalidCode = 0x021,
+            BadBlockNumber = 0x02d,
+        };
+
+        private const byte SmartPort = 0x00;
+        private const ushort EntryPointOffset = 0x15;
+        private const ushort DriveTypeOffset = 0x07;
 
         private readonly string[] rom1 = [
             "COMMAND  EQU   $42",
@@ -105,6 +119,7 @@ namespace InnoWerks.Computers.Apple
 
         public ProDOSSlotDevice(
             int slot,
+            bool asSmartport,
             ICpu cpu,
             IAppleBus bus,
             MachineState machineState)
@@ -124,6 +139,13 @@ namespace InnoWerks.Computers.Apple
             assembler.Assemble();
             Array.Copy(assembler.ObjectCode, Rom, assembler.ObjectCode.Length);
 
+            // if we're a smartport then we need to tweak the "code"
+            if (asSmartport == true)
+            {
+                Rom[DriveTypeOffset] = SmartPort;
+                Rom[EntryPointOffset] = (byte)(Rom[EntryPointOffset] + 3);
+            }
+
             assembler = new Assembler(rom2, Origin + EntryPoint);
             assembler.Assemble();
             Array.Copy(assembler.ObjectCode, 0, Rom, EntryPoint, assembler.ObjectCode.Length);
@@ -139,7 +161,6 @@ namespace InnoWerks.Computers.Apple
             // bit 1 The device can be read from (must be on).
             // bit 0 The device's status can be read (must be on).
             Rom[0xFE] = 0b00111111;
-
             // todo ^^^^ make bits 5-4 mirror the number of drives installed
 
             // drive entry point
@@ -147,60 +168,20 @@ namespace InnoWerks.Computers.Apple
 
             bus.AddDevice(this);
 
-            cpu.AddIntercept(0xC000 + EntryPoint + slot * 0x100, HandleIntercept);
-
-            /*
-            cpu.AddIntercept(0xC000 + EntryPoint + 0x03 + slot * 0x100, (cpu, bus) =>
+            if (asSmartport)
             {
-                // assume we're good
-                cpu.Registers.A = Success;
-                cpu.Registers.Carry = false;
-
-                var callAddr = (ushort)(bus.Read(Cpu6502Core.StackBase + cpu.Registers.StackPointer + 2) << 8 | bus.Read(Cpu6502Core.StackBase + cpu.Registers.StackPointer + 1));
-
-                var command = bus.Read(callAddr);
-                var paramList = (ushort)(bus.Read(callAddr + 3) << 8 | bus.Read(callAddr + 2));
-
-                var unit = bus.Read(paramList + 1);
-                var bufferAddr = (ushort)(bus.Read(paramList + 3) << 8 | bus.Read(paramList + 2));
-
-                switch (command)
-                {
-                    case 0:
-                        cpu.Registers.Carry = true;
-                        break;
-
-                    case 1:
-                        if (bus.Read(paramList) != 3)
-                        {
-                            cpu.Registers.Carry = true;
-                        }
-                        else
-                        {
-                            var block = bus.Read(paramList + 6) << 16 |
-                                        bus.Read(paramList + 5) << 8 |
-                                        bus.Read(paramList + 4);
-
-                            // todo: read the block
-                        }
-                        break;
-
-                    case 2:
-                        cpu.Registers.Carry = true;
-                        break;
-
-                    default:
-                        cpu.Registers.Carry = true;
-                        break;
-                }
-            });
-            */
+                // cpu.AddIntercept(0xC000 + EntryPoint + 0x03 + slot * 0x100, HandleSmartportIntercept);
+            }
+            else
+            {
+                cpu.AddIntercept(0xC000 + EntryPoint + slot * 0x100, HandleHardDiskIntercept);
+            }
         }
 
-        private bool HandleIntercept(ICpu cpu, IBus bus)
+        private bool HandleHardDiskIntercept(ICpu cpu, IBus bus)
         {
             // assume we're good
-            cpu.Registers.A = Success;
+            cpu.Registers.A = (byte)HarddiskErrors.Success;
             cpu.Registers.Carry = false;
 
             var command = (Command)bus.Read(0x42);
@@ -229,7 +210,7 @@ namespace InnoWerks.Computers.Apple
             if (unit > mountedDrives - 1)
             {
                 cpu.Registers.Carry = true;
-                cpu.Registers.A = NoDevice;
+                cpu.Registers.A = (byte)HarddiskErrors.NoDevice;
                 return true;
             }
 
@@ -241,7 +222,7 @@ namespace InnoWerks.Computers.Apple
                         cpu.Registers.X = 0;
                         cpu.Registers.Y = 0;
                         cpu.Registers.Carry = true;
-                        cpu.Registers.A = NoDevice;
+                        cpu.Registers.A = (byte)HarddiskErrors.NoDevice;
 
                         break;
                     }
@@ -257,14 +238,14 @@ namespace InnoWerks.Computers.Apple
                     if (fileStream[unit] == null || fileStream[unit].CanRead == false || fileStream[unit].CanSeek == false)
                     {
                         cpu.Registers.Carry = true;
-                        cpu.Registers.A = IOError;
+                        cpu.Registers.A = (byte)HarddiskErrors.IOError;
                     }
                     else
                     {
                         if (blockStart + BlockSize > fileStreamLength[unit])
                         {
                             cpu.Registers.Carry = true;
-                            cpu.Registers.A = IOError;
+                            cpu.Registers.A = (byte)HarddiskErrors.IOError;
                         }
                         else
                         {
@@ -282,14 +263,14 @@ namespace InnoWerks.Computers.Apple
                     if (fileStream[unit] == null || fileStream[unit].CanWrite == false || fileStream[unit].CanSeek == false)
                     {
                         cpu.Registers.Carry = true;
-                        cpu.Registers.A = WriteProtected;
+                        cpu.Registers.A = (byte)HarddiskErrors.WriteProtected;
                     }
                     else
                     {
                         if (blockStart + BlockSize > fileStreamLength[unit])
                         {
                             cpu.Registers.Carry = true;
-                            cpu.Registers.A = IOError;
+                            cpu.Registers.A = (byte)HarddiskErrors.IOError;
                         }
                         else
                         {
@@ -307,7 +288,7 @@ namespace InnoWerks.Computers.Apple
                     if (string.IsNullOrEmpty(drivePaths[unit]))
                     {
                         cpu.Registers.Carry = true;
-                        cpu.Registers.A = NoDevice;
+                        cpu.Registers.A = (byte)HarddiskErrors.NoDevice;
                     }
                     else
                     {

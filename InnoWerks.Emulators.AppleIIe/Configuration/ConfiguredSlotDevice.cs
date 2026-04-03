@@ -23,6 +23,8 @@ namespace InnoWerks.Emulators.AppleIIe
 
     public class ConfiguredHardDisk : ConfiguredSlotDevice
     {
+        public bool Smartport { get; set; }
+
         public DiskImage DriveOne { get; set; }
 
         public DiskImage DriveTwo { get; set; }
