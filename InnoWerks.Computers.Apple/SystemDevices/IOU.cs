@@ -403,7 +403,7 @@ namespace InnoWerks.Computers.Apple
             }
         }
 
-        public void Tick(int cycles) { /* NO-OP */ }
+        public void Tick() { /* NO-OP */ }
 
         public void Reset()
         {

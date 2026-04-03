@@ -1,11 +1,10 @@
 using System;
-using System.IO;
 using InnoWerks.Simulators;
 
 namespace InnoWerks.Computers.Apple
 {
     /// <summary>
-    /// Sweet Micro Systems Mockingboard sound card emulation.
+    /// Sweet Micro Systems Mockingboard A/B sound card emulation.
     ///
     /// The Mockingboard contains two 6522 VIAs, each connected to an AY-3-8910 PSG:
     ///   VIA1 + PSG1 at $Cn00-$Cn0F (channels A1, B1, C1)
@@ -17,7 +16,8 @@ namespace InnoWerks.Computers.Apple
     ///   Bit 1: BDIR
     ///   Bit 2: ~RESET (active low)
     ///
-    /// The expansion ROM ($C800-$CFFF) contains the Mockingboard firmware.
+    /// The Mockingboard A/B has no ROM. Detection is timer-based: software writes
+    /// to VIA Timer 1, reads it back, and checks that it has decremented.
     ///
     /// Timer 1 on either VIA can generate IRQs for interrupt-driven music playback.
     /// </summary>
@@ -42,19 +42,6 @@ namespace InnoWerks.Computers.Apple
 
             this.cpu = cpu;
 
-            // Load the Mockingboard D 2K ROM. The ROM occupies $Cn10-$Cn7F and
-            // $Cn90-$CnFF in the slot ROM space (avoiding the VIA register ranges)
-            // and the full $C800-$CFFF expansion ROM space.
-            var romBytes = File.ReadAllBytes("roms/mockingboard.rom");
-
-            HasRom = true;
-            Rom = new byte[256];
-            Array.Copy(romBytes, 0, Rom, 0, Math.Min(romBytes.Length, 256));
-
-            HasAuxRom = true;
-            ExpansionRom = new byte[2048];
-            Array.Copy(romBytes, 0, ExpansionRom, 0, Math.Min(romBytes.Length, 2048));
-
             // wire up VIA port B writes to the PSGs
             via1.OnPortBWrite = (portB, portA) => psg1.SetBusControl(portB, portA);
             via2.OnPortBWrite = (portB, portA) => psg2.SetBusControl(portB, portA);
@@ -68,97 +55,42 @@ namespace InnoWerks.Computers.Apple
 
         public override bool HandlesRead(ushort address)
         {
-            // slot I/O: $C0n0-$C0nF
-            if (address >= IoBaseAddressLo && address <= IoBaseAddressHi)
-            {
-                return true;
-            }
-
-            // slot ROM: $Cn00-$CnFF (VIA registers and ROM)
-            if (address >= RomBaseAddressLo && address <= RomBaseAddressHi)
-            {
-                return true;
-            }
-
-            // expansion ROM: $C800-$CFFF
-            if (address >= ExpansionBaseAddressLo && address <= ExpansionBaseAddressHi)
-            {
-                return true;
-            }
-
-            return false;
+            // slot ROM space: $Cn00-$CnFF (VIA registers)
+            return address >= RomBaseAddressLo && address <= RomBaseAddressHi;
         }
 
         public override bool HandlesWrite(ushort address)
         {
-            // slot I/O: $C0n0-$C0nF
-            if (address >= IoBaseAddressLo && address <= IoBaseAddressHi)
-            {
-                return true;
-            }
-
-            // slot ROM: $Cn00-$CnFF (VIA registers are writable)
-            if (address >= RomBaseAddressLo && address <= RomBaseAddressHi)
-            {
-                return true;
-            }
-
-            return false;
+            // slot ROM space: $Cn00-$CnFF (VIA registers)
+            return address >= RomBaseAddressLo && address <= RomBaseAddressHi;
         }
 
-        protected override byte DoIo(CardIoType ioType, byte address, byte value)
+        protected override byte DoIo(CardIoType ioType, ushort address, byte value)
         {
-            // The Mockingboard doesn't use the standard $C0n0-$C0nF I/O space.
-            // All register access goes through the $Cn00 ROM space.
-            // Return floating bus value for any stray I/O access.
-            return machineState.FloatingValue;
+            return 0xFF;
         }
 
         protected override byte DoCx(CardIoType ioType, ushort address, byte value)
         {
-            var offset = address & 0xFF;
+            // Address bit 7 selects VIA1 (0) or VIA2 (1), bits 0-3 select the register.
+            var reg = (byte)(address & 0x0F);
+            var via = (address & 0x80) != 0 ? via2 : via1;
 
-            // VIA registers: $Cn00-$Cn0F (VIA1) and $Cn80-$Cn8F (VIA2)
-            var isViaRange = (offset & 0x70) == 0x00; // low nibble of high nibble is 0 → $Cn0x or $Cn8x
-            if (isViaRange)
+            if (ioType == CardIoType.Read)
             {
-                var reg = (byte)(offset & 0x0F);
-                var via = (offset & 0x80) != 0 ? via2 : via1;
-
-                if (ioType == CardIoType.Read)
-                {
-                    return via.Read(reg);
-                }
-                else
-                {
-                    via.Write(reg, value);
-                    return 0;
-                }
+                return via.Read(reg);
             }
-
-            // Non-VIA addresses serve ROM
-            if (ioType == CardIoType.Read && Rom != null)
+            else
             {
-                return Rom[offset];
+                via.Write(reg, value);
+                return 0;
             }
-
-            return machineState.FloatingValue;
         }
 
-        protected override byte DoC8(CardIoType ioType, ushort address, byte value)
+        public override void Tick()
         {
-            if (ioType == CardIoType.Read && ExpansionRom != null)
-            {
-                return ExpansionRom[address - ExpansionBaseAddressLo];
-            }
-
-            return machineState.FloatingValue;
-        }
-
-        public override void Tick(int cycles)
-        {
-            via1.Tick(cycles);
-            via2.Tick(cycles);
+            via1.Tick();
+            via2.Tick();
         }
 
         public override void Reset()

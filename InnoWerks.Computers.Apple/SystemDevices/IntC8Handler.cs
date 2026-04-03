@@ -103,7 +103,7 @@ namespace InnoWerks.Computers.Apple
             memoryBlocks.Write(address, value);
         }
 
-        public void Tick(int cycles) { /* NO-OP */ }
+        public void Tick() { /* NO-OP */ }
 
         public void Reset()
         {

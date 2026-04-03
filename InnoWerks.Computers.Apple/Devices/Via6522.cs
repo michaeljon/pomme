@@ -1,5 +1,4 @@
 using System;
-
 namespace InnoWerks.Computers.Apple
 {
     /// <summary>
@@ -38,6 +37,7 @@ namespace InnoWerks.Computers.Apple
         // Timer 1 state
         private ushort timer1Counter;
         private ushort timer1Latch;
+#pragma warning disable IDE0052, CS0414
         private bool timer1Running;
         private bool timer1Armed; // for one-shot mode: has the interrupt fired?
 
@@ -270,22 +270,22 @@ namespace InnoWerks.Computers.Apple
         /// <summary>
         /// Advance the VIA timers by the specified number of CPU cycles.
         /// </summary>
-        public void Tick(int cycles)
+        public void Tick()
         {
-            if (timer1Running)
-            {
-                TickTimer1(cycles);
-            }
+            // Timer 1 always counts on a real 6522 — it free-runs from
+            // whatever value it has, even after reset. Detection software
+            // relies on reading T1C-L and seeing it decrement.
+            TickTimer1();
 
             if (timer2Running)
             {
-                TickTimer2(cycles);
+                TickTimer2();
             }
         }
 
-        private void TickTimer1(int cycles)
+        private void TickTimer1()
         {
-            var newValue = timer1Counter - cycles;
+            var newValue = timer1Counter - 1;
 
             if (newValue <= 0)
             {
@@ -317,11 +317,11 @@ namespace InnoWerks.Computers.Apple
             }
         }
 
-        private void TickTimer2(int cycles)
+        private void TickTimer2()
         {
             // Timer 2 only operates in one-shot mode for the Mockingboard
             // (pulse counting mode via ACR bit 5 is not used)
-            var newValue = timer2Counter - cycles;
+            var newValue = timer2Counter - 1;
 
             if (newValue <= 0)
             {

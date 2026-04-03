@@ -97,7 +97,7 @@ namespace InnoWerks.Computers.Apple
 
         public byte Read(ushort address)
         {
-            Tick(1);
+            Tick();
 
             if (address >= 0xC000 && address <= 0xC08F)
             {
@@ -135,9 +135,13 @@ namespace InnoWerks.Computers.Apple
             }
             else if ((address >= 0xC100 && address <= 0xC2FF) || (address >= 0xC400 && address <= 0xC7FF))
             {
+                // Any access to $Cn00-$CnFF selects this slot for subsequent
+                // $C800-$CFFF expansion ROM routing, regardless of soft switch state
+                var slot = (address >> 8) & 7;
+                machineState.CurrentSlot = slot;
+
                 if (machineState.State[SoftSwitch.IntCxRomEnabled] == false)
                 {
-                    var slot = (address >> 8) & 7;
                     var slotDevice = slotDevices[slot];
 
                     if (slotDevice?.HandlesRead(address) == true)
@@ -168,7 +172,7 @@ namespace InnoWerks.Computers.Apple
 
         public void Write(ushort address, byte value)
         {
-            Tick(1);
+            Tick();
 
             if (address >= 0xC000 && address <= 0xC08F)
             {
@@ -207,9 +211,11 @@ namespace InnoWerks.Computers.Apple
             }
             else if ((address >= 0xC100 && address <= 0xC2FF) || (address >= 0xC400 && address <= 0xC7FF))
             {
+                var slot = (address >> 8) & 7;
+                machineState.CurrentSlot = slot;
+
                 if (machineState.State[SoftSwitch.IntCxRomEnabled] == false)
                 {
-                    var slot = (address >> 8) & 7;
                     var slotDevice = slotDevices[slot];
 
                     if (slotDevice?.HandlesWrite(address) == true)
@@ -286,22 +292,16 @@ namespace InnoWerks.Computers.Apple
             CycleCount = 0;
         }
 
-        private void Tick(int cycles)
+        private void Tick()
         {
-            CycleCount += (ulong)cycles;
-
-            // foreach (var device in softSwitchDevices)
-            // {
-            //     device.Tick(cycles);
-            // }
-            // intC8Handler.Tick();
+            CycleCount++;
 
             for (var slot = 0; slot < slotDevices.Length; slot++)
             {
-                slotDevices[slot]?.Tick(cycles);
+                slotDevices[slot]?.Tick();
             }
 
-            transactionCycles += cycles;
+            transactionCycles++;
         }
 
         private byte CheckKeyboardLatch(ushort address)

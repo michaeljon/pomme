@@ -18,6 +18,10 @@
         "image": "disks/A2DeskTop-1.5-en_32MB.hdv",
         "readOnly": false
       }
+      // },
+      // {
+      //   "deviceType": "thunderClock",
+      //   "slotNumber": 5
     }
   ],
   "monochrome": true,

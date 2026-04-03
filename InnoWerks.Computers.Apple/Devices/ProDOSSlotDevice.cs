@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using InnoWerks.Assemblers;
-using InnoWerks.Processors;
 using InnoWerks.Simulators;
 
 namespace InnoWerks.Computers.Apple
@@ -341,31 +340,9 @@ namespace InnoWerks.Computers.Apple
             fileStreamLength[drive] = fileStream[drive].Length;
         }
 
-        protected override byte DoIo(CardIoType ioType, byte address, byte value)
-        {
-            if (ioType == CardIoType.Read)
-            {
-                SimDebugger.Info($"Read slot {Slot} I/O address {address:X4}\n");
-            }
-            else if (ioType == CardIoType.Write)
-            {
-                SimDebugger.Info($"Write slot {Slot} I/O address {address:X4}\n");
-            }
+        protected override byte DoIo(CardIoType ioType, ushort address, byte value) => 0xFF;
 
-            return 0xFF;
-        }
-
-        public override bool HandlesRead(ushort address) =>
-            address >= IoBaseAddressLo && address <= IoBaseAddressHi;
-
-        public override bool HandlesWrite(ushort address) =>
-            address >= IoBaseAddressLo && address <= IoBaseAddressHi;
-
-        protected override byte DoCx(CardIoType ioType, ushort address, byte value) { return 0x00; }
-
-        protected override byte DoC8(CardIoType ioType, ushort address, byte value) { return 0x00; }
-
-        public override void Tick(int cycles) {/* NO-OP */ }
+        public override void Tick() {/* NO-OP */ }
 
         public override void Reset() { }
 

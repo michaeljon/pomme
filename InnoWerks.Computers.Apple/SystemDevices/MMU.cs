@@ -206,7 +206,7 @@ namespace InnoWerks.Computers.Apple
             throw new ArgumentOutOfRangeException(nameof(address), $"Write {address:X4} is not supported in this device");
         }
 
-        public void Tick(int cycles) { /* NO-OP */ }
+        public void Tick() { /* NO-OP */ }
 
         public void Reset()
         {

@@ -13,7 +13,7 @@ namespace InnoWerks.Simulators
             return new DecodedOperation
             {
                 OpCodeValue = oc,
-                Display = "<illegal>",
+                Display = "<ILL>",
             };
         }
 

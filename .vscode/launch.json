@@ -106,6 +106,18 @@
     },
 
     {
+      "name": "Emulator (thunderclock)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe/bin/Debug/net10.0/InnoWerks.Emulators.AppleIIe.dll",
+      "cwd": "${workspaceFolder}/InnoWerks.Emulators.AppleIIe",
+      "args": ["--configuration", "configurations/thunderclock.json"],
+      "stopAtEntry": false,
+      "requireExactSource": false
+    },
+
+    {
       "name": ".NET Core Attach",
       "type": "coreclr",
       "request": "attach",

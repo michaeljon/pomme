@@ -21,6 +21,8 @@ namespace InnoWerks.Computers.Apple
     {
         public const int PageSize = 256;
 
+        public const int ExpansionRomSize = 8 * PageSize;
+
         public byte[] Block { get; set; }
 
         public MemoryPageType MemoryPageType { get; init; }

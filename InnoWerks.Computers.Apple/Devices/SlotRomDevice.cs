@@ -1,5 +1,4 @@
 using System;
-using InnoWerks.Processors;
 using InnoWerks.Simulators;
 
 namespace InnoWerks.Computers.Apple
@@ -90,39 +89,65 @@ namespace InnoWerks.Computers.Apple
 
         public string Name { get; }
 
-        public abstract bool HandlesRead(ushort address);
+        /// <summary>
+        /// Returns true if the device actively handles reads at this address.
+        /// Default claims $C0n0-$C0nF only. Override to claim $Cn00 or $C800
+        /// ranges for devices with active hardware in those spaces.
+        /// </summary>
+        public virtual bool HandlesRead(ushort address) =>
+            address >= IoBaseAddressLo && address <= IoBaseAddressHi;
 
-        public abstract bool HandlesWrite(ushort address);
+        /// <summary>
+        /// Returns true if the device actively handles writes at this address.
+        /// Default claims $C0n0-$C0nF only.
+        /// </summary>
+        public virtual bool HandlesWrite(ushort address) =>
+            address >= IoBaseAddressLo && address <= IoBaseAddressHi;
 
-        protected abstract byte DoIo(CardIoType ioType, byte address, byte value);
+        protected abstract byte DoIo(CardIoType ioType, ushort address, byte value);
 
-        protected abstract byte DoCx(CardIoType ioType, ushort address, byte value);
+        /// <summary>
+        /// Handles access in the $Cn00-$CnFF slot ROM range. Default serves ROM bytes.
+        /// Override for devices with active hardware in this range.
+        /// </summary>
+        protected virtual byte DoCx(CardIoType ioType, ushort address, byte value)
+        {
+            if (ioType == CardIoType.Read && Rom != null)
+            {
+                return Rom[address & 0xFF];
+            }
 
-        protected abstract byte DoC8(CardIoType ioType, ushort address, byte value);
+            return machineState.FloatingValue;
+        }
+
+        /// <summary>
+        /// Handles access in the $C800-$CFFF expansion ROM range. Default serves
+        /// expansion ROM bytes. Override for devices with active hardware in this range.
+        /// </summary>
+        protected virtual byte DoC8(CardIoType ioType, ushort address, byte value)
+        {
+            if (ioType == CardIoType.Read && ExpansionRom != null)
+            {
+                return ExpansionRom[address - ExpansionBaseAddressLo];
+            }
+
+            return machineState.FloatingValue;
+        }
 
         public byte Read(ushort address)
         {
             if (address >= IoBaseAddressLo && address <= IoBaseAddressHi)
             {
-                return DoIo(CardIoType.Read, (byte)(address & 0x0F), 0x00);
+                return DoIo(CardIoType.Read, address, 0x00);
             }
             else if (address >= RomBaseAddressLo && address <= RomBaseAddressHi)
             {
-                machineState.CurrentSlot = Slot;
-
-                if (machineState.State[SoftSwitch.IntCxRomEnabled] == false)
-                {
-                    // return value from rom
-                    return DoCx(CardIoType.Read, address, 0x00);
-                }
+                return DoCx(CardIoType.Read, address, 0x00);
             }
             else if (address >= ExpansionBaseAddressLo && address <= ExpansionBaseAddressHi)
             {
-                if (machineState.State[SoftSwitch.IntCxRomEnabled] == false || machineState.State[SoftSwitch.IntC8RomEnabled] == false)
-                {
-                    // return value from rom
-                    return DoC8(CardIoType.Read, address, 0x00);
-                }
+                // AppleBus verifies soft switch state before routing here
+                return DoC8(CardIoType.Read, address, 0x00);
             }
 
             return machineState.FloatingValue;
@@ -132,29 +157,20 @@ namespace InnoWerks.Computers.Apple
         {
             if (address >= IoBaseAddressLo && address <= IoBaseAddressHi)
             {
-                DoIo(CardIoType.Write, (byte)(address & 0x0F), value);
+                DoIo(CardIoType.Write, address, value);
             }
             else if (address >= RomBaseAddressLo && address <= RomBaseAddressHi)
             {
-                machineState.CurrentSlot = Slot;
-
-                if (machineState.State[SoftSwitch.IntCxRomEnabled] == false)
-                {
-                    // write to rom
-                    DoCx(CardIoType.Write, address, value);
-                }
+                DoCx(CardIoType.Write, address, value);
             }
             else if (address >= ExpansionBaseAddressLo && address <= ExpansionBaseAddressHi)
             {
-                if (machineState.State[SoftSwitch.IntCxRomEnabled] == false || machineState.State[SoftSwitch.IntC8RomEnabled] == false)
-                {
-                    // write to rom
-                    DoC8(CardIoType.Write, address, value);
-                }
+                // AppleBus verifies soft switch state before routing here
+                DoC8(CardIoType.Write, address, value);
             }
         }
 
-        public abstract void Tick(int cycles);
+        public abstract void Tick();
 
         public abstract void Reset();
 
@@ -176,26 +192,6 @@ namespace InnoWerks.Computers.Apple
         protected ushort ExpansionBaseAddressLo => EXPANSION_ROM_BASE_ADDR;
 
         protected ushort ExpansionBaseAddressHi => EXPANSION_ROM_BASE_ADDR + 0x7FF;
-
-        protected virtual bool IsIoReadRequest(ushort address)
-        {
-            SimDebugger.Info("Slot {0} IsIoReadRequest({1:X4})\n", Slot, address);
-
-            return IoBaseAddressLo <= address && address <= IoBaseAddressHi;
-        }
-
-        protected virtual bool IsRomReadRequest(ushort address)
-        {
-            SimDebugger.Info("Slot {0} IsRomReadRequest({1:X4})\n", Slot, address);
-
-            if (Slot > 0)
-            {
-                // allow for expansion rom
-                return (RomBaseAddressLo <= address && address <= RomBaseAddressHi) || (ExpansionBaseAddressLo <= address && address <= ExpansionBaseAddressHi);
-            }
-
-            return false;
-        }
     }
 #pragma warning restore CA1716, CA1707, CA1822
 }

@@ -54,7 +54,7 @@ namespace InnoWerks.Computers.Apple
         private const ushort StatScreenHole = 0x0778;
         private const ushort ModeScreenHole = 0x07F8;
 
-        private const int CyclesPerUpdate = (int)(1020484L / 60L);
+        // private const int CyclesPerUpdate = (int)(1020484L / 60L);
 
         // Mouse state
         private int mouseX;
@@ -362,36 +362,19 @@ namespace InnoWerks.Computers.Apple
 
         // --- SlotRomDevice required overrides ---
 
-        protected override byte DoIo(CardIoType ioType, byte address, byte value) => 0xFF;
+        protected override byte DoIo(CardIoType ioType, ushort address, byte value) => 0xFF;
 
-        protected override byte DoCx(CardIoType ioType, ushort address, byte value) => 0x00;
-
-        protected override byte DoC8(CardIoType ioType, ushort address, byte value) => 0x00;
-
-        public override bool HandlesRead(ushort address) => (address >= IoBaseAddressLo && address <= IoBaseAddressHi);
-
-        public override bool HandlesWrite(ushort address) => (address >= IoBaseAddressLo && address <= IoBaseAddressHi);
-
-        private int delay = CyclesPerUpdate;
-
-        public override void Tick(int cycles)
+        public override void Tick()
         {
             if ((mouseMode & MouseModeFlags.Enabled) == 0x00)
             {
                 return;
             }
 
-            delay += cycles;
-
             // if we've not been asked for interrupts...
             if ((mouseMode & MouseModeFlags.InterruptOnMove) == 0x00 || (mouseMode & MouseModeFlags.InterruptOnButton) == 0x00)
             {
-                return;
-            }
-
-            if ((mouseMode & MouseModeFlags.InterruptOnButton) != 0x00)
-            {
-
+                // return;
             }
         }
 

@@ -8,10 +8,10 @@
       "slotNumber": 4
     },
     {
-      "deviceType": "hardDisk",
+      "deviceType": "diskii",
       "slotNumber": 6,
       "driveOne": {
-        "image": "disks/ProDOS_2_4_3.po",
+        "image": "disks/ProDOS 2.4.2.dsk",
         "readOnly": false
       }
     }

@@ -25,10 +25,8 @@ namespace InnoWerks.Computers.Apple
     //
     public sealed class ThunderClockSlotDevice : SlotRomDevice
     {
-        // TODO: fix this!!!!
+        // TODO: fix this, it's shared all over the damned place
         private const int AppleClockSpeed = 1020484;
-
-        private const ushort ThunderClockRegisterBase = 0xC080;
 
         private bool strobe;
         private bool clock;
@@ -61,8 +59,8 @@ namespace InnoWerks.Computers.Apple
             Array.Copy(romBytes, Rom, MemoryPage.PageSize);
 
             HasAuxRom = true;
-            ExpansionRom = new byte[2048];
-            Array.Copy(romBytes, ExpansionRom, 2048);
+            ExpansionRom = new byte[MemoryPage.ExpansionRomSize];
+            Array.Copy(romBytes, ExpansionRom, MemoryPage.ExpansionRomSize);
 
             bus.AddDevice(this);
         }
@@ -79,19 +77,19 @@ namespace InnoWerks.Computers.Apple
         // Timer modes = 0x020 (64hz), 0x028 (256hz), 0x030 (2048hz)
         // Interrupt enable = 0x040 (IRQ assert is read as 0x020 in the status register)
         // data out = 0x080
-        protected override byte DoIo(CardIoType ioType, byte address, byte value)
+        protected override byte DoIo(CardIoType ioType, ushort address, byte value)
         {
-            if (ioType == CardIoType.Read && address == 0x00)
+            if (ioType == CardIoType.Read && (byte)(address & 0x0F) == 0x00)
             {
                 return (byte)(peekBit() | (irqAsserted ? 0x20 : 0x00));
             }
 
-            if (address == 0x08)
+            if ((byte)(address & 0x0F) == 0x08)
             {
                 irqAsserted = false;
                 return 0x00;
             }
-            else if (address != 0x00)
+            else if ((byte)(address & 0x0F) != 0x00)
             {
                 return 0x00;
             }
@@ -151,16 +149,12 @@ namespace InnoWerks.Computers.Apple
         }
 
         public override bool HandlesRead(ushort address) =>
-            address == (ThunderClockRegisterBase + (Slot << 4));
+            address == IoBaseAddressLo;
 
         public override bool HandlesWrite(ushort address) =>
-            address == (ThunderClockRegisterBase + (Slot << 4));
+            address == IoBaseAddressLo;
 
-        protected override byte DoCx(CardIoType ioType, ushort address, byte value) => 0x00;
-
-        protected override byte DoC8(CardIoType ioType, ushort address, byte value) => 0x00;
-
-        public override void Tick(int cycles)
+        public override void Tick()
         {
             if (timerEnabled)
             {

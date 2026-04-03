@@ -258,7 +258,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
             spriteBatch.DrawString(
                 debugFont,
-                cpuTraceEntry.Mnemonic,
+                cpuTraceEntry.OpCode.OpCode != Processors.OpCode.Unknown ? cpuTraceEntry.Mnemonic : "UNK",
                 new Vector2(x + 150, y),
                 Color.White);
 

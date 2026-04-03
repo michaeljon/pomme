@@ -62,10 +62,10 @@ namespace InnoWerks.Computers.Apple.Tests
         public override bool HandlesRead(ushort address) => true;
         public override bool HandlesWrite(ushort address) => true;
 
-        protected override byte DoIo(CardIoType ioType, byte address, byte value)
+        protected override byte DoIo(CardIoType ioType, ushort address, byte value)
         {
             lastIoType = ioType;
-            lastIoRegister = address;
+            lastIoRegister = (byte)(address & 0x0F);
             lastIoValue = value;
             return IoReturn;
         }
@@ -84,7 +84,7 @@ namespace InnoWerks.Computers.Apple.Tests
             return C8Return;
         }
 
-        public override void Tick(int cycles) => TickCount += cycles;
+        public override void Tick() => TickCount++;
 
         public override void Reset() => ResetCount++;
     }
@@ -247,25 +247,16 @@ namespace InnoWerks.Computers.Apple.Tests
         }
 
         [TestMethod]
-        public void ReadAtCxRomAddressSetsCurrentSlot()
+        public void ReadAtCxRomAlwaysDispatchesToDoCx()
         {
-            var cxRom = new byte[256];
-            var (device, state) = CreateForSlot(3, cxRom);
-            state.State[SoftSwitch.IntCxRomEnabled] = false;
-
-            device.Read(0xC300);
-            Assert.AreEqual(3, state.CurrentSlot);
-        }
-
-        [TestMethod]
-        public void ReadAtCxRomAddressWhenIntCxRomEnabledDoesNotCallDoCx()
-        {
+            // SlotRomDevice no longer gates on IntCxRomEnabled — AppleBus handles
+            // that before routing to the device.
             var cxRom = new byte[256];
             var (device, state) = CreateForSlot(2, cxRom);
             state.State[SoftSwitch.IntCxRomEnabled] = true;
 
             device.Read(0xC200);
-            Assert.IsNull(device.lastCxType);
+            Assert.AreEqual(CardIoType.Read, device.lastCxType);
         }
 
         [TestMethod]
@@ -309,8 +300,11 @@ namespace InnoWerks.Computers.Apple.Tests
         }
 
         [TestMethod]
-        public void ReadAtC8RomWhenBothIntRomsEnabledDoesNotCallDoC8()
+        public void ReadAtC8RomAlwaysDispatchesToDoC8()
         {
+            // SlotRomDevice no longer gates on soft switches — AppleBus handles
+            // that before routing to the device. When the device receives a
+            // $C800 read, it always dispatches to DoC8.
             var cxRom = new byte[256];
             var c8Rom = new byte[2048];
             var (device, state) = CreateForSlot(1, cxRom, c8Rom);
@@ -318,7 +312,7 @@ namespace InnoWerks.Computers.Apple.Tests
             state.State[SoftSwitch.IntC8RomEnabled] = true;
 
             device.Read(0xC800);
-            Assert.IsNull(device.lastC8Type);
+            Assert.AreEqual(CardIoType.Read, device.lastC8Type);
         }
 
         [TestMethod]
@@ -369,8 +363,12 @@ namespace InnoWerks.Computers.Apple.Tests
         public void TickDelegatesToConcreteImplementation()
         {
             var (device, _) = CreateForSlot(1);
-            device.Tick(10);
-            Assert.AreEqual(10, device.TickCount);
+            device.Tick();
+            device.Tick();
+            device.Tick();
+            device.Tick();
+            device.Tick();
+            Assert.AreEqual(5, device.TickCount);
         }
 
         [TestMethod]

@@ -34,11 +34,11 @@ namespace InnoWerks.Computers.Apple
             bus.AddDevice(this);
         }
 
-        protected override byte DoIo(CardIoType ioType, byte address, byte value)
+        protected override byte DoIo(CardIoType ioType, ushort address, byte value)
         {
             // SimDebugger.Info($"DoIo{ioType} DiskII(${address:X1}, {value:X2})\n");
 
-            switch (address)
+            switch ((byte)(address & 0x0F))
             {
                 case 0x0:
                 case 0x1:
@@ -119,17 +119,8 @@ namespace InnoWerks.Computers.Apple
             return 0xFF;
         }
 
-        public override bool HandlesRead(ushort address) =>
-            (address >= IoBaseAddressLo && address <= IoBaseAddressHi);
 
-        public override bool HandlesWrite(ushort address) =>
-            (address >= IoBaseAddressLo && address <= IoBaseAddressHi);
-
-        protected override byte DoCx(CardIoType ioType, ushort address, byte value) { return 0x00; }
-
-        protected override byte DoC8(CardIoType ioType, ushort address, byte value) { return 0x00; }
-
-        public override void Tick(int cycles) {/* NO-OP */ }
+        public override void Tick() {/* NO-OP */ }
 
         public override void Reset()
         {
