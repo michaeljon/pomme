@@ -43,6 +43,7 @@ namespace InnoWerks.Emulators.AppleIIe
         private Renderer currentGraphicsRenderer;
 
         private DebugToolsRenderer debugToolsRenderer;
+        private ToolbarRenderer toolbarRenderer;
 
         private bool hiresMode;
         private bool dhiresMode;
@@ -110,6 +111,14 @@ namespace InnoWerks.Emulators.AppleIIe
 
             // debug stuff is always white
             debugToolsRenderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, contentManager, Color.White);
+
+            toolbarRenderer = new ToolbarRenderer(graphicsDevice);
+            toolbarRenderer.LoadContent(contentManager);
+        }
+
+        public void ConfigureToolbar(ISlotDevice[] slotDevices)
+        {
+            toolbarRenderer.ConfigureItems(slotDevices);
         }
 
         public void Draw(
@@ -139,6 +148,9 @@ namespace InnoWerks.Emulators.AppleIIe
                 hostLayout.AppleDisplay,
                 new Rectangle(0, 0, DisplayCharacteristics.HiresAppleWidth, DisplayCharacteristics.AppleDisplayHeight),
                 Color.White);
+
+            // draw toolbar
+            toolbarRenderer.Draw(spriteBatch, hostLayout);
 
             // draw debug windows onto the surface
             debugToolsRenderer.Draw(spriteBatch, hostLayout, cpuTraceBuffer, breakpoints);
@@ -207,6 +219,11 @@ namespace InnoWerks.Emulators.AppleIIe
             return debugToolsRenderer.HandleTraceClick(hostLayout, cpuTraceBuffer, mousePos);
         }
 
+        public (ToolbarAction action, DiskIISlotDevice device, int driveNumber) HandleToolbarClick(Point mousePos)
+        {
+            return toolbarRenderer.HandleClick(mousePos);
+        }
+
         public void Dispose()
         {
             Dispose(true);
@@ -242,6 +259,7 @@ namespace InnoWerks.Emulators.AppleIIe
                 dhiresPage2Renderer?.Dispose();
 
                 debugToolsRenderer?.Dispose();
+                toolbarRenderer?.Dispose();
             }
 
             disposed = true;

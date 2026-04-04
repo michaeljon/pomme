@@ -16,6 +16,10 @@ namespace InnoWerks.Computers.Apple
         // we keep the numbering for convenience
         private readonly ISlotDevice[] slotDevices = new SlotRomDevice[8];
 
+#pragma warning disable CA1819
+        public ISlotDevice[] SlotDevices => slotDevices;
+#pragma warning restore CA1819
+
         private readonly List<ISoftSwitchDevice> softSwitchDevices = [];
 
         private readonly IntC8Handler intC8Handler;

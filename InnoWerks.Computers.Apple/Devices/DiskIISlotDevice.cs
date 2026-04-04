@@ -13,6 +13,12 @@ namespace InnoWerks.Computers.Apple
 
         DiskIIDrive currentDrive;
 
+        /// <summary>
+        /// Optional callback invoked when drive state changes (motor on/off,
+        /// disk insert/eject, drive select). Parameters are (slot, driveNumber).
+        /// </summary>
+        public Action<int, int> OnDriveStateChanged { get; set; }
+
         public DiskIISlotDevice(
             int slot,
             ICpu cpu,
@@ -55,25 +61,23 @@ namespace InnoWerks.Computers.Apple
 
                 case 0x8:
                     // drive off
-                    // SimDebugger.Info($"DoIo{ioType} DiskII Off(${address:X1}, {value:X2})\n");
                     currentDrive.SetOn(false);
+                    NotifyStateChanged();
                     break;
 
                 case 0x9:
                     // drive on
-                    // SimDebugger.Info($"DoIo{ioType} DiskII On(${address:X1}, {value:X2})\n");
                     currentDrive.SetOn(true);
+                    NotifyStateChanged();
                     break;
 
                 case 0xA:
                     // choose drive 1
-                    // SimDebugger.Info($"DoIo{ioType} DiskII D1(${address:X1}, {value:X2})\n");
                     currentDrive = drive1;
                     break;
 
                 case 0xB:
                     // choose drive 2
-                    // SimDebugger.Info($"DoIo{ioType} DiskII D2(${address:X1}, {value:X2})\n");
                     currentDrive = drive2;
                     break;
 
@@ -138,6 +142,24 @@ namespace InnoWerks.Computers.Apple
             }
 
             return drive == 0 ? drive1 : drive2;
+        }
+
+        public void InsertDisk(int drive, string path)
+        {
+            GetDrive(drive).InsertDisk(path);
+            OnDriveStateChanged?.Invoke(Slot, drive);
+        }
+
+        public void EjectDisk(int drive)
+        {
+            GetDrive(drive).EjectDisk();
+            OnDriveStateChanged?.Invoke(Slot, drive);
+        }
+
+        private void NotifyStateChanged()
+        {
+            var driveNumber = currentDrive == drive1 ? 0 : 1;
+            OnDriveStateChanged?.Invoke(Slot, driveNumber);
         }
     }
 }

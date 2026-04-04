@@ -104,6 +104,8 @@ namespace InnoWerks.Computers.Apple
             return driveOn;
         }
 
+        public bool HasDisk => floppyDisk != null;
+
         public byte ReadLatch()
         {
             byte result = 0x7F;

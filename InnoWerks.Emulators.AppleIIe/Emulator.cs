@@ -51,12 +51,6 @@ namespace InnoWerks.Emulators.AppleIIe
         private bool cpuPaused;
         private bool stepRequested;
         private readonly HashSet<ushort> breakpoints = [
-            // 0x7FD,      // JMP to our code
-            // 0x7FE,      // slot check
-            // 0x07FF,     // an RTS later high byte of our entry
-            // 0x0800,
-            // 0xC700,
-            // 0xC7C0
         ];
 
         //
@@ -192,12 +186,12 @@ namespace InnoWerks.Emulators.AppleIIe
 
                         if (diskiiDevice.DriveOne != null && string.IsNullOrEmpty(diskiiDevice.DriveOne.Image) == false)
                         {
-                            floppyDrive.GetDrive(0).InsertDisk(diskiiDevice.DriveOne.Image);
+                            floppyDrive.InsertDisk(0, diskiiDevice.DriveOne.Image);
                         }
 
                         if (diskiiDevice.DriveTwo != null && string.IsNullOrEmpty(diskiiDevice.DriveTwo.Image) == false)
                         {
-                            floppyDrive.GetDrive(1).InsertDisk(diskiiDevice.DriveTwo.Image);
+                            floppyDrive.InsertDisk(1, diskiiDevice.DriveTwo.Image);
                         }
 
                         break;
@@ -230,6 +224,7 @@ namespace InnoWerks.Emulators.AppleIIe
             display = new Display(GraphicsDevice, cpu, appleBus, memoryBlocks, machineState);
 
             display.LoadContent(emulatorConfiguration.ResolveMonochromeColor(), Content);
+            display.ConfigureToolbar(appleBus.SlotDevices);
         }
 
         private static Color? ResolveMonochromeColor(string monochrome) =>
@@ -267,13 +262,21 @@ namespace InnoWerks.Emulators.AppleIIe
 
             if (leftButtonJustPressed && !inAppleDisplay)
             {
-                var cpuTraceEntry = display.HandleTraceClick(hostLayout, cpuTraceBuffer, mouse.Position);
-
-                if (cpuTraceEntry != null)
+                // check toolbar clicks first
+                if (hostLayout.Toolbar.Contains(mouse.Position))
                 {
-                    if (breakpoints.Add(cpuTraceEntry.Value.ProgramCounter) == false)
+                    HandleToolbarClick(mouse.Position);
+                }
+                else
+                {
+                    var cpuTraceEntry = display.HandleTraceClick(hostLayout, cpuTraceBuffer, mouse.Position);
+
+                    if (cpuTraceEntry != null)
                     {
-                        breakpoints.Remove(cpuTraceEntry.Value.ProgramCounter);
+                        if (breakpoints.Add(cpuTraceEntry.Value.ProgramCounter) == false)
+                        {
+                            breakpoints.Remove(cpuTraceEntry.Value.ProgramCounter);
+                        }
                     }
                 }
             }
@@ -359,6 +362,39 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             display.Draw(hostLayout, cpuTraceBuffer, breakpoints, flashOn);
             base.Draw(gameTime);
+        }
+
+        private void HandleToolbarClick(Point mousePos)
+        {
+            var (action, device, driveNumber) = display.HandleToolbarClick(mousePos);
+
+            switch (action)
+            {
+                case ToolbarAction.Reset:
+                    cpuPaused = true;
+                    cpu.Reset();
+                    audioRenderer.Clear();
+                    audioSource.Clear();
+                    cpuPaused = false;
+                    break;
+
+                case ToolbarAction.Reboot:
+                    cpuPaused = true;
+                    cpu.Reset();
+                    memoryBlocks.Reset();
+                    audioRenderer.Clear();
+                    audioSource.Clear();
+                    cpuPaused = false;
+                    break;
+
+                case ToolbarAction.DiskEject:
+                    device?.EjectDisk(driveNumber);
+                    break;
+
+                case ToolbarAction.DiskInsert:
+                    // TODO: open a file dialog to select a disk image
+                    break;
+            }
         }
 
         private void UpdateHostControls(KeyboardState currentState, KeyboardState previousState)
