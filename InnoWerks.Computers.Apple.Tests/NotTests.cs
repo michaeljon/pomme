@@ -50,18 +50,18 @@ namespace InnoWerks.Computers.Apple
                 0xF7, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF
             ];
 
-            var ENCODING_TABLE_REVERSED = new int[256];
+            var ENCODING_TABLE_REVERSED = new byte[256];
             for (int i = 0; i < ENCODING_TABLE.Length; i++)
             {
-                ENCODING_TABLE_REVERSED[ENCODING_TABLE[i] & 0x0ff] = 0x0ff & i;
+                ENCODING_TABLE_REVERSED[ENCODING_TABLE[i] & 0xff] = (byte)(0xff & i);
             }
 
-            TestContext.WriteLine("public static readonly byte[] ENCODING_TABLE =");
+            TestContext.WriteLine("public static readonly byte[] DENCODING_TABLE =");
             TestContext.WriteLine("[");
 
-            for (var r = 0; r < 8; r++)
+            for (var r = 0; r < 16; r++)
             {
-                for (var c = 0; c < 8; c++)
+                for (var c = 0; c < 26; c++)
                 {
                     TestContext.Write($"0x{r * c:X2}, ");
                 }

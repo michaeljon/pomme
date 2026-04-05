@@ -18,4 +18,10 @@
    <ProjectReference Include="..\InnoWerks.Computers.Apple\InnoWerks.Computers.Apple.csproj" />
  </ItemGroup>
 
+  <ItemGroup>
+    <None Include="testdata\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

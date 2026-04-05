@@ -16,8 +16,16 @@
       "slotNumber": 4
     },
     {
+      "deviceType": "diskii",
+      "slotNumber": 6,
+      "driveOne": {
+        "image": "disks/blank.dsk",
+        "readOnly": false
+      }
+    },
+    {
       "deviceType": "hardDisk",
-      "smartport": true,
+      "smartport": false,
       "slotNumber": 7,
       "driveOne": {
         "image": "disks/A2DeskTop-1.5-en_32MB.hdv",

@@ -13,6 +13,10 @@
       "driveOne": {
         "image": "disks/dos33.dsk",
         "readOnly": false
+      },
+      "driveTwo": {
+        "image": "disks/blank.dsk",
+        "readOnly": false
       }
     }
   ],

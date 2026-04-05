@@ -1,9 +1,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using InnoWerks.Processors;
 
 namespace InnoWerks.Computers.Apple
@@ -14,6 +12,10 @@ namespace InnoWerks.Computers.Apple
 #pragma warning disable CA5394 // Do not use insecure randomness
 #pragma warning disable CA1707 // Identifiers should not contain underscores
 
+#pragma warning disable IDE0052
+#pragma warning disable CS0414
+#pragma warning disable CA2201 // Do not raise reserved exception types
+
     public sealed class FloppyDisk
     {
         public const int TRACK_NIBBLE_LENGTH = 0x1A00;
@@ -22,13 +24,38 @@ namespace InnoWerks.Computers.Apple
         public const int HALF_TRACK_COUNT = TRACK_COUNT * 2;
         public const int DISK_NIBBLE_LENGTH = TRACK_NIBBLE_LENGTH * TRACK_COUNT;
         public const int DISK_PLAIN_LENGTH = 143360;
+        public const int DISK_2MG_NON_NIB_LENGTH = DISK_PLAIN_LENGTH + 0x40;
+        public const int DISK_2MG_NIB_LENGTH = DISK_NIBBLE_LENGTH + 0x40;
         public const byte DEFAULT_VOLUME_NUMBER = 0xFE;
+
+        enum SectorOrder
+        {
+            Unknown,
+
+            Dos33,
+
+            ProDOS,
+        }
 
         private static readonly int[] dos33Interleave =
         [
             0x00, 0x07, 0x0E, 0x06, 0x0D, 0x05, 0x0C, 0x04,
             0x0B, 0x03, 0x0A, 0x02, 0x09, 0x01, 0x08, 0x0F
         ];
+
+        private static readonly int[] prodosInterleave =
+        [
+            0x00, 0x08, 0x01, 0x09, 0x02, 0x0a, 0x03, 0x0b,
+            0x04, 0x0c, 0x05, 0x0d, 0x06, 0x0e, 0x07, 0x0f
+        ];
+
+        private int[] currentInterleave =>
+            sectorOrder == SectorOrder.Dos33 ? dos33Interleave : prodosInterleave;
+        private SectorOrder sectorOrder;
+        private bool isNibblizedImage;
+        private int headerLength;
+        private readonly string path;
+        private byte[] nibbles = new byte[DISK_NIBBLE_LENGTH];
 
         private static readonly byte[] gcrTable =
         [
@@ -42,12 +69,24 @@ namespace InnoWerks.Computers.Apple
             0xF7, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF
         ];
 
-        private static readonly Dictionary<byte, byte> reverseGcrTable =
-            gcrTable.Select((val, i) => new { Key = val, Value = (byte)i })
-                    .ToDictionary(x => x.Key, x => x.Value);
+        private static byte[] reverseGcrTable;
 
-        private readonly string path;
-        private readonly byte[] nibbles;
+        private static byte[] ReverseGcrTable
+        {
+            get
+            {
+                if (reverseGcrTable == null)
+                {
+                    reverseGcrTable = new byte[256];
+                    for (int i = 0; i < gcrTable.Length; i++)
+                    {
+                        reverseGcrTable[gcrTable[i] & 0xff] = (byte)(0xff & i);
+                    }
+                }
+
+                return reverseGcrTable;
+            }
+        }
 
         public bool IsWriteProtected { get; set; }
 
@@ -55,12 +94,23 @@ namespace InnoWerks.Computers.Apple
 
         public int Length => nibbles.Length;
 
-        private FloppyDisk(byte[] nibbles, string path = null)
+        public FloppyDisk(string path)
         {
-            this.nibbles = nibbles;
-            this.path = path;
+            ArgumentException.ThrowIfNullOrEmpty(path);
 
-            IsWriteProtected = string.IsNullOrEmpty(path) || new FileInfo(path).IsReadOnly;
+            if (File.Exists(path) == false)
+            {
+                throw new ArgumentException(nameof(path), "File not found");
+            }
+
+            using var fileStream = File.Open(path, FileMode.Open, FileAccess.Read);
+            var assumedOrder = path.EndsWith(".po", StringComparison.OrdinalIgnoreCase) ?
+                SectorOrder.ProDOS :
+                SectorOrder.Dos33;
+            ReadDisk(fileStream, assumedOrder);
+
+            IsWriteProtected = new FileInfo(path).IsReadOnly;
+            this.path = path;
         }
 
         public byte ReadNibble(int position)
@@ -76,28 +126,77 @@ namespace InnoWerks.Computers.Apple
             }
         }
 
-        public static FloppyDisk FromDsk(string path)
+        private void ReadDisk(FileStream fileStream, SectorOrder assumedOrder)
         {
-            ArgumentException.ThrowIfNullOrEmpty(path);
+            isNibblizedImage = true;
+            VolumeNumber = DEFAULT_VOLUME_NUMBER;
+            headerLength = 0;
+            sectorOrder = assumedOrder;
 
-            return FromDsk(File.ReadAllBytes(path), path);
-        }
+            // we're not going to have files that are bigger than an int
+            int fileSize = (int)fileStream.Length;
+            var rawFileBytes = new byte[fileSize];
+            var fileBytes = new byte[fileSize];
+            fileStream.ReadExactly(rawFileBytes, 0, fileSize);
 
-        public static FloppyDisk FromDsk(byte[] dsk, string path = null)
-        {
-            ArgumentNullException.ThrowIfNull(dsk);
-
-            if (dsk.Length != 143360)
+            switch (fileSize)
             {
-                throw new ArgumentException("Only standard 140K DOS 3.3 DSK images supported");
+                case DISK_2MG_NIB_LENGTH:
+                case DISK_2MG_NON_NIB_LENGTH:
+                    if (fileSize == DISK_2MG_NON_NIB_LENGTH)
+                    {
+                        sectorOrder = rawFileBytes[12] == 0x01 ?
+                            SectorOrder.ProDOS :
+                            SectorOrder.Dos33;
+                    }
+
+                    fileSize -= 0x40;
+                    VolumeNumber = ((rawFileBytes[17] & 1) == 1) ? rawFileBytes[16] : 254;
+                    Array.Copy(rawFileBytes, 040, fileBytes, 0, fileSize);
+                    headerLength = 0x40;
+                    break;
+
+                default:
+                    Array.Copy(rawFileBytes, 0, fileBytes, 0, fileSize);
+                    break;
             }
 
-            var nibbles = Nibblize(dsk);
-            Debug.Assert(nibbles.Length == DISK_NIBBLE_LENGTH);
-            return new FloppyDisk(nibbles, path);
+            if (fileSize == DISK_PLAIN_LENGTH)
+            {
+                isNibblizedImage = false;
+                nibbles = Nibblize(fileBytes);
+                if (nibbles.Length != DISK_NIBBLE_LENGTH)
+                {
+                    throw new Exception("File size isn't lining up properly. Didn't nibblize the right number of bytes");
+                }
+            }
+            else if (fileSize != DISK_NIBBLE_LENGTH)
+            {
+                throw new Exception("File size isn't lining up properly. Wrong number of nibbles in file");
+            }
         }
 
-        private static byte[] Nibblize(byte[] nibbles)
+        private static bool hasProdosVolumeAt(byte[] fileBytes, int offset)
+        {
+            // First two bytes are zero (no previous block)
+            if (fileBytes[offset] != 0 || fileBytes[offset + 1] != 0)
+            {
+                return false;
+            }
+
+            // Next two bytes are either both zero or at least in the range of 3...280
+            var nextBlock = (ushort)((fileBytes[offset + 3] << 8) | (fileBytes[offset + 2] & 0xff));
+            if (nextBlock == 1 || nextBlock == 2 || nextBlock > 280)
+            {
+                return false;
+            }
+
+            // Now check total blocks at offset 0x29
+            var totalBlocks = (ushort)((fileBytes[offset + 0x2a] << 8) | (fileBytes[offset + 0x29] & 0xff));
+            return totalBlocks == 280;
+        }
+
+        private byte[] Nibblize(byte[] fileBytes)
         {
             var rng = new Random();
             var output = new List<byte>();
@@ -111,7 +210,7 @@ namespace InnoWerks.Computers.Apple
                     WriteNoiseBytes(output, 15);
                     WriteAddressBlock(output, track, sector);
                     WriteNoiseBytes(output, gap2);
-                    NibblizeBlock(output, track, dos33Interleave[sector], nibbles);
+                    NibblizeBlock(output, track, currentInterleave[sector], fileBytes);
                     WriteNoiseBytes(output, 38 - gap2);
                 }
             }
@@ -231,64 +330,58 @@ namespace InnoWerks.Computers.Apple
             var dskData = new byte[DISK_PLAIN_LENGTH];
             var allSectorsFound = true;
 
-            for (int track = 0; track < TRACK_COUNT; track++)
+            for (var track = 0; track < TRACK_COUNT; track++)
             {
-                int trackStart = track * TRACK_NIBBLE_LENGTH;
-                var foundSectorsOnTrack = new bool[SECTOR_COUNT];
+                var trackStart = track * TRACK_NIBBLE_LENGTH;
+                var trackNibbles = new byte[TRACK_NIBBLE_LENGTH];
 
-                // A nibblized sector is 416 bytes long. We can iterate through these chunks.
-                for (int physicalChunk = 0; physicalChunk < SECTOR_COUNT; physicalChunk++)
+                for (var i = 0; i < TRACK_NIBBLE_LENGTH; i++)
                 {
-                    int chunkStart = trackStart + (physicalChunk * 416);
-
-                    // Find address header in this chunk to identify the physical sector number
-                    int addressHeaderPos = -1;
-                    for (int i = 0; i < 40; i++) // Search in the first 40 bytes for address header
-                    {
-                        if (ReadNibble(chunkStart + i) == 0xD5 && ReadNibble(chunkStart + i + 1) == 0xAA && ReadNibble(chunkStart + i + 2) == 0x96)
-                        {
-                            addressHeaderPos = chunkStart + i;
-                            break;
-                        }
-                    }
-
-                    if (addressHeaderPos == -1) continue;
-
-                    int addrPtr = addressHeaderPos + 3;
-                    byte vol = (byte)DecodeOddEven(ReadNibble(addrPtr), ReadNibble(addrPtr + 1)); addrPtr += 2;
-                    byte t = (byte)DecodeOddEven(ReadNibble(addrPtr), ReadNibble(addrPtr + 1)); addrPtr += 2;
-                    byte s = (byte)DecodeOddEven(ReadNibble(addrPtr), ReadNibble(addrPtr + 1)); addrPtr += 2;
-                    byte checksum = (byte)DecodeOddEven(ReadNibble(addrPtr), ReadNibble(addrPtr + 1));
-
-                    if (t != track || (vol ^ t ^ s) != checksum) continue;
-
-                    // Now find data header
-                    int dataHeaderPos = -1;
-                    // Search in a window after the address header
-                    for (int i = (addressHeaderPos - chunkStart) + 14; i < (addressHeaderPos - chunkStart) + 14 + 20; i++)
-                    {
-                        if (ReadNibble(chunkStart + i) == 0xD5 && ReadNibble(chunkStart + i + 1) == 0xAA && ReadNibble(chunkStart + i + 2) == 0xAD)
-                        {
-                            dataHeaderPos = chunkStart + i;
-                            break;
-                        }
-                    }
-
-                    if (dataHeaderPos == -1) continue;
-
-                    byte[] sectorData = DenibblizeSector(dataHeaderPos + 3);
-                    int logicalSector = Array.IndexOf(dos33Interleave, s);
-
-                    if (logicalSector != -1)
-                    {
-                        int dskOffset = (track * SECTOR_COUNT + logicalSector) * 256;
-
-                        Array.Copy(sectorData, 0, dskData, dskOffset, 256);
-                        foundSectorsOnTrack[logicalSector] = true;
-                    }
+                    trackNibbles[i] = nibbles[trackStart + i];
                 }
 
-                if (foundSectorsOnTrack.Any(f => !f))
+                var foundSectorsOnTrack = new bool[SECTOR_COUNT];
+                var pos = 0;
+
+                for (var i = 0; i < SECTOR_COUNT; i++)
+                {
+                    // find address header: D5 AA 96
+                    pos = LocatePattern(pos, trackNibbles, 0xD5, 0xAA, 0x96);
+                    if (pos < 0) break;
+
+                    // decode sector number from address field
+                    // address field layout after D5 AA 96: vol(2) track(2) sector(2) checksum(2) DE AA EB
+                    var sector = DecodeOddEven(trackNibbles[(pos + 7) % TRACK_NIBBLE_LENGTH],
+                                               trackNibbles[(pos + 8) % TRACK_NIBBLE_LENGTH]);
+
+                    // skip to end of address block: DE AA
+                    pos = LocatePattern(pos, trackNibbles, 0xDE, 0xAA);
+                    if (pos < 0) break;
+
+                    // find data header: D5 AA AD
+                    pos = LocatePattern(pos, trackNibbles, 0xD5, 0xAA, 0xAD);
+                    if (pos < 0) break;
+
+                    // extract and decode the 342 GCR data bytes
+                    var gcrData = new byte[342];
+                    for (var j = 0; j < 342; j++)
+                    {
+                        gcrData[j] = trackNibbles[(pos + 3 + j) % TRACK_NIBBLE_LENGTH];
+                    }
+
+                    var sectorData = DenibblizeSector(gcrData);
+
+                    // map physical sector to DSK offset using interleave table
+                    var offset = currentInterleave[sector] * 256;
+                    Array.Copy(sectorData, 0, dskData, track * SECTOR_COUNT * 256 + offset, 256);
+                    foundSectorsOnTrack[currentInterleave[sector]] = true;
+
+                    // skip to end of data block: DE AA EB
+                    pos = LocatePattern(pos, trackNibbles, 0xDE, 0xAA, 0xEB);
+                    if (pos < 0) break;
+                }
+
+                if (Array.Exists(foundSectorsOnTrack, f => !f))
                 {
                     allSectorsFound = false;
                 }
@@ -304,61 +397,81 @@ namespace InnoWerks.Computers.Apple
             }
         }
 
-        private byte[] DenibblizeSector(int startOffset)
+        /// <summary>
+        /// Scans for a byte pattern in the track nibble data, wrapping around.
+        /// Returns the position of the first byte of the match, or -1 if not found.
+        /// </summary>
+        private static int LocatePattern(int startPos, byte[] data, params byte[] pattern)
         {
-            var decodedTemp = new int[342];
-            var lastVal = 0;
+            var max = data.Length;
+            var pos = startPos;
 
-            for (var i = 0; i < 342; i++)
+            while (max-- > 0)
             {
-                byte gcrByte = ReadNibble(startOffset + i);
-
-                if (reverseGcrTable.TryGetValue(gcrByte, out byte value) == false)
+                var matched = true;
+                for (var i = 0; i < pattern.Length; i++)
                 {
-                    throw new InvalidDataException($"Invalid GCR byte {gcrByte:X2} at offset {startOffset + i}");
+                    if (data[(pos + i) % data.Length] != pattern[i])
+                    {
+                        matched = false;
+                        break;
+                    }
                 }
 
-                var currentVal = value ^ lastVal;
+                if (matched) return pos;
 
-                decodedTemp[i] = currentVal;
-                lastVal = currentVal;
+                pos = (pos + 1) % data.Length;
             }
 
-            var mainData = new int[256];
-            var auxData = new int[86];
+            return -1;
+        }
 
-            Array.Copy(decodedTemp, 0, auxData, 0, 86);
-            Array.Reverse(auxData);
-            Array.Copy(decodedTemp, 86, mainData, 0, 256);
+        /// <summary>
+        /// Decodes 342 GCR-encoded bytes into a 256-byte sector.
+        /// </summary>
+        internal static byte[] DenibblizeSector(byte[] source)
+        {
+            var temp = new int[342];
+            var current = 0;
+            var last = 0;
 
-            var resultBytes = new byte[256];
-            var unscrambledLowBits = new byte[256];
-
-            int hi = 0x01;
-            int med = 0xAB;
-            int lo = 0x55;
-
-            for (var i = 0; i < 0x56; i++)
+            // un-encode raw GCR data, reversing the XOR chain
+            // aux bytes were encoded in reverse order (341 → 256)
+            for (var i = temp.Length - 1; i > 255; i--)
             {
-                var val = auxData[i];
-                if ((val & 0x20) != 0) unscrambledLowBits[hi] |= 1;
-                if ((val & 0x10) != 0) unscrambledLowBits[hi] |= 2;
-                if ((val & 0x08) != 0) unscrambledLowBits[med] |= 1;
-                if ((val & 0x04) != 0) unscrambledLowBits[med] |= 2;
-                if ((val & 0x02) != 0) unscrambledLowBits[lo] |= 1;
-                if ((val & 0x01) != 0) unscrambledLowBits[lo] |= 2;
-
-                hi = (hi - 1) & 0xFF;
-                med = (med - 1) & 0xFF;
-                lo = (lo - 1) & 0xFF;
+                var t = ReverseGcrTable[0xFF & source[current++]];
+                temp[i] = t ^ last;
+                last ^= t;
             }
+
+            // main bytes were encoded in forward order (0 → 255)
+            for (var i = 0; i < 256; i++)
+            {
+                var t = ReverseGcrTable[0xFF & source[current++]];
+                temp[i] = t ^ last;
+                last ^= t;
+            }
+
+            // decode the pre-nibblized bytes: recombine the 6-bit main data
+            // with the 2-bit fragments stored in the aux area (256 → 341)
+            var result = new byte[256];
+            var p = temp.Length - 1;
 
             for (var i = 0; i < 256; i++)
             {
-                resultBytes[i] = (byte)((mainData[i] << 2) | unscrambledLowBits[i]);
+                var a = temp[i] << 2;
+                a += ((temp[p] & 1) << 1) + ((temp[p] & 2) >> 1);
+                result[i] = (byte)a;
+                temp[p] >>= 2;
+                p--;
+
+                if (p < 256)
+                {
+                    p = temp.Length - 1;
+                }
             }
 
-            return resultBytes;
+            return result;
         }
     }
 }

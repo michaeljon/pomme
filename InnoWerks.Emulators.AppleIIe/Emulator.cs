@@ -364,6 +364,17 @@ namespace InnoWerks.Emulators.AppleIIe
             base.Draw(gameTime);
         }
 
+        private void FlushAllDisks()
+        {
+            foreach (var device in appleBus.SlotDevices)
+            {
+                if (device is DiskIISlotDevice diskDevice)
+                {
+                    diskDevice.FlushAll();
+                }
+            }
+        }
+
         private void HandleToolbarClick(Point mousePos)
         {
             var (action, device, driveNumber) = display.HandleToolbarClick(mousePos);
@@ -372,6 +383,7 @@ namespace InnoWerks.Emulators.AppleIIe
             {
                 case ToolbarAction.Reset:
                     cpuPaused = true;
+                    FlushAllDisks();
                     cpu.Reset();
                     audioRenderer.Clear();
                     audioSource.Clear();
@@ -380,6 +392,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
                 case ToolbarAction.Reboot:
                     cpuPaused = true;
+                    FlushAllDisks();
                     cpu.Reset();
                     memoryBlocks.Reset();
                     audioRenderer.Clear();
@@ -392,7 +405,19 @@ namespace InnoWerks.Emulators.AppleIIe
                     break;
 
                 case ToolbarAction.DiskInsert:
-                    // TODO: open a file dialog to select a disk image
+                    {
+                        using var nfd = new NativeFileDialogNET.NativeFileDialog();
+                        using var dialog = nfd
+                            .SelectFile()
+                            .AddFilter("Disk Images", "dsk,po,2mg")
+                            .AddFilter("All Files", "*");
+
+                        var result = dialog.Open(out string[] selectedFiles, "disks");
+                        if (result == NativeFileDialogNET.DialogResult.Okay && selectedFiles?.Length > 0)
+                        {
+                            device?.InsertDisk(driveNumber, selectedFiles[0]);
+                        }
+                    }
                     break;
             }
         }
@@ -409,6 +434,7 @@ namespace InnoWerks.Emulators.AppleIIe
                 if (IsJustPressed(Keys.F1))
                 {
                     cpuPaused = true;
+                    FlushAllDisks();
                     cpu.Reset();
 
                     audioRenderer.Clear();
@@ -419,6 +445,7 @@ namespace InnoWerks.Emulators.AppleIIe
                 if (IsJustPressed(Keys.F2))
                 {
                     cpuPaused = true;
+                    FlushAllDisks();
                     cpu.Reset();
                     memoryBlocks.Reset();
 

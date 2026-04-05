@@ -123,7 +123,6 @@ namespace InnoWerks.Computers.Apple
             return 0xFF;
         }
 
-
         public override void Tick() {/* NO-OP */ }
 
         public override void Reset()
@@ -154,6 +153,12 @@ namespace InnoWerks.Computers.Apple
         {
             GetDrive(drive).EjectDisk();
             OnDriveStateChanged?.Invoke(Slot, drive);
+        }
+
+        public void FlushAll()
+        {
+            drive1.Flush();
+            drive2.Flush();
         }
 
         private void NotifyStateChanged()

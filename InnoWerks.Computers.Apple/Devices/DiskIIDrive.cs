@@ -15,6 +15,7 @@ namespace InnoWerks.Computers.Apple
         private int magnets;
         private byte latch;
         private int spinCount;
+        private bool isDirty;
 
         private readonly int driveNumber;
 
@@ -35,7 +36,7 @@ namespace InnoWerks.Computers.Apple
         public void InsertDisk(string path)
         {
             EjectDisk();
-            floppyDisk = FloppyDisk.FromDsk(path);
+            floppyDisk = new FloppyDisk(path);
 
             driveOn = false;
             magnets = 0;
@@ -43,12 +44,18 @@ namespace InnoWerks.Computers.Apple
 
         public void EjectDisk()
         {
-            floppyDisk?.Save();
+            if (isDirty)
+            {
+                floppyDisk?.Save();
+            }
+
+            isDirty = false;
             floppyDisk = null;
         }
 
         public void Reset()
         {
+            isDirty = false;
             driveOn = false;
             magnets = 0;
         }
@@ -96,7 +103,22 @@ namespace InnoWerks.Computers.Apple
 
         public void SetOn(bool b)
         {
+            if (driveOn && !b)
+            {
+                // motor turning off — flush any pending writes
+                Flush();
+            }
+
             driveOn = b;
+        }
+
+        public void Flush()
+        {
+            if (isDirty)
+            {
+                floppyDisk?.Save();
+                isDirty = false;
+            }
         }
 
         public bool IsOn()
@@ -149,6 +171,8 @@ namespace InnoWerks.Computers.Apple
         {
             if (writeMode && driveOn && floppyDisk?.IsWriteProtected == false)
             {
+                isDirty = true;
+
                 floppyDisk.WriteNibble(trackStartOffset + nibbleOffset, latch);
                 nibbleOffset++;
                 if (nibbleOffset >= FloppyDisk.TRACK_NIBBLE_LENGTH)
