@@ -321,7 +321,7 @@ namespace InnoWerks.Computers.Apple
             fileStreamLength[drive] = fileStream[drive].Length;
         }
 
-        protected override byte DoIo(CardIoType ioType, ushort address, byte value) => 0xFF;
+        protected override byte DoIo(MemoryAccessType ioType, ushort address, byte value) => 0xFF;
 
         public override void Tick() {/* NO-OP */ }
 

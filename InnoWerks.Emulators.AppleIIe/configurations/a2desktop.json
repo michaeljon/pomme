@@ -1,12 +1,11 @@
 {
   "appleModel": "appleIIeEnhanced",
   "showInternals": true,
+  "noSlotClock": true,
+  "monochrome": true,
+  "color": "white",
   "breakpoints": [],
   "slots": [
-    {
-      "deviceType": "thunderClock",
-      "slotNumber": 1
-    },
     {
       "deviceType": "mouse",
       "slotNumber": 2
@@ -28,11 +27,9 @@
       "smartport": false,
       "slotNumber": 7,
       "driveOne": {
-        "image": "disks/A2DeskTop-1.5-en_32MB.hdv",
+        "image": "disks/A2DeskTop-1.6-alpha2-en_32MB.hdv",
         "readOnly": false
       }
     }
-  ],
-  "monochrome": true,
-  "color": "white"
+  ]
 }

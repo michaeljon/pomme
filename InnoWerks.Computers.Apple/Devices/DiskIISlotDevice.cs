@@ -40,7 +40,7 @@ namespace InnoWerks.Computers.Apple
             bus.AddDevice(this);
         }
 
-        protected override byte DoIo(CardIoType ioType, ushort address, byte value)
+        protected override byte DoIo(MemoryAccessType ioType, ushort address, byte value)
         {
             // SimDebugger.Info($"DoIo{ioType} DiskII(${address:X1}, {value:X2})\n");
 
@@ -89,7 +89,7 @@ namespace InnoWerks.Computers.Apple
                 case 0xD:
                     // set latch
                     // SimDebugger.Info($"DoIo{ioType} DiskII Set(${address:X1}, {value:X2})\n");
-                    if (ioType == CardIoType.Write)
+                    if (ioType == MemoryAccessType.Write)
                     {
                         currentDrive.SetLatchValue(value);
                     }
@@ -113,7 +113,7 @@ namespace InnoWerks.Computers.Apple
                     // SimDebugger.Info($"DoIo{ioType} DiskII Wmode(${address:X1}, {value:X2})\n");
                     currentDrive.SetWriteMode();
                     // set latch
-                    if (ioType == CardIoType.Write)
+                    if (ioType == MemoryAccessType.Write)
                     {
                         currentDrive.SetLatchValue(value);
                     }

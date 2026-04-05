@@ -4,6 +4,8 @@ using InnoWerks.Simulators;
 
 namespace InnoWerks.Computers.Apple
 {
+#pragma warning disable CA1819
+
     public class AppleBus : IAppleBus
     {
         private readonly AppleConfiguration configuration;
@@ -12,15 +14,11 @@ namespace InnoWerks.Computers.Apple
 
         private readonly Memory128k memoryBlocks;
 
-        // there are 8 slots, 0 - 7, most of the time, but slot 0 is not used
-        // we keep the numbering for convenience
-        private readonly ISlotDevice[] slotDevices = new SlotRomDevice[8];
-
-#pragma warning disable CA1819
-        public ISlotDevice[] SlotDevices => slotDevices;
-#pragma warning restore CA1819
+        public ISlotDevice[] SlotDevices { get; } = new SlotRomDevice[8];
 
         private readonly List<ISoftSwitchDevice> softSwitchDevices = [];
+
+        private readonly List<IAddressInterceptDevice> interceptDevices = [];
 
         private readonly IntC8Handler intC8Handler;
 
@@ -52,9 +50,9 @@ namespace InnoWerks.Computers.Apple
         {
             ArgumentNullException.ThrowIfNull(device, nameof(device));
 
-            if (slotDevices[device.Slot] != null)
+            if (SlotDevices[device.Slot] != null)
             {
-                throw new ArgumentException($"There is already a device {slotDevices[device.Slot].Name} in slot {device.Slot}");
+                throw new ArgumentException($"There is already a device {SlotDevices[device.Slot].Name} in slot {device.Slot}");
             }
 
             device.Reset();
@@ -64,7 +62,7 @@ namespace InnoWerks.Computers.Apple
                 throw new ArgumentNullException($"Device being added implements ISlotDevice but is not a SlotRomDevice");
             }
 
-            slotDevices[device.Slot] = slotDevice;
+            SlotDevices[device.Slot] = slotDevice;
 
             if (slotDevice.HasRom)
             {
@@ -80,6 +78,13 @@ namespace InnoWerks.Computers.Apple
             {
                 reportKeyboardLatchAll = false;
             }
+        }
+
+        public void AddDevice(IAddressInterceptDevice interceptDevice)
+        {
+            ArgumentNullException.ThrowIfNull(interceptDevice, nameof(interceptDevice));
+            interceptDevice.Reset();
+            interceptDevices.Add(interceptDevice);
         }
 
         public void BeginTransaction()
@@ -103,6 +108,18 @@ namespace InnoWerks.Computers.Apple
         {
             Tick();
 
+            // check address intercept devices first
+            foreach (var interceptDevice in interceptDevices)
+            {
+                foreach (var range in interceptDevice.AddressRanges)
+                {
+                    if (range.Contains(address, MemoryAccessType.Read) && interceptDevice.TryRead(address, out var interceptValue))
+                    {
+                        return interceptValue;
+                    }
+                }
+            }
+
             if (address >= 0xC000 && address <= 0xC08F)
             {
                 foreach (var softSwitchDevice in softSwitchDevices)
@@ -121,7 +138,7 @@ namespace InnoWerks.Computers.Apple
             else if (address >= 0xC090 && address <= 0xC0FF)
             {
                 var slot = (address >> 4) & 7;
-                var slotDevice = slotDevices[slot];
+                var slotDevice = SlotDevices[slot];
 
                 if (slotDevice?.HandlesRead(address) == true)
                 {
@@ -150,7 +167,7 @@ namespace InnoWerks.Computers.Apple
 
                 if (machineState.State[SoftSwitch.IntCxRomEnabled] == false)
                 {
-                    var slotDevice = slotDevices[slot];
+                    var slotDevice = SlotDevices[slot];
 
                     if (slotDevice?.HandlesRead(address) == true)
                     {
@@ -165,7 +182,7 @@ namespace InnoWerks.Computers.Apple
                     var slot = machineState.CurrentSlot;
                     if (slot != 0)
                     {
-                        var slotDevice = slotDevices[slot];
+                        var slotDevice = SlotDevices[slot];
 
                         if (slotDevice?.HandlesRead(address) == true)
                         {
@@ -181,6 +198,18 @@ namespace InnoWerks.Computers.Apple
         public void Write(ushort address, byte value)
         {
             Tick();
+
+            // check address intercept devices first
+            foreach (var interceptDevice in interceptDevices)
+            {
+                foreach (var range in interceptDevice.AddressRanges)
+                {
+                    if (range.Contains(address, MemoryAccessType.Write) && interceptDevice.TryWrite(address, value))
+                    {
+                        return;
+                    }
+                }
+            }
 
             if (address >= 0xC000 && address <= 0xC08F)
             {
@@ -199,7 +228,7 @@ namespace InnoWerks.Computers.Apple
             else if (address >= 0xC090 && address <= 0xC0FF)
             {
                 var slot = (address >> 4) & 7;
-                var slotDevice = slotDevices[slot];
+                var slotDevice = SlotDevices[slot];
 
                 if (slotDevice?.HandlesWrite(address) == true)
                 {
@@ -228,7 +257,7 @@ namespace InnoWerks.Computers.Apple
 
                 if (machineState.State[SoftSwitch.IntCxRomEnabled] == false)
                 {
-                    var slotDevice = slotDevices[slot];
+                    var slotDevice = SlotDevices[slot];
 
                     if (slotDevice?.HandlesWrite(address) == true)
                     {
@@ -244,7 +273,7 @@ namespace InnoWerks.Computers.Apple
                     var slot = machineState.CurrentSlot;
                     if (slot != 0)
                     {
-                        var slotDevice = slotDevices[slot];
+                        var slotDevice = SlotDevices[slot];
 
                         if (slotDevice?.HandlesWrite(address) == true)
                         {
@@ -293,9 +322,14 @@ namespace InnoWerks.Computers.Apple
             }
             intC8Handler.Reset();
 
-            for (var slot = 0; slot < slotDevices.Length; slot++)
+            for (var slot = 0; slot < SlotDevices.Length; slot++)
             {
-                slotDevices[slot]?.Reset();
+                SlotDevices[slot]?.Reset();
+            }
+
+            foreach (var interceptDevice in interceptDevices)
+            {
+                interceptDevice.Reset();
             }
 
             memoryBlocks.Remap();
@@ -308,9 +342,14 @@ namespace InnoWerks.Computers.Apple
         {
             CycleCount++;
 
-            for (var slot = 0; slot < slotDevices.Length; slot++)
+            for (var slot = 0; slot < SlotDevices.Length; slot++)
             {
-                slotDevices[slot]?.Tick();
+                SlotDevices[slot]?.Tick();
+            }
+
+            foreach (var interceptDevice in interceptDevices)
+            {
+                interceptDevice.Tick();
             }
 
             transactionCycles++;

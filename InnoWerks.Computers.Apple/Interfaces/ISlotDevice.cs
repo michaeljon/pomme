@@ -18,5 +18,4 @@ namespace InnoWerks.Simulators
 
         void Reset();
     }
-#pragma warning restore CA1716
 }

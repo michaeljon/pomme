@@ -2,30 +2,33 @@ namespace InnoWerks.Computers.Apple
 {
     /// <summary>
     /// AY-3-8910 Programmable Sound Generator (PSG) emulation.
-    ///
-    /// The PSG has 16 registers (R0-R15):
-    ///   R0-R1:  Channel A tone period (12-bit)
-    ///   R2-R3:  Channel B tone period (12-bit)
-    ///   R4-R5:  Channel C tone period (12-bit)
-    ///   R6:     Noise period (5-bit)
-    ///   R7:     Mixer control (tone/noise enable per channel, I/O port direction)
-    ///   R8:     Channel A volume (4-bit + envelope mode bit)
-    ///   R9:     Channel B volume
-    ///   R10:    Channel C volume
-    ///   R11-R12: Envelope period (16-bit)
-    ///   R13:    Envelope shape/cycle control
-    ///   R14:    I/O Port A data
-    ///   R15:    I/O Port B data
-    ///
+    /// <para>The PSG has 16 registers (R0-R15):</para>
+    /// <ul>
+    /// <li>R0-R1: Channel A tone period (12-bit)</li>
+    /// <li>R2-R3: Channel B tone period (12-bit)</li>
+    /// <li>R4-R5: Channel C tone period (12-bit)</li>
+    /// <li>R6: Noise period (5-bit)</li>
+    /// <li>R7: Mixer control (tone/noise enable per channel, I/O port direction)</li>
+    /// <li>R8: Channel A volume (4-bit + envelope mode bit)</li>
+    /// <li>R9: Channel B volume</li>
+    /// <li>R10: Channel C volume</li>
+    /// <li>R11-R12: Envelope period (16-bit)</li>
+    /// <li>R13: Envelope shape/cycle control</li>
+    /// <li>R14: I/O Port A data</li>
+    /// <li>R15: I/O Port B data</li>
+    /// </ul>
+    /// <para>
     /// Communication with the PSG is via two 8-bit ports on a 6522 VIA:
-    ///   Port A: 8-bit data bus (DA0-DA7)
-    ///   Port B: control lines (active-low RESET on bit 2, BC1 on bit 0, BDIR on bit 1)
-    ///
-    /// Bus control (active-high, accent BC2 is active-high and active on accent BDIR):
-    ///   BDIR=0 BC1=0: Inactive
-    ///   BDIR=0 BC1=1: Read from PSG register
-    ///   BDIR=1 BC1=0: Write to PSG register
-    ///   BDIR=1 BC1=1: Latch register address
+    /// Port A carries the 8-bit data bus (DA0-DA7), Port B carries control
+    /// lines (~RESET on bit 2, BC1 on bit 0, BDIR on bit 1).
+    /// </para>
+    /// <para>Bus control truth table:</para>
+    /// <ul>
+    /// <li>BDIR=0 BC1=0: Inactive</li>
+    /// <li>BDIR=0 BC1=1: Read from PSG register</li>
+    /// <li>BDIR=1 BC1=0: Write to PSG register</li>
+    /// <li>BDIR=1 BC1=1: Latch register address</li>
+    /// </ul>
     /// </summary>
     public sealed class AY38910
     {

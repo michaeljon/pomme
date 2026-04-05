@@ -33,14 +33,14 @@ namespace InnoWerks.Computers.Apple.Tests
     /// </summary>
     internal sealed class StubSlotDevice : SlotRomDevice
     {
-        public CardIoType? lastIoType;
+        public MemoryAccessType? lastIoType;
         public byte? lastIoRegister;
         public byte? lastIoValue;
 
-        public CardIoType? lastCxType;
+        public MemoryAccessType? lastCxType;
         public ushort? lastCxAddress;
 
-        public CardIoType? lastC8Type;
+        public MemoryAccessType? lastC8Type;
         public ushort? lastC8Address;
 
         public byte IoReturn { get; set; } = 0x55;
@@ -62,7 +62,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public override bool HandlesRead(ushort address) => true;
         public override bool HandlesWrite(ushort address) => true;
 
-        protected override byte DoIo(CardIoType ioType, ushort address, byte value)
+        protected override byte DoIo(MemoryAccessType ioType, ushort address, byte value)
         {
             lastIoType = ioType;
             lastIoRegister = (byte)(address & 0x0F);
@@ -70,14 +70,14 @@ namespace InnoWerks.Computers.Apple.Tests
             return IoReturn;
         }
 
-        protected override byte DoCx(CardIoType ioType, ushort address, byte value)
+        protected override byte DoCx(MemoryAccessType ioType, ushort address, byte value)
         {
             lastCxType = ioType;
             lastCxAddress = address;
             return CxReturn;
         }
 
-        protected override byte DoC8(CardIoType ioType, ushort address, byte value)
+        protected override byte DoC8(MemoryAccessType ioType, ushort address, byte value)
         {
             lastC8Type = ioType;
             lastC8Address = address;
@@ -176,7 +176,7 @@ namespace InnoWerks.Computers.Apple.Tests
             var (device, _) = CreateForSlot(1);
             // slot 1 IO base = $C090
             device.Read(0xC090);
-            Assert.AreEqual(CardIoType.Read, device.lastIoType);
+            Assert.AreEqual(MemoryAccessType.Read, device.lastIoType);
             Assert.AreEqual((byte)0x00, device.lastIoRegister);
         }
 
@@ -186,7 +186,7 @@ namespace InnoWerks.Computers.Apple.Tests
             var (device, _) = CreateForSlot(1);
             // slot 1 IO high = $C09F; register = 0x0F
             device.Read(0xC09F);
-            Assert.AreEqual(CardIoType.Read, device.lastIoType);
+            Assert.AreEqual(MemoryAccessType.Read, device.lastIoType);
             Assert.AreEqual((byte)0x0F, device.lastIoRegister);
         }
 
@@ -204,7 +204,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (device, _) = CreateForSlot(1);
             device.Write(0xC090, 0x42);
-            Assert.AreEqual(CardIoType.Write, device.lastIoType);
+            Assert.AreEqual(MemoryAccessType.Write, device.lastIoType);
             Assert.AreEqual((byte)0x00, device.lastIoRegister);
             Assert.AreEqual((byte)0x42, device.lastIoValue);
         }
@@ -230,7 +230,7 @@ namespace InnoWerks.Computers.Apple.Tests
             state.State[SoftSwitch.IntCxRomEnabled] = false;
 
             device.Read(0xC200); // slot 2 CX ROM base
-            Assert.AreEqual(CardIoType.Read, device.lastCxType);
+            Assert.AreEqual(MemoryAccessType.Read, device.lastCxType);
             Assert.AreEqual((ushort)0xC200, device.lastCxAddress);
         }
 
@@ -256,7 +256,7 @@ namespace InnoWerks.Computers.Apple.Tests
             state.State[SoftSwitch.IntCxRomEnabled] = true;
 
             device.Read(0xC200);
-            Assert.AreEqual(CardIoType.Read, device.lastCxType);
+            Assert.AreEqual(MemoryAccessType.Read, device.lastCxType);
         }
 
         [TestMethod]
@@ -267,7 +267,7 @@ namespace InnoWerks.Computers.Apple.Tests
             state.State[SoftSwitch.IntCxRomEnabled] = false;
 
             device.Write(0xC200, 0x55);
-            Assert.AreEqual(CardIoType.Write, device.lastCxType);
+            Assert.AreEqual(MemoryAccessType.Write, device.lastCxType);
         }
 
         // ------------------------------------------------------------------ //
@@ -283,7 +283,7 @@ namespace InnoWerks.Computers.Apple.Tests
             state.State[SoftSwitch.IntCxRomEnabled] = false;
 
             device.Read(0xC800);
-            Assert.AreEqual(CardIoType.Read, device.lastC8Type);
+            Assert.AreEqual(MemoryAccessType.Read, device.lastC8Type);
             Assert.AreEqual((ushort)0xC800, device.lastC8Address);
         }
 
@@ -296,7 +296,7 @@ namespace InnoWerks.Computers.Apple.Tests
             state.State[SoftSwitch.IntCxRomEnabled] = false;
 
             device.Read(0xCFFF);
-            Assert.AreEqual(CardIoType.Read, device.lastC8Type);
+            Assert.AreEqual(MemoryAccessType.Read, device.lastC8Type);
         }
 
         [TestMethod]
@@ -312,7 +312,7 @@ namespace InnoWerks.Computers.Apple.Tests
             state.State[SoftSwitch.IntC8RomEnabled] = true;
 
             device.Read(0xC800);
-            Assert.AreEqual(CardIoType.Read, device.lastC8Type);
+            Assert.AreEqual(MemoryAccessType.Read, device.lastC8Type);
         }
 
         [TestMethod]
@@ -324,7 +324,7 @@ namespace InnoWerks.Computers.Apple.Tests
             state.State[SoftSwitch.IntCxRomEnabled] = false;
 
             device.Write(0xC800, 0x99);
-            Assert.AreEqual(CardIoType.Write, device.lastC8Type);
+            Assert.AreEqual(MemoryAccessType.Write, device.lastC8Type);
         }
 
         // ------------------------------------------------------------------ //

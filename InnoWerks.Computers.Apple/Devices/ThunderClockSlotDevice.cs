@@ -5,24 +5,29 @@ using InnoWerks.Simulators;
 
 namespace InnoWerks.Computers.Apple
 {
-    // https://www.alldatasheet.com/datasheet-pdf/view/113488/NEC/UPD1990AC.html
-    //
-    // UPD1990AC 40 bit shift register layout:
-    //
-    // All values except month are BCD encoded. Month is a hex value. Each
-    // slot is a 4-bit 0-based BCD value.
-    //
-    // month (1-12) -- 4-bit hex encoded
-    // day of week (0-6)
-    // day of month, tens digit (0-3)
-    // day of month, ones digit (0-9)
-    // hour, tens digit (0-2)
-    // hour, ones digit (0-9)
-    // minute, tens digit (0-5)
-    // minute, ones digit (0-9)
-    // second, tens digit (0-5)
-    // second, ones digit (0-9)
-    //
+    /// <summary>
+    /// ThunderClock Plus real-time clock card emulation using the NEC UPD1990AC.
+    /// <para>
+    /// See <see href="https://www.alldatasheet.com/datasheet-pdf/view/113488/NEC/UPD1990AC.html"/>
+    /// for the UPD1990AC datasheet.
+    /// </para>
+    /// <para>
+    /// The UPD1990AC uses a 40-bit shift register. All values except month are
+    /// BCD encoded. Month is a 4-bit hex value. Each field is a 4-bit nibble:
+    /// </para>
+    /// <ul>
+    /// <li>month (1-12) — 4-bit hex encoded</li>
+    /// <li>day of week (0-6)</li>
+    /// <li>day of month, tens digit (0-3)</li>
+    /// <li>day of month, ones digit (0-9)</li>
+    /// <li>hour, tens digit (0-2)</li>
+    /// <li>hour, ones digit (0-9)</li>
+    /// <li>minute, tens digit (0-5)</li>
+    /// <li>minute, ones digit (0-9)</li>
+    /// <li>second, tens digit (0-5)</li>
+    /// <li>second, ones digit (0-9)</li>
+    /// </ul>
+    /// </summary>
     public sealed class ThunderClockSlotDevice : SlotRomDevice
     {
         // TODO: fix this, it's shared all over the damned place
@@ -40,17 +45,6 @@ namespace InnoWerks.Computers.Apple
         private readonly IAppleBus bus;
 
         private readonly Stack<bool> bitBuffer = new();
-
-#pragma warning disable CA1805, RCS1129
-        private readonly bool attemptYearPatch = false;
-
-        private static readonly byte[] driverPattern = [
-            0x00, 0x01f, 0x03b, 0x05a, 0x078, 0x097, 0x0b5, 0x0d3, 0x0f2
-        ];
-
-        private const int DRIVER_OFFSET = -26;
-
-        private int patchLoc = -1;
 
         public ThunderClockSlotDevice(int slot, ICpu cpu, IAppleBus bus, MachineState machineState)
             : base(slot, "ThunderClock Plus", cpu, bus, machineState)
@@ -88,9 +82,9 @@ namespace InnoWerks.Computers.Apple
         // Timer modes = 0x020 (64hz), 0x028 (256hz), 0x030 (2048hz)
         // Interrupt enable = 0x040 (IRQ assert is read as 0x020 in the status register)
         // data out = 0x080
-        protected override byte DoIo(CardIoType ioType, ushort address, byte value)
+        protected override byte DoIo(MemoryAccessType ioType, ushort address, byte value)
         {
-            if (ioType == CardIoType.Read && (byte)(address & 0x0F) == 0x00)
+            if (ioType == MemoryAccessType.Read && (byte)(address & 0x0F) == 0x00)
             {
                 return (byte)(peekBit() | (irqAsserted ? 0x20 : 0x00));
             }
@@ -116,9 +110,9 @@ namespace InnoWerks.Computers.Apple
 
             if (isStrobe == false && strobe && isRead)
             {
-                if (attemptYearPatch)
+                if (ProDOSClockPatcher.PerformProDOSPatch)
                 {
-                    performProdosPatch();
+                    ProDOSClockPatcher.PatchClockForProDOS(bus);
                 }
 
                 getTime();
@@ -231,54 +225,6 @@ namespace InnoWerks.Computers.Apple
             }
 
             return bitBuffer.Peek() ? 0x80 : 0x00;
-        }
-
-        private void performProdosPatch()
-        {
-            const byte LDA = 0xA9;
-            const byte NOP = 0xEA;
-
-            if (patchLoc > 0)
-            {
-                // We've already patched, just validate
-                if (bus.Peek(patchLoc) == LDA)
-                {
-                    return;
-                }
-            }
-
-            int match = 0;
-            int matchStart = 0;
-
-            for (int addr = 0x8000; addr < 0x10000; addr++)
-            {
-                if (bus.Peek(addr) == driverPattern[match])
-                {
-                    match++;
-                    if (match == driverPattern.Length)
-                    {
-                        break;
-                    }
-                }
-                else
-                {
-                    match = 0;
-                    matchStart = addr;
-                }
-            }
-
-            if (match != driverPattern.Length)
-            {
-                return;
-            }
-
-            patchLoc = matchStart + DRIVER_OFFSET;
-            bus.Poke(patchLoc, LDA);
-
-            int year = DateTime.Now.Year % 100;
-            bus.Poke(patchLoc + 1, (byte)year);
-            bus.Poke(patchLoc + 2, NOP);
-            bus.Poke(patchLoc + 3, NOP);
         }
     }
 }

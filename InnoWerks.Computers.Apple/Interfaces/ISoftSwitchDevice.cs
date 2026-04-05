@@ -1,6 +1,5 @@
 namespace InnoWerks.Simulators
 {
-#pragma warning disable CA1716
     public interface ISoftSwitchDevice
     {
         string Name { get; }
@@ -17,5 +16,4 @@ namespace InnoWerks.Simulators
 
         void Reset();
     }
-#pragma warning restore CA1716
 }

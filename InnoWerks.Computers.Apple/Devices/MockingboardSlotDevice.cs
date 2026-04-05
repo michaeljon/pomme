@@ -5,21 +5,27 @@ namespace InnoWerks.Computers.Apple
 {
     /// <summary>
     /// Sweet Micro Systems Mockingboard A/B sound card emulation.
-    ///
+    /// <para>
     /// The Mockingboard contains two 6522 VIAs, each connected to an AY-3-8910 PSG:
-    ///   VIA1 + PSG1 at $Cn00-$Cn0F (channels A1, B1, C1)
-    ///   VIA2 + PSG2 at $Cn80-$Cn8F (channels A2, B2, C2)
-    ///
+    /// </para>
+    /// <ul>
+    /// <li>VIA1 + PSG1 at $Cn00-$Cn0F (channels A1, B1, C1)</li>
+    /// <li>VIA2 + PSG2 at $Cn80-$Cn8F (channels A2, B2, C2)</li>
+    /// </ul>
+    /// <para>
     /// The VIA Port A carries the 8-bit data bus to the PSG.
     /// The VIA Port B low bits carry the PSG control signals:
-    ///   Bit 0: BC1
-    ///   Bit 1: BDIR
-    ///   Bit 2: ~RESET (active low)
-    ///
+    /// </para>
+    /// <ul>
+    /// <li>Bit 0: BC1</li>
+    /// <li>Bit 1: BDIR</li>
+    /// <li>Bit 2: ~RESET (active low)</li>
+    /// </ul>
+    /// <para>
     /// The Mockingboard A/B has no ROM. Detection is timer-based: software writes
     /// to VIA Timer 1, reads it back, and checks that it has decremented.
-    ///
     /// Timer 1 on either VIA can generate IRQs for interrupt-driven music playback.
+    /// </para>
     /// </summary>
     public sealed class MockingboardSlotDevice : SlotRomDevice
     {
@@ -65,18 +71,18 @@ namespace InnoWerks.Computers.Apple
             return address >= RomBaseAddressLo && address <= RomBaseAddressHi;
         }
 
-        protected override byte DoIo(CardIoType ioType, ushort address, byte value)
+        protected override byte DoIo(MemoryAccessType ioType, ushort address, byte value)
         {
             return 0xFF;
         }
 
-        protected override byte DoCx(CardIoType ioType, ushort address, byte value)
+        protected override byte DoCx(MemoryAccessType ioType, ushort address, byte value)
         {
             // Address bit 7 selects VIA1 (0) or VIA2 (1), bits 0-3 select the register.
             var reg = (byte)(address & 0x0F);
             var via = (address & 0x80) != 0 ? via2 : via1;
 
-            if (ioType == CardIoType.Read)
+            if (ioType == MemoryAccessType.Read)
             {
                 return via.Read(reg);
             }

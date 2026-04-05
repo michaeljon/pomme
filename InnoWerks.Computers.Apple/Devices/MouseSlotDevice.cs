@@ -362,7 +362,7 @@ namespace InnoWerks.Computers.Apple
 
         // --- SlotRomDevice required overrides ---
 
-        protected override byte DoIo(CardIoType ioType, ushort address, byte value) => 0xFF;
+        protected override byte DoIo(MemoryAccessType ioType, ushort address, byte value) => 0xFF;
 
         public override void Tick()
         {

@@ -140,6 +140,11 @@ namespace InnoWerks.Emulators.AppleIIe
             iou = new IOU(memoryBlocks, machineState, appleBus);
             mmu = new MMU(memoryBlocks, machineState, appleBus);
 
+            if (emulatorConfiguration.NoSlotClock)
+            {
+                _ = new NoSlotClockDevice(machineState, appleBus);
+            }
+
             cpu = Cpu6502Factory.Construct<Cpu65C02>(
                 CpuClass.WDC65C02,
                 appleBus,

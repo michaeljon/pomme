@@ -11,7 +11,6 @@ namespace InnoWerks.Computers.Apple
         ExpRomPeripheral
     };
 
-
     public class MachineState
     {
         private readonly Random rng = new();
@@ -22,7 +21,7 @@ namespace InnoWerks.Computers.Apple
 
         public MachineState()
         {
-            foreach (SoftSwitch sw in Enum.GetValues<SoftSwitch>().OrderBy(v => v.ToString()))
+            foreach (var sw in Enum.GetValues<SoftSwitch>().OrderBy(v => v.ToString()))
             {
                 State[sw] = false;
             }

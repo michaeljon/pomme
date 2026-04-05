@@ -29,6 +29,11 @@ namespace InnoWerks.Emulators.AppleIIe
         /// </summary>
         public List<ConfiguredSlotDevice> Slots { get; set; }
 
+        /// <summary>
+        /// If true, installs a No-Slot-Clock (DS1215) in the ROM socket.
+        /// </summary>
+        public bool NoSlotClock { get; set; }
+
         public bool JoystickInverted { get; set; } = true;
 
         /// <summary>

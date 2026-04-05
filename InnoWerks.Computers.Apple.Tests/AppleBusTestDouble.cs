@@ -28,6 +28,8 @@ namespace InnoWerks.Computers.Apple.Tests
 
         public void AddDevice(ISlotDevice device) { }
 
+        public void AddDevice(IAddressInterceptDevice interceptDevice) { }
+
         public void SetCpu(ICpu cpu) { }
 
         // ------------------------------------------------------------------ //

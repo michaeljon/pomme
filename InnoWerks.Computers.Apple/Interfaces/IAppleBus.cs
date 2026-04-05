@@ -7,5 +7,7 @@ namespace InnoWerks.Computers.Apple
         void AddDevice(ISoftSwitchDevice device);
 
         void AddDevice(ISlotDevice slotDevice);
+
+        void AddDevice(IAddressInterceptDevice interceptDevice);
     }
 }

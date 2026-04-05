@@ -3,11 +3,6 @@ using InnoWerks.Simulators;
 
 namespace InnoWerks.Computers.Apple
 {
-    public enum CardIoType
-    {
-        Read,
-        Write
-    }
 
     // Core soft switches
     //   $C000..C07F On Board Resources
@@ -27,6 +22,8 @@ namespace InnoWerks.Computers.Apple
     //   $C800..CFFF Common area for all Slots (2 KiB 'ROM')
 
 #pragma warning disable CA1716, CA1707, CA1822
+#pragma warning disable CA1819 // Properties should not return arrays
+
     public abstract class SlotRomDevice : ISlotDevice
     {
         private readonly ICpu cpu;
@@ -41,11 +38,8 @@ namespace InnoWerks.Computers.Apple
 
         protected MachineState machineState { get; }
 
-#pragma warning disable CA1819 // Properties should not return arrays
         public byte[] Rom { get; init; }
         public byte[] ExpansionRom { get; init; }
-
-#pragma warning restore CA1819 // Properties should not return arrays
 
         protected SlotRomDevice(int slot, string name, ICpu cpu, IAppleBus bus, MachineState machineState)
             : this(slot, name, cpu, bus, machineState, null, null) { }
@@ -104,15 +98,15 @@ namespace InnoWerks.Computers.Apple
         public virtual bool HandlesWrite(ushort address) =>
             address >= IoBaseAddressLo && address <= IoBaseAddressHi;
 
-        protected abstract byte DoIo(CardIoType ioType, ushort address, byte value);
+        protected abstract byte DoIo(MemoryAccessType ioType, ushort address, byte value);
 
         /// <summary>
         /// Handles access in the $Cn00-$CnFF slot ROM range. Default serves ROM bytes.
         /// Override for devices with active hardware in this range.
         /// </summary>
-        protected virtual byte DoCx(CardIoType ioType, ushort address, byte value)
+        protected virtual byte DoCx(MemoryAccessType ioType, ushort address, byte value)
         {
-            if (ioType == CardIoType.Read && Rom != null)
+            if (ioType == MemoryAccessType.Read && Rom != null)
             {
                 return Rom[address & 0xFF];
             }
@@ -124,9 +118,9 @@ namespace InnoWerks.Computers.Apple
         /// Handles access in the $C800-$CFFF expansion ROM range. Default serves
         /// expansion ROM bytes. Override for devices with active hardware in this range.
         /// </summary>
-        protected virtual byte DoC8(CardIoType ioType, ushort address, byte value)
+        protected virtual byte DoC8(MemoryAccessType ioType, ushort address, byte value)
         {
-            if (ioType == CardIoType.Read && ExpansionRom != null)
+            if (ioType == MemoryAccessType.Read && ExpansionRom != null)
             {
                 return ExpansionRom[address - ExpansionBaseAddressLo];
             }
@@ -138,16 +132,16 @@ namespace InnoWerks.Computers.Apple
         {
             if (address >= IoBaseAddressLo && address <= IoBaseAddressHi)
             {
-                return DoIo(CardIoType.Read, address, 0x00);
+                return DoIo(MemoryAccessType.Read, address, 0x00);
             }
             else if (address >= RomBaseAddressLo && address <= RomBaseAddressHi)
             {
-                return DoCx(CardIoType.Read, address, 0x00);
+                return DoCx(MemoryAccessType.Read, address, 0x00);
             }
             else if (address >= ExpansionBaseAddressLo && address <= ExpansionBaseAddressHi)
             {
                 // AppleBus verifies soft switch state before routing here
-                return DoC8(CardIoType.Read, address, 0x00);
+                return DoC8(MemoryAccessType.Read, address, 0x00);
             }
 
             return machineState.FloatingValue;
@@ -157,16 +151,16 @@ namespace InnoWerks.Computers.Apple
         {
             if (address >= IoBaseAddressLo && address <= IoBaseAddressHi)
             {
-                DoIo(CardIoType.Write, address, value);
+                DoIo(MemoryAccessType.Write, address, value);
             }
             else if (address >= RomBaseAddressLo && address <= RomBaseAddressHi)
             {
-                DoCx(CardIoType.Write, address, value);
+                DoCx(MemoryAccessType.Write, address, value);
             }
             else if (address >= ExpansionBaseAddressLo && address <= ExpansionBaseAddressHi)
             {
                 // AppleBus verifies soft switch state before routing here
-                DoC8(CardIoType.Write, address, value);
+                DoC8(MemoryAccessType.Write, address, value);
             }
         }
 

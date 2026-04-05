@@ -3,28 +3,30 @@ namespace InnoWerks.Computers.Apple
 {
     /// <summary>
     /// MOS 6522 Versatile Interface Adapter (VIA) emulation.
-    ///
-    /// Register map (accent accent accent accent accent accent accent accent accent RS3-RS0):
-    ///   $0: ORB/IRB  - Output/Input Register B
-    ///   $1: ORA/IRA  - Output/Input Register A (with handshake)
-    ///   $2: DDRB     - Data Direction Register B
-    ///   $3: DDRA     - Data Direction Register A
-    ///   $4: T1C-L    - Timer 1 Counter Low (read) / Latch Low (write)
-    ///   $5: T1C-H    - Timer 1 Counter High (read/write, starts timer)
-    ///   $6: T1L-L    - Timer 1 Latch Low
-    ///   $7: T1L-H    - Timer 1 Latch High
-    ///   $8: T2C-L    - Timer 2 Counter Low (read) / Latch Low (write)
-    ///   $9: T2C-H    - Timer 2 Counter High (read/write, starts timer)
-    ///   $A: SR       - Shift Register
-    ///   $B: ACR      - Auxiliary Control Register
-    ///   $C: PCR      - Peripheral Control Register
-    ///   $D: IFR      - Interrupt Flag Register
-    ///   $E: IER      - Interrupt Enable Register
-    ///   $F: ORA/IRA  - Same as $1 but without handshake
-    ///
+    /// <para>Register map (RS3-RS0):</para>
+    /// <ul>
+    /// <li>$0: ORB/IRB — Output/Input Register B</li>
+    /// <li>$1: ORA/IRA — Output/Input Register A (with handshake)</li>
+    /// <li>$2: DDRB — Data Direction Register B</li>
+    /// <li>$3: DDRA — Data Direction Register A</li>
+    /// <li>$4: T1C-L — Timer 1 Counter Low (read) / Latch Low (write)</li>
+    /// <li>$5: T1C-H — Timer 1 Counter High (read/write, starts timer)</li>
+    /// <li>$6: T1L-L — Timer 1 Latch Low</li>
+    /// <li>$7: T1L-H — Timer 1 Latch High</li>
+    /// <li>$8: T2C-L — Timer 2 Counter Low (read) / Latch Low (write)</li>
+    /// <li>$9: T2C-H — Timer 2 Counter High (read/write, starts timer)</li>
+    /// <li>$A: SR — Shift Register</li>
+    /// <li>$B: ACR — Auxiliary Control Register</li>
+    /// <li>$C: PCR — Peripheral Control Register</li>
+    /// <li>$D: IFR — Interrupt Flag Register</li>
+    /// <li>$E: IER — Interrupt Enable Register</li>
+    /// <li>$F: ORA/IRA — Same as $1 but without handshake</li>
+    /// </ul>
+    /// <para>
     /// For the Mockingboard, Port A carries data to/from the AY-3-8910 PSG,
     /// and Port B bits 0-2 carry the PSG bus control signals (BC1, BDIR, ~RESET).
     /// Timer 1 is typically used for interrupt-driven music playback.
+    /// </para>
     /// </summary>
     public sealed class Via6522
     {
