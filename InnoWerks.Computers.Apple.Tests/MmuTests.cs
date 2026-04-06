@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace InnoWerks.Computers.Apple.Tests
@@ -15,6 +16,15 @@ namespace InnoWerks.Computers.Apple.Tests
             var bus = new AppleBusTestDouble();
             var mmu = new MMU(memory, state, bus);
             return (mmu, memory, state);
+        }
+
+        private static bool AddressInRange(MMU mmu, ushort address, MemoryAccessType accessType) =>
+            mmu.AddressRanges.Any(r => r.Contains(address, accessType));
+
+        private static byte DoRead(MMU mmu, ushort address)
+        {
+            mmu.DoRead(address, out var value);
+            return value;
         }
 
         // ------------------------------------------------------------------ //
@@ -48,105 +58,104 @@ namespace InnoWerks.Computers.Apple.Tests
             state.State[SoftSwitch.LcReadEnabled] = true;
             state.State[SoftSwitch.LcWriteEnabled] = true;
             mmu.Reset();
-            // Reset only sets LcBank2; it does not touch LcReadEnabled / LcWriteEnabled
             Assert.IsTrue(state.State[SoftSwitch.LcReadEnabled]);
             Assert.IsTrue(state.State[SoftSwitch.LcWriteEnabled]);
         }
 
         // ------------------------------------------------------------------ //
-        // HandlesRead
+        // AddressRanges
         // ------------------------------------------------------------------ //
 
         [TestMethod]
-        public void HandlesReadReturnsTrueForRdLcBnk2()
+        public void AddressRangesContainsRdLcBnk2ForRead()
         {
             var (mmu, _, _) = CreateMmu();
-            Assert.IsTrue(mmu.HandlesRead(SoftSwitchAddress.RDLCBNK2));
+            Assert.IsTrue(AddressInRange(mmu, SoftSwitchAddress.RDLCBNK2, MemoryAccessType.Read));
         }
 
         [TestMethod]
-        public void HandlesReadReturnsTrueForRdLcRam()
+        public void AddressRangesContainsRdLcRamForRead()
         {
             var (mmu, _, _) = CreateMmu();
-            Assert.IsTrue(mmu.HandlesRead(SoftSwitchAddress.RDLCRAM));
+            Assert.IsTrue(AddressInRange(mmu, SoftSwitchAddress.RDLCRAM, MemoryAccessType.Read));
         }
 
         [TestMethod]
-        public void HandlesReadReturnsTrueForRdRamRd()
+        public void AddressRangesContainsRdRamRdForRead()
         {
             var (mmu, _, _) = CreateMmu();
-            Assert.IsTrue(mmu.HandlesRead(SoftSwitchAddress.RDRAMRD));
+            Assert.IsTrue(AddressInRange(mmu, SoftSwitchAddress.RDRAMRD, MemoryAccessType.Read));
         }
 
         [TestMethod]
-        public void HandlesReadReturnsTrueForRdRamWrt()
+        public void AddressRangesContainsRdRamWrtForRead()
         {
             var (mmu, _, _) = CreateMmu();
-            Assert.IsTrue(mmu.HandlesRead(SoftSwitchAddress.RDRAMWRT));
+            Assert.IsTrue(AddressInRange(mmu, SoftSwitchAddress.RDRAMWRT, MemoryAccessType.Read));
         }
 
         [TestMethod]
-        public void HandlesReadReturnsTrueForRdAltStkZp()
+        public void AddressRangesContainsRdAltStkZpForRead()
         {
             var (mmu, _, _) = CreateMmu();
-            Assert.IsTrue(mmu.HandlesRead(SoftSwitchAddress.RDALTSTKZP));
+            Assert.IsTrue(AddressInRange(mmu, SoftSwitchAddress.RDALTSTKZP, MemoryAccessType.Read));
         }
 
         [TestMethod]
-        public void HandlesReadReturnsTrueForC080()
+        public void AddressRangesContainsC080ForRead()
         {
             var (mmu, _, _) = CreateMmu();
-            Assert.IsTrue(mmu.HandlesRead(0xC080));
+            Assert.IsTrue(AddressInRange(mmu, 0xC080, MemoryAccessType.Read));
         }
 
         [TestMethod]
-        public void HandlesReadReturnsTrueForC08F()
+        public void AddressRangesContainsC08FForRead()
         {
             var (mmu, _, _) = CreateMmu();
-            Assert.IsTrue(mmu.HandlesRead(0xC08F));
+            Assert.IsTrue(AddressInRange(mmu, 0xC08F, MemoryAccessType.Read));
         }
 
         [TestMethod]
-        public void HandlesReadReturnsFalseForC090()
+        public void AddressRangesDoesNotContainC090()
         {
             var (mmu, _, _) = CreateMmu();
-            Assert.IsFalse(mmu.HandlesRead(0xC090));
+            Assert.IsFalse(AddressInRange(mmu, 0xC090, MemoryAccessType.Read));
         }
 
         [TestMethod]
-        public void HandlesReadReturnsFalseForAddressBelowC000()
+        public void AddressRangesDoesNotContainAddressBelowC000()
         {
             var (mmu, _, _) = CreateMmu();
-            Assert.IsFalse(mmu.HandlesRead(0x1000));
+            Assert.IsFalse(AddressInRange(mmu, 0x1000, MemoryAccessType.Read));
         }
 
         // ------------------------------------------------------------------ //
-        // HandlesWrite
+        // AddressRanges — write
         // ------------------------------------------------------------------ //
 
         [TestMethod]
-        public void HandlesWriteReturnsTrueForClr80Store()
+        public void AddressRangesContainsClr80StoreForWrite()
         {
             var (mmu, _, _) = CreateMmu();
-            Assert.IsTrue(mmu.HandlesWrite(SoftSwitchAddress.CLR80STORE));
+            Assert.IsTrue(AddressInRange(mmu, SoftSwitchAddress.CLR80STORE, MemoryAccessType.Write));
         }
 
         [TestMethod]
-        public void HandlesWriteReturnsTrueForC080()
+        public void AddressRangesContainsC080ForWrite()
         {
             var (mmu, _, _) = CreateMmu();
-            Assert.IsTrue(mmu.HandlesWrite(0xC080));
+            Assert.IsTrue(AddressInRange(mmu, 0xC080, MemoryAccessType.Write));
         }
 
         [TestMethod]
-        public void HandlesWriteReturnsFalseForC090()
+        public void AddressRangesDoesNotContainC090ForWrite()
         {
             var (mmu, _, _) = CreateMmu();
-            Assert.IsFalse(mmu.HandlesWrite(0xC090));
+            Assert.IsFalse(AddressInRange(mmu, 0xC090, MemoryAccessType.Write));
         }
 
         // ------------------------------------------------------------------ //
-        // Status register reads — each returns 0x80 when set, 0x00 when clear
+        // Status register reads
         // ------------------------------------------------------------------ //
 
         [TestMethod]
@@ -154,7 +163,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (mmu, _, state) = CreateMmu();
             state.State[SoftSwitch.LcBank2] = true;
-            Assert.AreEqual((byte)0x80, mmu.Read(SoftSwitchAddress.RDLCBNK2));
+            Assert.AreEqual((byte)0x80, DoRead(mmu, SoftSwitchAddress.RDLCBNK2));
         }
 
         [TestMethod]
@@ -162,7 +171,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (mmu, _, state) = CreateMmu();
             state.State[SoftSwitch.LcBank2] = false;
-            Assert.AreEqual((byte)0x00, mmu.Read(SoftSwitchAddress.RDLCBNK2));
+            Assert.AreEqual((byte)0x00, DoRead(mmu, SoftSwitchAddress.RDLCBNK2));
         }
 
         [TestMethod]
@@ -170,7 +179,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (mmu, _, state) = CreateMmu();
             state.State[SoftSwitch.LcReadEnabled] = true;
-            Assert.AreEqual((byte)0x80, mmu.Read(SoftSwitchAddress.RDLCRAM));
+            Assert.AreEqual((byte)0x80, DoRead(mmu, SoftSwitchAddress.RDLCRAM));
         }
 
         [TestMethod]
@@ -178,7 +187,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (mmu, _, state) = CreateMmu();
             state.State[SoftSwitch.AuxRead] = true;
-            Assert.AreEqual((byte)0x80, mmu.Read(SoftSwitchAddress.RDRAMRD));
+            Assert.AreEqual((byte)0x80, DoRead(mmu, SoftSwitchAddress.RDRAMRD));
         }
 
         [TestMethod]
@@ -186,7 +195,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (mmu, _, state) = CreateMmu();
             state.State[SoftSwitch.AuxWrite] = true;
-            Assert.AreEqual((byte)0x80, mmu.Read(SoftSwitchAddress.RDRAMWRT));
+            Assert.AreEqual((byte)0x80, DoRead(mmu, SoftSwitchAddress.RDRAMWRT));
         }
 
         [TestMethod]
@@ -194,7 +203,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (mmu, _, state) = CreateMmu();
             state.State[SoftSwitch.ZpAux] = true;
-            Assert.AreEqual((byte)0x80, mmu.Read(SoftSwitchAddress.RDALTSTKZP));
+            Assert.AreEqual((byte)0x80, DoRead(mmu, SoftSwitchAddress.RDALTSTKZP));
         }
 
         [TestMethod]
@@ -202,7 +211,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (mmu, _, state) = CreateMmu();
             state.State[SoftSwitch.Store80] = true;
-            Assert.AreEqual((byte)0x80, mmu.Read(SoftSwitchAddress.RD80STORE));
+            Assert.AreEqual((byte)0x80, DoRead(mmu, SoftSwitchAddress.RD80STORE));
         }
 
         [TestMethod]
@@ -210,7 +219,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (mmu, _, state) = CreateMmu();
             state.State[SoftSwitch.IntCxRomEnabled] = true;
-            Assert.AreEqual((byte)0x80, mmu.Read(SoftSwitchAddress.RDCXROM));
+            Assert.AreEqual((byte)0x80, DoRead(mmu, SoftSwitchAddress.RDCXROM));
         }
 
         [TestMethod]
@@ -218,7 +227,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (mmu, _, state) = CreateMmu();
             state.State[SoftSwitch.SlotC3RomEnabled] = true;
-            Assert.AreEqual((byte)0x80, mmu.Read(SoftSwitchAddress.RDC3ROM));
+            Assert.AreEqual((byte)0x80, DoRead(mmu, SoftSwitchAddress.RDC3ROM));
         }
 
         // ------------------------------------------------------------------ //
@@ -230,7 +239,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (mmu, _, state) = CreateMmu();
             state.State[SoftSwitch.Store80] = true;
-            mmu.Write(SoftSwitchAddress.CLR80STORE, 0);
+            mmu.DoWrite(SoftSwitchAddress.CLR80STORE, 0);
             Assert.IsFalse(state.State[SoftSwitch.Store80]);
         }
 
@@ -238,7 +247,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public void WriteSet80StoreSetsStore80()
         {
             var (mmu, _, state) = CreateMmu();
-            mmu.Write(SoftSwitchAddress.SET80STORE, 0);
+            mmu.DoWrite(SoftSwitchAddress.SET80STORE, 0);
             Assert.IsTrue(state.State[SoftSwitch.Store80]);
         }
 
@@ -247,7 +256,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (mmu, _, state) = CreateMmu();
             state.State[SoftSwitch.AuxRead] = true;
-            mmu.Write(SoftSwitchAddress.RDMAINRAM, 0);
+            mmu.DoWrite(SoftSwitchAddress.RDMAINRAM, 0);
             Assert.IsFalse(state.State[SoftSwitch.AuxRead]);
         }
 
@@ -255,7 +264,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public void WriteRdCardRamSetsAuxRead()
         {
             var (mmu, _, state) = CreateMmu();
-            mmu.Write(SoftSwitchAddress.RDCARDRAM, 0);
+            mmu.DoWrite(SoftSwitchAddress.RDCARDRAM, 0);
             Assert.IsTrue(state.State[SoftSwitch.AuxRead]);
         }
 
@@ -264,7 +273,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (mmu, _, state) = CreateMmu();
             state.State[SoftSwitch.AuxWrite] = true;
-            mmu.Write(SoftSwitchAddress.WRMAINRAM, 0);
+            mmu.DoWrite(SoftSwitchAddress.WRMAINRAM, 0);
             Assert.IsFalse(state.State[SoftSwitch.AuxWrite]);
         }
 
@@ -272,7 +281,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public void WriteWrCardRamSetsAuxWrite()
         {
             var (mmu, _, state) = CreateMmu();
-            mmu.Write(SoftSwitchAddress.WRCARDRAM, 0);
+            mmu.DoWrite(SoftSwitchAddress.WRCARDRAM, 0);
             Assert.IsTrue(state.State[SoftSwitch.AuxWrite]);
         }
 
@@ -281,7 +290,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (mmu, _, state) = CreateMmu();
             state.State[SoftSwitch.ZpAux] = true;
-            mmu.Write(SoftSwitchAddress.CLRALSTKZP, 0);
+            mmu.DoWrite(SoftSwitchAddress.CLRALSTKZP, 0);
             Assert.IsFalse(state.State[SoftSwitch.ZpAux]);
         }
 
@@ -289,7 +298,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public void WriteSetAltStkZpSetsZpAux()
         {
             var (mmu, _, state) = CreateMmu();
-            mmu.Write(SoftSwitchAddress.SETALTSTKZP, 0);
+            mmu.DoWrite(SoftSwitchAddress.SETALTSTKZP, 0);
             Assert.IsTrue(state.State[SoftSwitch.ZpAux]);
         }
 
@@ -302,7 +311,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (mmu, _, state) = CreateMmu();
             state.State[SoftSwitch.IntCxRomEnabled] = true;
-            mmu.Write(SoftSwitchAddress.SETSLOTCXROM, 0);
+            mmu.DoWrite(SoftSwitchAddress.SETSLOTCXROM, 0);
             Assert.IsFalse(state.State[SoftSwitch.IntCxRomEnabled]);
         }
 
@@ -310,7 +319,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public void WriteSetIntCxRomSetsIntCxRomEnabled()
         {
             var (mmu, _, state) = CreateMmu();
-            mmu.Write(SoftSwitchAddress.SETINTCXROM, 0);
+            mmu.DoWrite(SoftSwitchAddress.SETINTCXROM, 0);
             Assert.IsTrue(state.State[SoftSwitch.IntCxRomEnabled]);
         }
 
@@ -319,7 +328,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (mmu, _, state) = CreateMmu();
             state.State[SoftSwitch.SlotC3RomEnabled] = true;
-            mmu.Write(SoftSwitchAddress.SETINTC3ROM, 0);
+            mmu.DoWrite(SoftSwitchAddress.SETINTC3ROM, 0);
             Assert.IsFalse(state.State[SoftSwitch.SlotC3RomEnabled]);
         }
 
@@ -327,7 +336,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public void WriteSetSlotC3RomSetsSlotC3RomEnabled()
         {
             var (mmu, _, state) = CreateMmu();
-            mmu.Write(SoftSwitchAddress.SETSLOTC3ROM, 0);
+            mmu.DoWrite(SoftSwitchAddress.SETSLOTC3ROM, 0);
             Assert.IsTrue(state.State[SoftSwitch.SlotC3RomEnabled]);
         }
 
@@ -339,7 +348,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public void ReadC080SelectsBank2AndEnablesReadOnly()
         {
             var (mmu, _, state) = CreateMmu();
-            mmu.Read(0xC080);
+            DoRead(mmu, 0xC080);
             Assert.IsTrue(state.State[SoftSwitch.LcBank2]);
             Assert.IsTrue(state.State[SoftSwitch.LcReadEnabled]);
             Assert.IsFalse(state.State[SoftSwitch.LcWriteEnabled]);
@@ -349,7 +358,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public void ReadC081FirstAccessDoesNotEnableWrite()
         {
             var (mmu, _, state) = CreateMmu();
-            mmu.Read(0xC081);
+            DoRead(mmu, 0xC081);
             Assert.IsFalse(state.State[SoftSwitch.LcWriteEnabled]);
         }
 
@@ -357,18 +366,17 @@ namespace InnoWerks.Computers.Apple.Tests
         public void ReadC081TwiceEnablesLcWrite()
         {
             var (mmu, _, state) = CreateMmu();
-            mmu.Read(0xC081);
-            mmu.Read(0xC081);
+            DoRead(mmu, 0xC081);
+            DoRead(mmu, 0xC081);
             Assert.IsTrue(state.State[SoftSwitch.LcWriteEnabled]);
         }
 
         [TestMethod]
         public void ReadC081TwiceDisablesLcRead()
         {
-            // $C081 A0A1=01, so LcReadEnabled = (low==0 || low==3) = false
             var (mmu, _, state) = CreateMmu();
-            mmu.Read(0xC081);
-            mmu.Read(0xC081);
+            DoRead(mmu, 0xC081);
+            DoRead(mmu, 0xC081);
             Assert.IsFalse(state.State[SoftSwitch.LcReadEnabled]);
         }
 
@@ -378,7 +386,7 @@ namespace InnoWerks.Computers.Apple.Tests
             var (mmu, _, state) = CreateMmu();
             state.State[SoftSwitch.LcReadEnabled] = true;
             state.State[SoftSwitch.LcWriteEnabled] = true;
-            mmu.Read(0xC082);
+            DoRead(mmu, 0xC082);
             Assert.IsFalse(state.State[SoftSwitch.LcReadEnabled]);
             Assert.IsFalse(state.State[SoftSwitch.LcWriteEnabled]);
         }
@@ -387,8 +395,8 @@ namespace InnoWerks.Computers.Apple.Tests
         public void ReadC083TwiceEnablesBothReadAndWrite()
         {
             var (mmu, _, state) = CreateMmu();
-            mmu.Read(0xC083);
-            mmu.Read(0xC083);
+            DoRead(mmu, 0xC083);
+            DoRead(mmu, 0xC083);
             Assert.IsTrue(state.State[SoftSwitch.LcReadEnabled]);
             Assert.IsTrue(state.State[SoftSwitch.LcWriteEnabled]);
         }
@@ -397,9 +405,9 @@ namespace InnoWerks.Computers.Apple.Tests
         public void WriteC08xClearsPrewriteSoSubsequentSingleReadDoesNotEnableWrite()
         {
             var (mmu, _, state) = CreateMmu();
-            mmu.Read(0xC081);   // sets preWrite
-            mmu.Write(0xC081, 0); // clears preWrite
-            mmu.Read(0xC081);   // only one read — should not enable write
+            DoRead(mmu, 0xC081);      // sets preWrite
+            mmu.DoWrite(0xC081, 0);    // clears preWrite
+            DoRead(mmu, 0xC081);      // only one read — should not enable write
             Assert.IsFalse(state.State[SoftSwitch.LcWriteEnabled]);
         }
 
@@ -407,7 +415,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public void ReadC088SelectsBank1()
         {
             var (mmu, _, state) = CreateMmu();
-            mmu.Read(0xC088); // A3=1 → bank 1
+            DoRead(mmu, 0xC088);
             Assert.IsFalse(state.State[SoftSwitch.LcBank2]);
         }
 
@@ -415,8 +423,8 @@ namespace InnoWerks.Computers.Apple.Tests
         public void ReadC08BTwiceEnablesWriteWithBank1()
         {
             var (mmu, _, state) = CreateMmu();
-            mmu.Read(0xC08B);
-            mmu.Read(0xC08B);
+            DoRead(mmu, 0xC08B);
+            DoRead(mmu, 0xC08B);
             Assert.IsFalse(state.State[SoftSwitch.LcBank2]);
             Assert.IsTrue(state.State[SoftSwitch.LcWriteEnabled]);
         }
@@ -424,10 +432,9 @@ namespace InnoWerks.Computers.Apple.Tests
         [TestMethod]
         public void ReadC08ATwiceDoesNotEnableWriteBecauseA0IsZero()
         {
-            // $C08A: A0=0 → preWrite cleared and LcWriteEnabled=false on every read
             var (mmu, _, state) = CreateMmu();
-            mmu.Read(0xC08A);
-            mmu.Read(0xC08A);
+            DoRead(mmu, 0xC08A);
+            DoRead(mmu, 0xC08A);
             Assert.IsFalse(state.State[SoftSwitch.LcWriteEnabled]);
         }
     }

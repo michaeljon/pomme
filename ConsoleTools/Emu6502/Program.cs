@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CommandLine;
@@ -75,15 +74,6 @@ namespace Emu6502
             disk.GetDrive(1).InsertDisk("disks/dos33.dsk");
 
             bus.AddDevice(disk);
-
-            foreach (var (address, name) in SoftSwitchAddress.Lookup.OrderBy(a => a.Key))
-            {
-                bool assigned = iou.HandlesRead(address) || iou.HandlesWrite(address) || mmu.HandlesRead(address) || mmu.HandlesWrite(address);
-                if (assigned == false)
-                {
-                    SimDebugger.Info("Address {0:X4} ({1}) is not assigned to any device", address, name);
-                }
-            }
 
             var keyListener = Task.Run(() =>
             {

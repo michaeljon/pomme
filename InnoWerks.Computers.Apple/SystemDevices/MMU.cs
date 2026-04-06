@@ -4,11 +4,10 @@
 
 using System;
 using System.Collections.Generic;
-using InnoWerks.Simulators;
 
 namespace InnoWerks.Computers.Apple
 {
-    public class MMU : ISoftSwitchDevice
+    public class MMU : IAddressInterceptDevice
     {
         private bool preWrite;
 
@@ -80,6 +79,8 @@ namespace InnoWerks.Computers.Apple
 
         public string Name => $"MMU";
 
+        public InterceptPriority InterceptPriority => InterceptPriority.SoftSwitch;
+
         public MMU(Memory128k memoryBlocks, MachineState machineState, IAppleBus bus)
         {
             ArgumentNullException.ThrowIfNull(machineState, nameof(machineState));
@@ -90,23 +91,20 @@ namespace InnoWerks.Computers.Apple
             this.memoryBlocks = memoryBlocks;
             this.bus = bus;
 
+            AddressRanges =
+            [
+                new (handlesRead, MemoryAccessType.Read),
+                new (handlesWrite, MemoryAccessType.Write),
+            ];
+
             bus.AddDevice(this);
         }
 
-        public bool HandlesRead(ushort address)
-            => handlesRead.Contains(address);
+        public IReadOnlyList<AddressRange> AddressRanges { get; init; }
 
-        public bool HandlesWrite(ushort address)
-            => handlesWrite.Contains(address);
-
-        public byte Read(ushort address)
+        public bool DoRead(ushort address, out byte value)
         {
-#if DEBUG_READ
-            if (address < 0xC090)
-            {
-                SimDebugger.Info($"Read MMU({address:X4}) [{SoftSwitchAddress.LookupAddress(address)}]\n");
-            }
-#endif
+            value = 0xFF;
 
             switch (address)
             {
@@ -114,19 +112,41 @@ namespace InnoWerks.Computers.Apple
                 // LANGUAGE CARD
                 //
 
-                case SoftSwitchAddress.RDLCBNK2: return (byte)(machineState.State[SoftSwitch.LcBank2] ? 0x80 : 0x00);
-                case SoftSwitchAddress.RDLCRAM: return (byte)(machineState.State[SoftSwitch.LcReadEnabled] ? 0x80 : 0x00);
+                case SoftSwitchAddress.RDLCBNK2:
+                    value = (byte)(machineState.State[SoftSwitch.LcBank2] ? 0x80 : 0x00);
+                    break;
+                case SoftSwitchAddress.RDLCRAM:
+                    value = (byte)(machineState.State[SoftSwitch.LcReadEnabled] ? 0x80 : 0x00);
+                    break;
 
-                case SoftSwitchAddress.RDRAMRD: return (byte)(machineState.State[SoftSwitch.AuxRead] ? 0x80 : 0x00);
-                case SoftSwitchAddress.RDRAMWRT: return (byte)(machineState.State[SoftSwitch.AuxWrite] ? 0x80 : 0x00);
-                case SoftSwitchAddress.RDALTSTKZP: return (byte)(machineState.State[SoftSwitch.ZpAux] ? 0x80 : 0x00);
-                case SoftSwitchAddress.RD80STORE: return (byte)(machineState.State[SoftSwitch.Store80] ? 0x80 : 0x00);
-                case SoftSwitchAddress.RDPAGE2: return (byte)(machineState.State[SoftSwitch.Page2] ? 0x80 : 0x00);
-                case SoftSwitchAddress.RDHIRES: return (byte)(machineState.State[SoftSwitch.HiRes] ? 0x80 : 0x00);
-                case SoftSwitchAddress.RDDHIRES: return (byte)(machineState.State[SoftSwitch.DoubleHiRes] ? 0x80 : 0x00);
+                case SoftSwitchAddress.RDRAMRD:
+                    value = (byte)(machineState.State[SoftSwitch.AuxRead] ? 0x80 : 0x00);
+                    break;
+                case SoftSwitchAddress.RDRAMWRT:
+                    value = (byte)(machineState.State[SoftSwitch.AuxWrite] ? 0x80 : 0x00);
+                    break;
+                case SoftSwitchAddress.RDALTSTKZP:
+                    value = (byte)(machineState.State[SoftSwitch.ZpAux] ? 0x80 : 0x00);
+                    break;
+                case SoftSwitchAddress.RD80STORE:
+                    value = (byte)(machineState.State[SoftSwitch.Store80] ? 0x80 : 0x00);
+                    break;
+                case SoftSwitchAddress.RDPAGE2:
+                    value = (byte)(machineState.State[SoftSwitch.Page2] ? 0x80 : 0x00);
+                    break;
+                case SoftSwitchAddress.RDHIRES:
+                    value = (byte)(machineState.State[SoftSwitch.HiRes] ? 0x80 : 0x00);
+                    break;
+                case SoftSwitchAddress.RDDHIRES:
+                    value = (byte)(machineState.State[SoftSwitch.DoubleHiRes] ? 0x80 : 0x00);
+                    break;
 
-                case SoftSwitchAddress.RDCXROM: return (byte)(machineState.State[SoftSwitch.IntCxRomEnabled] ? 0x80 : 0x00);
-                case SoftSwitchAddress.RDC3ROM: return (byte)(machineState.State[SoftSwitch.SlotC3RomEnabled] ? 0x80 : 0x00);
+                case SoftSwitchAddress.RDCXROM:
+                    value = (byte)(machineState.State[SoftSwitch.IntCxRomEnabled] ? 0x80 : 0x00);
+                    break;
+                case SoftSwitchAddress.RDC3ROM:
+                    value = (byte)(machineState.State[SoftSwitch.SlotC3RomEnabled] ? 0x80 : 0x00);
+                    break;
             }
 
             if (address >= 0xC080 && address <= 0xC08F)
@@ -134,18 +154,11 @@ namespace InnoWerks.Computers.Apple
                 HandleReadC08x(address);
             }
 
-            return 0x00;
+            return true;
         }
 
-        public void Write(ushort address, byte value)
+        public bool DoWrite(ushort address, byte value)
         {
-#if DEBUG_WRITE
-            if (address < 0xC090)
-            {
-                SimDebugger.Info($"Write MMU({address:X4}, {value:X2}) [{SoftSwitchAddress.LookupAddress(address)}]\n");
-            }
-#endif
-
             switch (address)
             {
                 //
@@ -153,57 +166,56 @@ namespace InnoWerks.Computers.Apple
                 //
                 case SoftSwitchAddress.CLR80STORE:
                     machineState.HandleWriteStateToggle(memoryBlocks, SoftSwitch.Store80, false);
-                    return;
+                    break;
                 case SoftSwitchAddress.SET80STORE:
                     machineState.HandleWriteStateToggle(memoryBlocks, SoftSwitch.Store80, true);
-                    return;
+                    break;
 
                 case SoftSwitchAddress.RDMAINRAM:
                     machineState.HandleWriteStateToggle(memoryBlocks, SoftSwitch.AuxRead, false);
-                    return;
+                    break;
                 case SoftSwitchAddress.RDCARDRAM:
                     machineState.HandleWriteStateToggle(memoryBlocks, SoftSwitch.AuxRead, true);
-                    return;
+                    break;
 
                 case SoftSwitchAddress.WRMAINRAM:
                     machineState.HandleWriteStateToggle(memoryBlocks, SoftSwitch.AuxWrite, false);
-                    return;
+                    break;
                 case SoftSwitchAddress.WRCARDRAM:
                     machineState.HandleWriteStateToggle(memoryBlocks, SoftSwitch.AuxWrite, true);
-                    return;
+                    break;
 
                 case SoftSwitchAddress.CLRALSTKZP:
                     machineState.HandleWriteStateToggle(memoryBlocks, SoftSwitch.ZpAux, false);
-                    return;
+                    break;
                 case SoftSwitchAddress.SETALTSTKZP:
                     machineState.HandleWriteStateToggle(memoryBlocks, SoftSwitch.ZpAux, true);
-                    return;
+                    break;
 
                 //
                 // I/O BANKING
                 //
                 case SoftSwitchAddress.SETSLOTCXROM:
                     machineState.HandleWriteStateToggle(memoryBlocks, SoftSwitch.IntCxRomEnabled, false);
-                    return;
+                    break;
                 case SoftSwitchAddress.SETINTCXROM:
                     machineState.HandleWriteStateToggle(memoryBlocks, SoftSwitch.IntCxRomEnabled, true);
-                    return;
+                    break;
 
                 case SoftSwitchAddress.SETINTC3ROM:
                     machineState.HandleWriteStateToggle(memoryBlocks, SoftSwitch.SlotC3RomEnabled, false);
-                    return;
+                    break;
                 case SoftSwitchAddress.SETSLOTC3ROM:
                     machineState.HandleWriteStateToggle(memoryBlocks, SoftSwitch.SlotC3RomEnabled, true);
-                    return;
+                    break;
             }
 
             if (0xC080 <= address && address <= 0xC08F)
             {
                 HandleWriteC08x(address, value);
-                return;
             }
 
-            throw new ArgumentOutOfRangeException(nameof(address), $"Write {address:X4} is not supported in this device");
+            return true;
         }
 
         public void Tick() { /* NO-OP */ }
@@ -254,17 +266,6 @@ namespace InnoWerks.Computers.Apple
                 machineState.State[SoftSwitch.LcWriteEnabled] = false;
             }
 
-#if DEBUG_C08X_HANDLER
-            var exitState = "";
-
-            exitState += machineState.State[SoftSwitch.LcBank2] ? "b=2," : "b=1,";
-            exitState += machineState.State[SoftSwitch.LcReadEnabled] ? "r=1," : "r=0,";
-            exitState += machineState.State[SoftSwitch.LcWriteEnabled] ? "w=1," : "w=0,";
-            exitState += $"p={(preWrite ? 1 : 0)}";
-
-            SimDebugger.Info($"Read MMU({address:X4}) entry: {entryState} exit: {exitState}\n");
-#endif
-
             if (lcBank2 != machineState.State[SoftSwitch.LcBank2] ||
                 lcReadEnabled != machineState.State[SoftSwitch.LcReadEnabled] ||
                 lcWriteEnabled != machineState.State[SoftSwitch.LcWriteEnabled])
@@ -275,15 +276,6 @@ namespace InnoWerks.Computers.Apple
 
         private void HandleWriteC08x(ushort address, byte value)
         {
-#if DEBUG_C08X_HANDLER
-            var entryState = "";
-
-            entryState += machineState.State[SoftSwitch.LcBank2] ? "b=2," : "b=1,";
-            entryState += machineState.State[SoftSwitch.LcReadEnabled] ? "r=1," : "r=0,";
-            entryState += machineState.State[SoftSwitch.LcWriteEnabled] ? "w=1," : "w=0,";
-            entryState += $"p={(preWrite ? 1 : 0)}";
-#endif
-
             var lcBank2 = machineState.State[SoftSwitch.LcBank2];
             var lcReadEnabled = machineState.State[SoftSwitch.LcReadEnabled];
 

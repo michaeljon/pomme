@@ -3,7 +3,6 @@ using InnoWerks.Simulators;
 
 namespace InnoWerks.Computers.Apple
 {
-
     // Core soft switches
     //   $C000..C07F On Board Resources
     //
@@ -21,8 +20,9 @@ namespace InnoWerks.Computers.Apple
     // Shared ROM addresses
     //   $C800..CFFF Common area for all Slots (2 KiB 'ROM')
 
-#pragma warning disable CA1716, CA1707, CA1822
+#pragma warning disable CA1707 // Identifiers should not contain underscores
 #pragma warning disable CA1819 // Properties should not return arrays
+#pragma warning disable CA1822 // Mark members as static
 
     public abstract class SlotRomDevice : ISlotDevice
     {
@@ -187,5 +187,4 @@ namespace InnoWerks.Computers.Apple
 
         protected ushort ExpansionBaseAddressHi => EXPANSION_ROM_BASE_ADDR + 0x7FF;
     }
-#pragma warning restore CA1716, CA1707, CA1822
 }

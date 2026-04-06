@@ -16,11 +16,13 @@ namespace InnoWerks.Computers.Apple
 
         public ISlotDevice[] SlotDevices { get; } = new SlotRomDevice[8];
 
-        private readonly List<ISoftSwitchDevice> softSwitchDevices = [];
-
         private readonly List<IAddressInterceptDevice> interceptDevices = [];
 
-        private readonly IntC8Handler intC8Handler;
+        // 64K dispatch tables — each entry is a list of devices interested in that address
+        private readonly List<IAddressInterceptDevice>[] readDispatch =
+            new List<IAddressInterceptDevice>[ushort.MaxValue + 1];
+        private readonly List<IAddressInterceptDevice>[] writeDispatch =
+            new List<IAddressInterceptDevice>[ushort.MaxValue + 1];
 
         private readonly MachineState machineState;
 
@@ -36,45 +38,38 @@ namespace InnoWerks.Computers.Apple
             this.memoryBlocks = memoryBlocks;
             this.machineState = machineState;
 
-            intC8Handler = new IntC8Handler(memoryBlocks, machineState, this);
+            AddDevice(new IntC8Handler(memoryBlocks, machineState, this));
         }
 
-        public void AddDevice(ISoftSwitchDevice device)
+        public void AddDevice(ISlotDevice slotDevice)
         {
-            ArgumentNullException.ThrowIfNull(device, nameof(device));
-            device.Reset();
-            softSwitchDevices.Add(device);
-        }
+            ArgumentNullException.ThrowIfNull(slotDevice, nameof(slotDevice));
 
-        public void AddDevice(ISlotDevice device)
-        {
-            ArgumentNullException.ThrowIfNull(device, nameof(device));
-
-            if (SlotDevices[device.Slot] != null)
+            if (SlotDevices[slotDevice.Slot] != null)
             {
-                throw new ArgumentException($"There is already a device {SlotDevices[device.Slot].Name} in slot {device.Slot}");
+                throw new ArgumentException($"There is already a device {SlotDevices[slotDevice.Slot].Name} in slot {slotDevice.Slot}");
             }
 
-            device.Reset();
+            slotDevice.Reset();
 
-            if (device is not SlotRomDevice slotDevice)
+            if (slotDevice is not SlotRomDevice slotRomDevice)
             {
                 throw new ArgumentNullException($"Device being added implements ISlotDevice but is not a SlotRomDevice");
             }
 
-            SlotDevices[device.Slot] = slotDevice;
+            SlotDevices[slotDevice.Slot] = slotDevice;
 
-            if (slotDevice.HasRom)
+            if (slotRomDevice.HasRom)
             {
-                memoryBlocks.LoadSlotCxRom(device.Slot, slotDevice.Rom);
+                memoryBlocks.LoadSlotCxRom(slotDevice.Slot, slotRomDevice.Rom);
             }
 
-            if (slotDevice.ExpansionRom != null)
+            if (slotRomDevice.ExpansionRom != null)
             {
-                memoryBlocks.LoadSlotC8Rom(device.Slot, slotDevice.ExpansionRom);
+                memoryBlocks.LoadSlotC8Rom(slotDevice.Slot, slotRomDevice.ExpansionRom);
             }
 
-            if (device.Slot == 1)
+            if (slotDevice.Slot == 1)
             {
                 reportKeyboardLatchAll = false;
             }
@@ -83,8 +78,26 @@ namespace InnoWerks.Computers.Apple
         public void AddDevice(IAddressInterceptDevice interceptDevice)
         {
             ArgumentNullException.ThrowIfNull(interceptDevice, nameof(interceptDevice));
+
             interceptDevice.Reset();
             interceptDevices.Add(interceptDevice);
+
+            // populate dispatch tables from the device's address ranges,
+            // maintaining priority order within each address entry
+            foreach (var range in interceptDevice.AddressRanges)
+            {
+                foreach (var addr in range.GetAddresses(MemoryAccessType.Read))
+                {
+                    readDispatch[addr] ??= [];
+                    InsertByPriority(readDispatch[addr], interceptDevice);
+                }
+
+                foreach (var addr in range.GetAddresses(MemoryAccessType.Write))
+                {
+                    writeDispatch[addr] ??= [];
+                    InsertByPriority(writeDispatch[addr], interceptDevice);
+                }
+            }
         }
 
         public void BeginTransaction()
@@ -108,39 +121,21 @@ namespace InnoWerks.Computers.Apple
         {
             Tick();
 
-            // check address intercept devices first
-            foreach (var interceptDevice in interceptDevices)
+            // O(1) lookup into the dispatch table for registered intercept devices
+            var readers = readDispatch[address];
+            if (readers != null)
             {
-                foreach (var range in interceptDevice.AddressRanges)
+                foreach (var device in readers)
                 {
-                    if (range.Contains(address, MemoryAccessType.Read) && interceptDevice.DoRead(address, out var interceptValue))
+                    if (device.DoRead(address, out var interceptValue))
                     {
                         return interceptValue;
                     }
                 }
             }
 
-            foreach (var range in intC8Handler.AddressRanges)
-            {
-                if (range.Contains(address, MemoryAccessType.Read) && intC8Handler.DoRead(address, out var interceptValue))
-                {
-                    return interceptValue;
-                }
-            }
-
             if (address >= 0xC000 && address <= 0xC08F)
             {
-                foreach (var softSwitchDevice in softSwitchDevices)
-                {
-                    if (softSwitchDevice.HandlesRead(address))
-                    {
-                        var value = softSwitchDevice.Read(address);
-                        value |= CheckKeyboardLatch(address);
-
-                        return value;
-                    }
-                }
-
                 return 0x00;
             }
             else if (address >= 0xC090 && address <= 0xC0FF)
@@ -200,37 +195,22 @@ namespace InnoWerks.Computers.Apple
         {
             Tick();
 
-            // check address intercept devices first
-            foreach (var interceptDevice in interceptDevices)
+            // O(1) lookup into the dispatch table for registered intercept devices
+            var writers = writeDispatch[address];
+            if (writers != null)
             {
-                foreach (var range in interceptDevice.AddressRanges)
+                foreach (var device in writers)
                 {
-                    if (range.Contains(address, MemoryAccessType.Write) && interceptDevice.DoWrite(address, value))
+                    if (device.DoWrite(address, value))
                     {
                         return;
                     }
                 }
             }
 
-            foreach (var range in intC8Handler.AddressRanges)
-            {
-                if (range.Contains(address, MemoryAccessType.Write) && intC8Handler.DoWrite(address, value))
-                {
-                    return;
-                }
-            }
-
             if (address >= 0xC000 && address <= 0xC08F)
             {
                 CheckClearKeystrobe(address);
-
-                foreach (var softSwitchDevice in softSwitchDevices)
-                {
-                    if (softSwitchDevice.HandlesWrite(address))
-                    {
-                        softSwitchDevice.Write(address, value);
-                    }
-                }
 
                 return;
             }
@@ -317,20 +297,14 @@ namespace InnoWerks.Computers.Apple
                 machineState.State[softSwitch] = false;
             }
 
-            foreach (var device in softSwitchDevices)
+            foreach (var interceptDevice in interceptDevices)
             {
-                device.Reset();
+                interceptDevice.Reset();
             }
-            intC8Handler.Reset();
 
             for (var slot = 0; slot < SlotDevices.Length; slot++)
             {
                 SlotDevices[slot]?.Reset();
-            }
-
-            foreach (var interceptDevice in interceptDevices)
-            {
-                interceptDevice.Reset();
             }
 
             memoryBlocks.Remap();
@@ -354,6 +328,22 @@ namespace InnoWerks.Computers.Apple
             }
 
             transactionCycles++;
+        }
+
+        private static void InsertByPriority(List<IAddressInterceptDevice> list, IAddressInterceptDevice device)
+        {
+            var priority = device.InterceptPriority;
+
+            for (var i = 0; i < list.Count; i++)
+            {
+                if (priority < list[i].InterceptPriority)
+                {
+                    list.Insert(i, device);
+                    return;
+                }
+            }
+
+            list.Add(device);
         }
 
         private byte CheckKeyboardLatch(ushort address)

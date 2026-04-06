@@ -42,8 +42,6 @@ namespace InnoWerks.Computers.Apple
 
         protected override byte DoIo(MemoryAccessType ioType, ushort address, byte value)
         {
-            // SimDebugger.Info($"DoIo{ioType} DiskII(${address:X1}, {value:X2})\n");
-
             switch ((byte)(address & 0x0F))
             {
                 case 0x0:

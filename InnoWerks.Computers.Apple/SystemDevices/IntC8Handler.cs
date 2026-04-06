@@ -37,10 +37,6 @@ namespace InnoWerks.Computers.Apple
 
         public bool DoRead(ushort address, out byte value)
         {
-#if DEBUG_READ
-            SimDebugger.Info($"Read IntC8Handler({address:X4})\n");
-#endif
-
             value = 0;
 
             // observe the access for soft switch side effects,
@@ -52,10 +48,6 @@ namespace InnoWerks.Computers.Apple
 
         public bool DoWrite(ushort address, byte value)
         {
-#if DEBUG_WRITE
-            SimDebugger.Info($"Write IOU({address:X4}, {value:X2}) [{SoftSwitchAddress.LookupAddress(address)}]\n");
-#endif
-
             // observe the access for soft switch side effects,
             // but don't intercept — let the normal routing handle the write
             HandleAccess(address);

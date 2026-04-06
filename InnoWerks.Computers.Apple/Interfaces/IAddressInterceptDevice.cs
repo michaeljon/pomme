@@ -2,15 +2,6 @@ using System.Collections.Generic;
 
 namespace InnoWerks.Computers.Apple
 {
-    public enum InterceptPriority
-    {
-        AddressIntercept = 0,
-
-        SoftSwitch = 1,
-
-        SlotDevice = 2,
-    }
-
     /// <summary>
     /// <para>
     /// A device that monitors a range of bus addresses and can optionally

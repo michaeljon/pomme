@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace InnoWerks.Computers.Apple.Tests
@@ -24,6 +25,15 @@ namespace InnoWerks.Computers.Apple.Tests
             {
                 bus.Read(0x0000);
             }
+        }
+
+        private static bool AddressInRange(IOU iou, ushort address, MemoryAccessType accessType) =>
+            iou.AddressRanges.Any(r => r.Contains(address, accessType));
+
+        private static byte DoRead(IOU iou, ushort address)
+        {
+            iou.DoRead(address, out var value);
+            return value;
         }
 
         // ------------------------------------------------------------------ //
@@ -78,63 +88,63 @@ namespace InnoWerks.Computers.Apple.Tests
         }
 
         // ------------------------------------------------------------------ //
-        // HandlesRead / HandlesWrite
+        // AddressRanges
         // ------------------------------------------------------------------ //
 
         [TestMethod]
-        public void HandlesReadReturnsTrueForKbd()
+        public void AddressRangesContainsKbdForRead()
         {
             var (iou, _, _, _) = CreateIou();
-            Assert.IsTrue(iou.HandlesRead(SoftSwitchAddress.KBD));
+            Assert.IsTrue(AddressInRange(iou, SoftSwitchAddress.KBD, MemoryAccessType.Read));
         }
 
         [TestMethod]
-        public void HandlesReadReturnsTrueForKbdStrb()
+        public void AddressRangesContainsKbdStrbForRead()
         {
             var (iou, _, _, _) = CreateIou();
-            Assert.IsTrue(iou.HandlesRead(SoftSwitchAddress.KBDSTRB));
+            Assert.IsTrue(AddressInRange(iou, SoftSwitchAddress.KBDSTRB, MemoryAccessType.Read));
         }
 
         [TestMethod]
-        public void HandlesReadReturnsTrueForTxtClr()
+        public void AddressRangesContainsTxtClrForRead()
         {
             var (iou, _, _, _) = CreateIou();
-            Assert.IsTrue(iou.HandlesRead(SoftSwitchAddress.TXTCLR));
+            Assert.IsTrue(AddressInRange(iou, SoftSwitchAddress.TXTCLR, MemoryAccessType.Read));
         }
 
         [TestMethod]
-        public void HandlesReadReturnsTrueForHires()
+        public void AddressRangesContainsHiresForRead()
         {
             var (iou, _, _, _) = CreateIou();
-            Assert.IsTrue(iou.HandlesRead(SoftSwitchAddress.HIRES));
+            Assert.IsTrue(AddressInRange(iou, SoftSwitchAddress.HIRES, MemoryAccessType.Read));
         }
 
         [TestMethod]
-        public void HandlesReadReturnsTrueForRdVblBar()
+        public void AddressRangesContainsRdVblBarForRead()
         {
             var (iou, _, _, _) = CreateIou();
-            Assert.IsTrue(iou.HandlesRead(SoftSwitchAddress.RDVBLBAR));
+            Assert.IsTrue(AddressInRange(iou, SoftSwitchAddress.RDVBLBAR, MemoryAccessType.Read));
         }
 
         [TestMethod]
-        public void HandlesWriteReturnsTrueForTxtClr()
+        public void AddressRangesContainsTxtClrForWrite()
         {
             var (iou, _, _, _) = CreateIou();
-            Assert.IsTrue(iou.HandlesWrite(SoftSwitchAddress.TXTCLR));
+            Assert.IsTrue(AddressInRange(iou, SoftSwitchAddress.TXTCLR, MemoryAccessType.Write));
         }
 
         [TestMethod]
-        public void HandlesWriteReturnsTrueForKbdStrb()
+        public void AddressRangesContainsKbdStrbForWrite()
         {
             var (iou, _, _, _) = CreateIou();
-            Assert.IsTrue(iou.HandlesWrite(SoftSwitchAddress.KBDSTRB));
+            Assert.IsTrue(AddressInRange(iou, SoftSwitchAddress.KBDSTRB, MemoryAccessType.Write));
         }
 
         [TestMethod]
-        public void HandlesReadReturnsFalseForAddressBelowC000()
+        public void AddressRangesDoesNotContainAddressBelowC000()
         {
             var (iou, _, _, _) = CreateIou();
-            Assert.IsFalse(iou.HandlesRead(0x1000));
+            Assert.IsFalse(AddressInRange(iou, 0x1000, MemoryAccessType.Read));
         }
 
         // ------------------------------------------------------------------ //
@@ -146,7 +156,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, state, _) = CreateIou();
             state.State[SoftSwitch.TextMode] = true;
-            iou.Read(SoftSwitchAddress.TXTCLR);
+            DoRead(iou, SoftSwitchAddress.TXTCLR);
             Assert.IsFalse(state.State[SoftSwitch.TextMode]);
         }
 
@@ -155,7 +165,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, state, _) = CreateIou();
             state.State[SoftSwitch.TextMode] = false;
-            iou.Read(SoftSwitchAddress.TXTSET);
+            DoRead(iou, SoftSwitchAddress.TXTSET);
             Assert.IsTrue(state.State[SoftSwitch.TextMode]);
         }
 
@@ -164,7 +174,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, state, _) = CreateIou();
             state.State[SoftSwitch.MixedMode] = true;
-            iou.Read(SoftSwitchAddress.MIXCLR);
+            DoRead(iou, SoftSwitchAddress.MIXCLR);
             Assert.IsFalse(state.State[SoftSwitch.MixedMode]);
         }
 
@@ -172,7 +182,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public void ReadMixSetSetsMixedModeTrue()
         {
             var (iou, _, state, _) = CreateIou();
-            iou.Read(SoftSwitchAddress.MIXSET);
+            DoRead(iou, SoftSwitchAddress.MIXSET);
             Assert.IsTrue(state.State[SoftSwitch.MixedMode]);
         }
 
@@ -181,7 +191,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, state, _) = CreateIou();
             state.State[SoftSwitch.Page2] = true;
-            iou.Read(SoftSwitchAddress.TXTPAGE1);
+            DoRead(iou, SoftSwitchAddress.TXTPAGE1);
             Assert.IsFalse(state.State[SoftSwitch.Page2]);
         }
 
@@ -189,7 +199,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public void ReadTxtPage2SetsPage2True()
         {
             var (iou, _, state, _) = CreateIou();
-            iou.Read(SoftSwitchAddress.TXTPAGE2);
+            DoRead(iou, SoftSwitchAddress.TXTPAGE2);
             Assert.IsTrue(state.State[SoftSwitch.Page2]);
         }
 
@@ -198,7 +208,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, state, _) = CreateIou();
             state.State[SoftSwitch.HiRes] = true;
-            iou.Read(SoftSwitchAddress.LORES);
+            DoRead(iou, SoftSwitchAddress.LORES);
             Assert.IsFalse(state.State[SoftSwitch.HiRes]);
         }
 
@@ -206,7 +216,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public void ReadHiresSetsHiResTrue()
         {
             var (iou, _, state, _) = CreateIou();
-            iou.Read(SoftSwitchAddress.HIRES);
+            DoRead(iou, SoftSwitchAddress.HIRES);
             Assert.IsTrue(state.State[SoftSwitch.HiRes]);
         }
 
@@ -219,7 +229,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, state, _) = CreateIou();
             state.State[SoftSwitch.TextMode] = true;
-            Assert.AreEqual((byte)0x80, iou.Read(SoftSwitchAddress.RDTEXT));
+            Assert.AreEqual((byte)0x80, DoRead(iou, SoftSwitchAddress.RDTEXT));
         }
 
         [TestMethod]
@@ -227,7 +237,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, state, _) = CreateIou();
             state.State[SoftSwitch.TextMode] = false;
-            Assert.AreEqual((byte)0x00, iou.Read(SoftSwitchAddress.RDTEXT));
+            Assert.AreEqual((byte)0x00, DoRead(iou, SoftSwitchAddress.RDTEXT));
         }
 
         [TestMethod]
@@ -235,7 +245,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, state, _) = CreateIou();
             state.State[SoftSwitch.MixedMode] = true;
-            Assert.AreEqual((byte)0x80, iou.Read(SoftSwitchAddress.RDMIXED));
+            Assert.AreEqual((byte)0x80, DoRead(iou, SoftSwitchAddress.RDMIXED));
         }
 
         [TestMethod]
@@ -243,7 +253,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, state, _) = CreateIou();
             state.State[SoftSwitch.Page2] = true;
-            Assert.AreEqual((byte)0x80, iou.Read(SoftSwitchAddress.RDPAGE2));
+            Assert.AreEqual((byte)0x80, DoRead(iou, SoftSwitchAddress.RDPAGE2));
         }
 
         [TestMethod]
@@ -251,7 +261,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, state, _) = CreateIou();
             state.State[SoftSwitch.HiRes] = true;
-            Assert.AreEqual((byte)0x80, iou.Read(SoftSwitchAddress.RDHIRES));
+            Assert.AreEqual((byte)0x80, DoRead(iou, SoftSwitchAddress.RDHIRES));
         }
 
         // ------------------------------------------------------------------ //
@@ -263,7 +273,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, state, _) = CreateIou();
             state.State[SoftSwitch.TextMode] = true;
-            iou.Write(SoftSwitchAddress.TXTCLR, 0);
+            iou.DoWrite(SoftSwitchAddress.TXTCLR, 0);
             Assert.IsFalse(state.State[SoftSwitch.TextMode]);
         }
 
@@ -271,7 +281,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public void WriteTxtSetSetsTextModeTrue()
         {
             var (iou, _, state, _) = CreateIou();
-            iou.Write(SoftSwitchAddress.TXTSET, 0);
+            iou.DoWrite(SoftSwitchAddress.TXTSET, 0);
             Assert.IsTrue(state.State[SoftSwitch.TextMode]);
         }
 
@@ -279,7 +289,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public void WriteHiresSetsHiResTrue()
         {
             var (iou, _, state, _) = CreateIou();
-            iou.Write(SoftSwitchAddress.HIRES, 0);
+            iou.DoWrite(SoftSwitchAddress.HIRES, 0);
             Assert.IsTrue(state.State[SoftSwitch.HiRes]);
         }
 
@@ -288,7 +298,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, state, _) = CreateIou();
             state.State[SoftSwitch.EightyColumnMode] = true;
-            iou.Write(SoftSwitchAddress.CLR80COL, 0);
+            iou.DoWrite(SoftSwitchAddress.CLR80COL, 0);
             Assert.IsFalse(state.State[SoftSwitch.EightyColumnMode]);
         }
 
@@ -296,7 +306,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public void WriteSet80ColSetsEightyColumnModeTrue()
         {
             var (iou, _, state, _) = CreateIou();
-            iou.Write(SoftSwitchAddress.SET80COL, 0);
+            iou.DoWrite(SoftSwitchAddress.SET80COL, 0);
             Assert.IsTrue(state.State[SoftSwitch.EightyColumnMode]);
         }
 
@@ -310,8 +320,7 @@ namespace InnoWerks.Computers.Apple.Tests
             var (iou, _, state, _) = CreateIou();
             state.KeyLatch = 0x41; // 'A'
             state.KeyStrobe = true;
-            var result = iou.Read(SoftSwitchAddress.KBD);
-            Assert.AreEqual((byte)0xC1, result); // 0x80 | 0x41
+            Assert.AreEqual((byte)0xC1, DoRead(iou, SoftSwitchAddress.KBD)); // 0x80 | 0x41
         }
 
         [TestMethod]
@@ -320,8 +329,7 @@ namespace InnoWerks.Computers.Apple.Tests
             var (iou, _, state, _) = CreateIou();
             state.KeyLatch = 0x41;
             state.KeyStrobe = false;
-            var result = iou.Read(SoftSwitchAddress.KBD);
-            Assert.AreEqual((byte)0x41, result);
+            Assert.AreEqual((byte)0x41, DoRead(iou, SoftSwitchAddress.KBD));
         }
 
         [TestMethod]
@@ -329,7 +337,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, state, _) = CreateIou();
             state.KeyStrobe = true;
-            iou.Read(SoftSwitchAddress.KBDSTRB);
+            DoRead(iou, SoftSwitchAddress.KBDSTRB);
             Assert.IsFalse(state.KeyStrobe);
         }
 
@@ -338,7 +346,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, state, _) = CreateIou();
             state.KeyStrobe = true;
-            iou.Write(SoftSwitchAddress.KBDSTRB, 0);
+            iou.DoWrite(SoftSwitchAddress.KBDSTRB, 0);
             Assert.IsFalse(state.KeyStrobe);
         }
 
@@ -354,12 +362,9 @@ namespace InnoWerks.Computers.Apple.Tests
         [TestMethod]
         public void InjectKeySecondCallOverwritesLatchWhenQueueIsEmpty()
         {
-            // EnqueueKey only routes to the queue if the queue is already non-empty.
-            // Two back-to-back InjectKey calls both hit the else branch, so the
-            // second key overwrites the first in KeyLatch.
             var (iou, _, state, _) = CreateIou();
-            iou.InjectKey(0x41); // 'A' → KeyLatch=0x41
-            iou.InjectKey(0x42); // 'B' → overwrites KeyLatch=0x42 (queue still empty)
+            iou.InjectKey(0x41);
+            iou.InjectKey(0x42);
             Assert.AreEqual((byte)0x42, state.KeyLatch);
         }
 
@@ -389,7 +394,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, state, _) = CreateIou();
             iou.OpenApple(true);
-            Assert.AreEqual((byte)0x80, iou.Read(SoftSwitchAddress.OPENAPPLE));
+            Assert.AreEqual((byte)0x80, DoRead(iou, SoftSwitchAddress.OPENAPPLE));
         }
 
         [TestMethod]
@@ -397,7 +402,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, state, _) = CreateIou();
             iou.OpenApple(false);
-            Assert.AreEqual((byte)0x00, iou.Read(SoftSwitchAddress.OPENAPPLE));
+            Assert.AreEqual((byte)0x00, DoRead(iou, SoftSwitchAddress.OPENAPPLE));
         }
 
         [TestMethod]
@@ -413,7 +418,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, state, _) = CreateIou();
             iou.SolidApple(true);
-            Assert.AreEqual((byte)0x80, iou.Read(SoftSwitchAddress.SOLIDAPPLE));
+            Assert.AreEqual((byte)0x80, DoRead(iou, SoftSwitchAddress.SOLIDAPPLE));
         }
 
         // ------------------------------------------------------------------ //
@@ -425,7 +430,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, state, _) = CreateIou();
             state.State[SoftSwitch.Annunciator0] = true;
-            iou.Read(SoftSwitchAddress.CLRAN0);
+            DoRead(iou, SoftSwitchAddress.CLRAN0);
             Assert.IsFalse(state.State[SoftSwitch.Annunciator0]);
         }
 
@@ -433,7 +438,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public void ReadSetAn0SetsAnnunciator0()
         {
             var (iou, _, state, _) = CreateIou();
-            iou.Read(SoftSwitchAddress.SETAN0);
+            DoRead(iou, SoftSwitchAddress.SETAN0);
             Assert.IsTrue(state.State[SoftSwitch.Annunciator0]);
         }
 
@@ -442,7 +447,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, state, _) = CreateIou();
             state.State[SoftSwitch.Annunciator1] = true;
-            iou.Read(SoftSwitchAddress.CLRAN1);
+            DoRead(iou, SoftSwitchAddress.CLRAN1);
             Assert.IsFalse(state.State[SoftSwitch.Annunciator1]);
         }
 
@@ -450,7 +455,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public void ReadSetAn1SetsAnnunciator1()
         {
             var (iou, _, state, _) = CreateIou();
-            iou.Read(SoftSwitchAddress.SETAN1);
+            DoRead(iou, SoftSwitchAddress.SETAN1);
             Assert.IsTrue(state.State[SoftSwitch.Annunciator1]);
         }
 
@@ -459,7 +464,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, state, _) = CreateIou();
             state.State[SoftSwitch.Annunciator0] = true;
-            iou.Write(SoftSwitchAddress.CLRAN0, 0);
+            iou.DoWrite(SoftSwitchAddress.CLRAN0, 0);
             Assert.IsFalse(state.State[SoftSwitch.Annunciator0]);
         }
 
@@ -467,7 +472,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public void WriteSetAn0SetsAnnunciator0()
         {
             var (iou, _, state, _) = CreateIou();
-            iou.Write(SoftSwitchAddress.SETAN0, 0);
+            iou.DoWrite(SoftSwitchAddress.SETAN0, 0);
             Assert.IsTrue(state.State[SoftSwitch.Annunciator0]);
         }
 
@@ -480,7 +485,7 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, state, _) = CreateIou();
             var initial = state.State[SoftSwitch.Speaker];
-            iou.Read(SoftSwitchAddress.SPKR);
+            DoRead(iou, SoftSwitchAddress.SPKR);
             Assert.AreNotEqual(initial, state.State[SoftSwitch.Speaker]);
         }
 
@@ -489,8 +494,8 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, state, _) = CreateIou();
             var initial = state.State[SoftSwitch.Speaker];
-            iou.Read(SoftSwitchAddress.SPKR);
-            iou.Read(SoftSwitchAddress.SPKR);
+            DoRead(iou, SoftSwitchAddress.SPKR);
+            DoRead(iou, SoftSwitchAddress.SPKR);
             Assert.AreEqual(initial, state.State[SoftSwitch.Speaker]);
         }
 
@@ -502,8 +507,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public void ReadPaddle0BeforeTimerTriggerReturnsZero()
         {
             var (iou, _, _, _) = CreateIou();
-            // paddleTimerStartCycle is -1 until PTRIG is fired
-            Assert.AreEqual((byte)0x00, iou.Read(SoftSwitchAddress.PADDLE0));
+            Assert.AreEqual((byte)0x00, DoRead(iou, SoftSwitchAddress.PADDLE0));
         }
 
         [TestMethod]
@@ -511,9 +515,8 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, _, bus) = CreateIou();
             iou.UpdateJoystick(128, 0, 0, 0, false, false);
-            iou.Read(0xC070); // PTRIG — sets paddleTimerStartCycle = bus.CycleCount (currently 0)
-            // Cycle count has not advanced past threshold (128 * 11 = 1408)
-            Assert.AreEqual((byte)0x80, iou.Read(SoftSwitchAddress.PADDLE0));
+            DoRead(iou, 0xC070); // PTRIG
+            Assert.AreEqual((byte)0x80, DoRead(iou, SoftSwitchAddress.PADDLE0));
         }
 
         [TestMethod]
@@ -521,9 +524,9 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, _, bus) = CreateIou();
             iou.UpdateJoystick(1, 0, 0, 0, false, false);
-            iou.Read(0xC070); // trigger at cycle 0; threshold = 1 * 11 = 11
+            DoRead(iou, 0xC070); // trigger at cycle 0; threshold = 1 * 11 = 11
             AdvanceCycles(bus, 12); // advance past threshold
-            Assert.AreEqual((byte)0x00, iou.Read(SoftSwitchAddress.PADDLE0));
+            Assert.AreEqual((byte)0x00, DoRead(iou, SoftSwitchAddress.PADDLE0));
         }
 
         [TestMethod]
@@ -531,10 +534,8 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (iou, _, _, bus) = CreateIou();
             iou.UpdateJoystick(64, 128, 192, 255, true, false);
-            iou.Read(0xC070); // trigger
-
-            // Paddle 0 at value 64, threshold = 64 * 11 = 704; elapsed=0 → 0x80
-            Assert.AreEqual((byte)0x80, iou.Read(SoftSwitchAddress.PADDLE0));
+            DoRead(iou, 0xC070); // trigger
+            Assert.AreEqual((byte)0x80, DoRead(iou, SoftSwitchAddress.PADDLE0));
         }
 
         [TestMethod]
@@ -553,27 +554,24 @@ namespace InnoWerks.Computers.Apple.Tests
         [TestMethod]
         public void ReadRdVblBarReturns0x80WhenNotInVerticalBlank()
         {
-            // At cycle 0: frameCycle = 0, which is below VblStart (12480) → not in VBL → 0x80
             var (iou, _, _, _) = CreateIou();
-            Assert.AreEqual((byte)0x80, iou.Read(SoftSwitchAddress.RDVBLBAR));
+            Assert.AreEqual((byte)0x80, DoRead(iou, SoftSwitchAddress.RDVBLBAR));
         }
 
         [TestMethod]
         public void ReadRdVblBarReturns0x00WhenInVerticalBlank()
         {
             var (iou, _, _, bus) = CreateIou();
-            // Advance to the start of vertical blank (cycle 12480)
             AdvanceCycles(bus, VideoTiming.VblStart);
-            Assert.AreEqual((byte)0x00, iou.Read(SoftSwitchAddress.RDVBLBAR));
+            Assert.AreEqual((byte)0x00, DoRead(iou, SoftSwitchAddress.RDVBLBAR));
         }
 
         [TestMethod]
         public void ReadRdVblBarReturns0x80AfterVblEnds()
         {
             var (iou, _, _, bus) = CreateIou();
-            // Advance past one full frame into active scan of next frame
             AdvanceCycles(bus, VideoTiming.FrameCycles + 1);
-            Assert.AreEqual((byte)0x80, iou.Read(SoftSwitchAddress.RDVBLBAR));
+            Assert.AreEqual((byte)0x80, DoRead(iou, SoftSwitchAddress.RDVBLBAR));
         }
     }
 }

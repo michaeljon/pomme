@@ -24,9 +24,7 @@ namespace InnoWerks.Computers.Apple.Tests
         // IBus — device registration (no-ops for unit tests)
         // ------------------------------------------------------------------ //
 
-        public void AddDevice(ISoftSwitchDevice device) { }
-
-        public void AddDevice(ISlotDevice device) { }
+        public void AddDevice(ISlotDevice slotDevice) { }
 
         public void AddDevice(IAddressInterceptDevice interceptDevice) { }
 

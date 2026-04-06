@@ -67,5 +67,32 @@ namespace InnoWerks.Computers.Apple
                 ? discreteAddresses.Contains(address)
                 : address >= start && address <= end;
         }
+
+        /// <summary>
+        /// Enumerates all addresses covered by this range for the given access type.
+        /// Used by the bus to build dispatch tables at registration time.
+        /// </summary>
+        public IEnumerable<ushort> GetAddresses(MemoryAccessType accessType)
+        {
+            if ((memoryAccessType & accessType) == 0)
+            {
+                yield break;
+            }
+
+            if (isDiscrete)
+            {
+                foreach (var addr in discreteAddresses)
+                {
+                    yield return addr;
+                }
+            }
+            else
+            {
+                for (int addr = start; addr <= end; addr++)
+                {
+                    yield return (ushort)addr;
+                }
+            }
+        }
     }
 }
