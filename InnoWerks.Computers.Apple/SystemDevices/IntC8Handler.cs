@@ -39,31 +39,7 @@ namespace InnoWerks.Computers.Apple
             SimDebugger.Info($"Read IntC8Handler({address:X4})\n");
 #endif
 
-            if (address >= 0xC300 && address <= 0xC3FF)
-            {
-                if (machineState.State[SoftSwitch.SlotC3RomEnabled] == false)
-                {
-                    var pre = machineState.State[SoftSwitch.IntC8RomEnabled];
-                    machineState.State[SoftSwitch.IntC8RomEnabled] = true;
-
-                    // only remap if we've changed the value
-                    if (pre == false)
-                    {
-                        memoryBlocks.Remap();
-                    }
-                }
-            }
-            else if (address == 0xCFFF)
-            {
-                var pre = machineState.State[SoftSwitch.IntC8RomEnabled];
-                machineState.State[SoftSwitch.IntC8RomEnabled] = false;
-
-                // only remap if we've changed the value
-                if (pre == true)
-                {
-                    memoryBlocks.Remap();
-                }
-            }
+            HandleAccess(address, MemoryAccessType.Read);
 
             return memoryBlocks.Read(address);
         }
@@ -74,31 +50,7 @@ namespace InnoWerks.Computers.Apple
             SimDebugger.Info($"Write IOU({address:X4}, {value:X2}) [{SoftSwitchAddress.LookupAddress(address)}]\n");
 #endif
 
-            if (address >= 0xC300 && address <= 0xC3FF)
-            {
-                if (machineState.State[SoftSwitch.SlotC3RomEnabled] == false)
-                {
-                    var pre = machineState.State[SoftSwitch.IntC8RomEnabled];
-                    machineState.State[SoftSwitch.IntC8RomEnabled] = true;
-
-                    // only remap if we've changed the value
-                    if (pre == false)
-                    {
-                        memoryBlocks.Remap();
-                    }
-                }
-            }
-            else if (address == 0xCFFF)
-            {
-                var pre = machineState.State[SoftSwitch.IntC8RomEnabled];
-                machineState.State[SoftSwitch.IntC8RomEnabled] = false;
-
-                // only remap if we've changed the value
-                if (pre == true)
-                {
-                    memoryBlocks.Remap();
-                }
-            }
+            HandleAccess(address, MemoryAccessType.Write);
 
             memoryBlocks.Write(address, value);
         }
@@ -112,6 +64,35 @@ namespace InnoWerks.Computers.Apple
 
             machineState.CurrentSlot = 0;
             machineState.ExpansionRomType = ExpansionRomType.ExpRomInternal;
+        }
+
+        private void HandleAccess(ushort address, MemoryAccessType memoryAccessType)
+        {
+            if (address >= 0xC300 && address <= 0xC3FF)
+            {
+                if (machineState.State[SoftSwitch.SlotC3RomEnabled] == false)
+                {
+                    var pre = machineState.State[SoftSwitch.IntC8RomEnabled];
+                    machineState.State[SoftSwitch.IntC8RomEnabled] = true;
+
+                    // only remap if we've changed the value
+                    if (pre == false)
+                    {
+                        memoryBlocks.Remap();
+                    }
+                }
+            }
+            else if (address == 0xCFFF)
+            {
+                var pre = machineState.State[SoftSwitch.IntC8RomEnabled];
+                machineState.State[SoftSwitch.IntC8RomEnabled] = false;
+
+                // only remap if we've changed the value
+                if (pre == true)
+                {
+                    memoryBlocks.Remap();
+                }
+            }
         }
     }
 }
