@@ -1,34 +1,71 @@
 using System;
+using System.Collections.Generic;
 
 namespace InnoWerks.Computers.Apple
 {
     /// <summary>
-    /// Defines a contiguous range of addresses that a device is interested in.
+    /// Defines a set of addresses that a device is interested in.
+    /// <para>
+    /// Supports two modes:
+    /// </para>
+    /// <ul>
+    /// <li>Contiguous range: start/end bounds checked with simple comparison</li>
+    /// <li>Discrete set: a <see cref="HashSet{T}"/> of specific addresses</li>
+    /// </ul>
+    /// <para>
+    /// Both modes also filter by <see cref="MemoryAccessType"/> (read, write, or both).
+    /// </para>
     /// </summary>
-    public readonly struct AddressRange : IEquatable<AddressRange>
+    public class AddressRange
     {
-        public ushort Start { get; init; }
-        public ushort End { get; init; }
-        public MemoryAccessType MemoryAccessType { get; init; }
+        private readonly ushort start;
+        private readonly ushort end;
+        private readonly HashSet<ushort> discreteAddresses;
+        private readonly MemoryAccessType memoryAccessType;
+        private readonly bool isDiscrete;
 
+        /// <summary>
+        /// Creates an address range for a contiguous block of addresses.
+        /// </summary>
         public AddressRange(ushort start, ushort end, MemoryAccessType memoryAccessType)
         {
-            Start = start;
-            End = end;
-            MemoryAccessType = memoryAccessType;
+            this.start = start;
+            this.end = end;
+            this.memoryAccessType = memoryAccessType;
         }
 
-        public bool Contains(ushort address, MemoryAccessType memoryAccessType) =>
-            (MemoryAccessType & memoryAccessType) != 0 && address >= Start && address <= End;
+        /// <summary>
+        /// Creates an address range from a discrete set of addresses.
+        /// </summary>
+        public AddressRange(HashSet<ushort> addresses, MemoryAccessType memoryAccessType)
+        {
+            ArgumentNullException.ThrowIfNull(addresses);
 
-        public override bool Equals(object obj) => obj is AddressRange other && Equals(other);
+            discreteAddresses = addresses;
+            this.memoryAccessType = memoryAccessType;
+            isDiscrete = true;
+        }
 
-        public bool Equals(AddressRange other) => Start == other.Start && End == other.End;
+        /// <summary>
+        /// Creates an address range from a single address.
+        /// </summary>
+        public AddressRange(ushort address, MemoryAccessType memoryAccessType)
+        {
+            discreteAddresses = [address];
+            this.memoryAccessType = memoryAccessType;
+            isDiscrete = true;
+        }
 
-        public override int GetHashCode() => HashCode.Combine(Start, End);
+        public bool Contains(ushort address, MemoryAccessType accessType)
+        {
+            if ((memoryAccessType & accessType) == 0)
+            {
+                return false;
+            }
 
-        public static bool operator ==(AddressRange left, AddressRange right) => left.Equals(right);
-
-        public static bool operator !=(AddressRange left, AddressRange right) => !left.Equals(right);
+            return isDiscrete
+                ? discreteAddresses.Contains(address)
+                : address >= start && address <= end;
+        }
     }
 }

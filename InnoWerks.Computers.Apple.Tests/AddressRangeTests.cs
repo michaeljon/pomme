@@ -109,36 +109,6 @@ namespace InnoWerks.Computers.Apple.Tests
         }
 
         // ------------------------------------------------------------------ //
-        // Equality
-        // ------------------------------------------------------------------ //
-
-        [TestMethod]
-        public void EqualRangesAreEqual()
-        {
-            var a = new AddressRange(0xC100, 0xCFFF, MemoryAccessType.Any);
-            var b = new AddressRange(0xC100, 0xCFFF, MemoryAccessType.Any);
-            Assert.AreEqual(a, b);
-            Assert.IsTrue(a == b);
-        }
-
-        [TestMethod]
-        public void DifferentStartsAreNotEqual()
-        {
-            var a = new AddressRange(0xC100, 0xCFFF, MemoryAccessType.Any);
-            var b = new AddressRange(0xC200, 0xCFFF, MemoryAccessType.Any);
-            Assert.AreNotEqual(a, b);
-            Assert.IsTrue(a != b);
-        }
-
-        [TestMethod]
-        public void DifferentEndsAreNotEqual()
-        {
-            var a = new AddressRange(0xC100, 0xCFFF, MemoryAccessType.Any);
-            var b = new AddressRange(0xC100, 0xCFFE, MemoryAccessType.Any);
-            Assert.AreNotEqual(a, b);
-        }
-
-        // ------------------------------------------------------------------ //
         // Single-address range
         // ------------------------------------------------------------------ //
 
@@ -149,6 +119,107 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsTrue(range.Contains(0xC030, MemoryAccessType.Read));
             Assert.IsFalse(range.Contains(0xC02F, MemoryAccessType.Read));
             Assert.IsFalse(range.Contains(0xC031, MemoryAccessType.Read));
+        }
+
+        // ------------------------------------------------------------------ //
+        // Discrete address set — Contains
+        // ------------------------------------------------------------------ //
+
+        [TestMethod]
+        public void DiscreteContainsReturnsTrueForAddressInSet()
+        {
+            var addresses = new System.Collections.Generic.HashSet<ushort> { 0xC090, 0xC094, 0xC098 };
+            var range = new AddressRange(addresses, MemoryAccessType.Read);
+            Assert.IsTrue(range.Contains(0xC090, MemoryAccessType.Read));
+            Assert.IsTrue(range.Contains(0xC094, MemoryAccessType.Read));
+            Assert.IsTrue(range.Contains(0xC098, MemoryAccessType.Read));
+        }
+
+        [TestMethod]
+        public void DiscreteContainsReturnsFalseForAddressNotInSet()
+        {
+            var addresses = new System.Collections.Generic.HashSet<ushort> { 0xC090, 0xC094, 0xC098 };
+            var range = new AddressRange(addresses, MemoryAccessType.Read);
+            Assert.IsFalse(range.Contains(0xC091, MemoryAccessType.Read));
+            Assert.IsFalse(range.Contains(0xC093, MemoryAccessType.Read));
+            Assert.IsFalse(range.Contains(0xC000, MemoryAccessType.Read));
+        }
+
+        [TestMethod]
+        public void DiscreteContainsReturnsFalseForWrongAccessType()
+        {
+            var addresses = new System.Collections.Generic.HashSet<ushort> { 0xC090 };
+            var range = new AddressRange(addresses, MemoryAccessType.Read);
+            Assert.IsFalse(range.Contains(0xC090, MemoryAccessType.Write));
+        }
+
+        [TestMethod]
+        public void DiscreteContainsReturnsTrueForWriteWhenConfiguredForWrite()
+        {
+            var addresses = new System.Collections.Generic.HashSet<ushort> { 0xC090 };
+            var range = new AddressRange(addresses, MemoryAccessType.Write);
+            Assert.IsTrue(range.Contains(0xC090, MemoryAccessType.Write));
+        }
+
+        [TestMethod]
+        public void DiscreteContainsReturnsTrueForAnyAccessType()
+        {
+            var addresses = new System.Collections.Generic.HashSet<ushort> { 0xC090 };
+            var range = new AddressRange(addresses, MemoryAccessType.Any);
+            Assert.IsTrue(range.Contains(0xC090, MemoryAccessType.Read));
+            Assert.IsTrue(range.Contains(0xC090, MemoryAccessType.Write));
+        }
+
+        [TestMethod]
+        public void DiscreteDoesNotMatchContiguousAddressesBetweenSetMembers()
+        {
+            var addresses = new System.Collections.Generic.HashSet<ushort> { 0xC090, 0xC098 };
+            var range = new AddressRange(addresses, MemoryAccessType.Read);
+            Assert.IsFalse(range.Contains(0xC094, MemoryAccessType.Read));
+        }
+
+        [TestMethod]
+        public void DiscreteSingleAddressWorks()
+        {
+            var addresses = new System.Collections.Generic.HashSet<ushort> { 0xC030 };
+            var range = new AddressRange(addresses, MemoryAccessType.Any);
+            Assert.IsTrue(range.Contains(0xC030, MemoryAccessType.Read));
+            Assert.IsFalse(range.Contains(0xC031, MemoryAccessType.Read));
+        }
+
+        // ------------------------------------------------------------------ //
+        // Single-address constructor
+        // ------------------------------------------------------------------ //
+
+        [TestMethod]
+        public void SingleAddressConstructorContainsExactAddress()
+        {
+            var range = new AddressRange(0xC030, MemoryAccessType.Read);
+            Assert.IsTrue(range.Contains(0xC030, MemoryAccessType.Read));
+        }
+
+        [TestMethod]
+        public void SingleAddressConstructorDoesNotContainAdjacentAddresses()
+        {
+            var range = new AddressRange(0xC030, MemoryAccessType.Read);
+            Assert.IsFalse(range.Contains(0xC02F, MemoryAccessType.Read));
+            Assert.IsFalse(range.Contains(0xC031, MemoryAccessType.Read));
+        }
+
+        [TestMethod]
+        public void SingleAddressConstructorRespectsAccessType()
+        {
+            var range = new AddressRange(0xC030, MemoryAccessType.Write);
+            Assert.IsTrue(range.Contains(0xC030, MemoryAccessType.Write));
+            Assert.IsFalse(range.Contains(0xC030, MemoryAccessType.Read));
+        }
+
+        [TestMethod]
+        public void SingleAddressConstructorWithAnyMatchesBothAccessTypes()
+        {
+            var range = new AddressRange(0xC030, MemoryAccessType.Any);
+            Assert.IsTrue(range.Contains(0xC030, MemoryAccessType.Read));
+            Assert.IsTrue(range.Contains(0xC030, MemoryAccessType.Write));
         }
     }
 }

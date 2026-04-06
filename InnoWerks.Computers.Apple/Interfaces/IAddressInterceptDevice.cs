@@ -3,18 +3,24 @@ using System.Collections.Generic;
 namespace InnoWerks.Computers.Apple
 {
     /// <summary>
+    /// <para>
     /// A device that monitors a range of bus addresses and can optionally
     /// intercept reads or writes. Unlike slot devices (which own specific
     /// I/O addresses) or soft switch devices (which own $C000-$C08F),
     /// address intercept devices observe bus traffic and conditionally
     /// handle accesses based on their internal state.
+    /// </para>
     ///
+    /// <para>
     /// Examples: No-Slot-Clock (watches $C300-$C3FF for an unlock sequence,
     /// then provides clock data on reads).
+    /// </para>
     ///
+    /// <para>
     /// The AppleBus queries registered intercept devices before falling
     /// through to normal memory routing. The device returns whether it
     /// handled the access; if not, normal routing continues.
+    /// </para>
     /// </summary>
     public interface IAddressInterceptDevice
     {
