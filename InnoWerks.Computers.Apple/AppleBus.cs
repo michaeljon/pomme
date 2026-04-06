@@ -198,8 +198,6 @@ namespace InnoWerks.Computers.Apple
                 interceptDevice.Reset();
             }
 
-            // slotHandler.Reset();
-
             if (slotHandler.SlotDevices[1] != null)
             {
                 keylatchHandler.ReportKeyboardLatchAll = false;
