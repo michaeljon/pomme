@@ -2,11 +2,11 @@
 // #define DEBUG_WRITE
 
 using System;
-using InnoWerks.Simulators;
+using System.Collections.Generic;
 
 namespace InnoWerks.Computers.Apple
 {
-    public class IntC8Handler : ISoftSwitchDevice
+    public class IntC8Handler : IAddressInterceptDevice
     {
         private readonly IAppleBus bus;
 
@@ -15,6 +15,8 @@ namespace InnoWerks.Computers.Apple
         private readonly MachineState machineState;
 
         public string Name => $"IntC8Handler";
+
+        public InterceptPriority InterceptPriority => InterceptPriority.SoftSwitch;
 
         public IntC8Handler(Memory128k memoryBlocks, MachineState machineState, IAppleBus bus)
         {
@@ -25,35 +27,43 @@ namespace InnoWerks.Computers.Apple
             this.machineState = machineState;
             this.memoryBlocks = memoryBlocks;
             this.bus = bus;
+
+            AddressRanges =
+            [
+                new (0xC300, 0xC3FF, MemoryAccessType.Any),
+                new (0xCFFF, MemoryAccessType.Any),
+            ];
         }
 
-        public bool HandlesRead(ushort address) =>
-            (address >= 0xC300 && address <= 0xC3FF) || address == 0xCFFF;
-
-        public bool HandlesWrite(ushort address) =>
-            (address >= 0xC300 && address <= 0xC3FF) || address == 0xCFFF;
-
-        public byte Read(ushort address)
+        public bool DoRead(ushort address, out byte value)
         {
 #if DEBUG_READ
             SimDebugger.Info($"Read IntC8Handler({address:X4})\n");
 #endif
 
-            HandleAccess(address, MemoryAccessType.Read);
+            value = 0;
 
-            return memoryBlocks.Read(address);
+            // observe the access for soft switch side effects,
+            // but don't intercept — let the normal routing handle the read
+            HandleAccess(address);
+
+            return false;
         }
 
-        public void Write(ushort address, byte value)
+        public bool DoWrite(ushort address, byte value)
         {
 #if DEBUG_WRITE
             SimDebugger.Info($"Write IOU({address:X4}, {value:X2}) [{SoftSwitchAddress.LookupAddress(address)}]\n");
 #endif
 
-            HandleAccess(address, MemoryAccessType.Write);
+            // observe the access for soft switch side effects,
+            // but don't intercept — let the normal routing handle the write
+            HandleAccess(address);
 
-            memoryBlocks.Write(address, value);
+            return false;
         }
+
+        public IReadOnlyList<AddressRange> AddressRanges { get; init; }
 
         public void Tick() { /* NO-OP */ }
 
@@ -66,7 +76,7 @@ namespace InnoWerks.Computers.Apple
             machineState.ExpansionRomType = ExpansionRomType.ExpRomInternal;
         }
 
-        private void HandleAccess(ushort address, MemoryAccessType memoryAccessType)
+        private void HandleAccess(ushort address)
         {
             if (address >= 0xC300 && address <= 0xC3FF)
             {

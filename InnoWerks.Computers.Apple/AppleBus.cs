@@ -113,10 +113,18 @@ namespace InnoWerks.Computers.Apple
             {
                 foreach (var range in interceptDevice.AddressRanges)
                 {
-                    if (range.Contains(address, MemoryAccessType.Read) && interceptDevice.TryRead(address, out var interceptValue))
+                    if (range.Contains(address, MemoryAccessType.Read) && interceptDevice.DoRead(address, out var interceptValue))
                     {
                         return interceptValue;
                     }
+                }
+            }
+
+            foreach (var range in intC8Handler.AddressRanges)
+            {
+                if (range.Contains(address, MemoryAccessType.Read) && intC8Handler.DoRead(address, out var interceptValue))
+                {
+                    return interceptValue;
                 }
             }
 
@@ -146,13 +154,6 @@ namespace InnoWerks.Computers.Apple
                 }
 
                 return 0xFF;
-            }
-            else if (address >= 0xC300 && address <= 0xC3FF || address == 0xCFFF)
-            {
-                if (intC8Handler.HandlesRead(address))
-                {
-                    return intC8Handler.Read(address);
-                }
             }
             else if ((address >= 0xC100 && address <= 0xC2FF) || (address >= 0xC400 && address <= 0xC7FF))
             {
@@ -204,10 +205,18 @@ namespace InnoWerks.Computers.Apple
             {
                 foreach (var range in interceptDevice.AddressRanges)
                 {
-                    if (range.Contains(address, MemoryAccessType.Write) && interceptDevice.TryWrite(address, value))
+                    if (range.Contains(address, MemoryAccessType.Write) && interceptDevice.DoWrite(address, value))
                     {
                         return;
                     }
+                }
+            }
+
+            foreach (var range in intC8Handler.AddressRanges)
+            {
+                if (range.Contains(address, MemoryAccessType.Write) && intC8Handler.DoWrite(address, value))
+                {
+                    return;
                 }
             }
 
@@ -237,14 +246,6 @@ namespace InnoWerks.Computers.Apple
                 }
 
                 return;
-            }
-            else if (address >= 0xC300 && address <= 0xC3FF || address == 0xCFFF)
-            {
-                if (intC8Handler.HandlesWrite(address))
-                {
-                    intC8Handler.Write(address, value);
-                    return;
-                }
             }
             else if ((address >= 0xC100 && address <= 0xC2FF) || (address >= 0xC400 && address <= 0xC7FF))
             {

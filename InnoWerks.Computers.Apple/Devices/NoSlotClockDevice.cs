@@ -51,6 +51,8 @@ namespace InnoWerks.Computers.Apple
 
         public string Name => "No-Slot-Clock";
 
+        public InterceptPriority InterceptPriority => InterceptPriority.AddressIntercept;
+
         public IReadOnlyList<AddressRange> AddressRanges { get; } =
         [
             new AddressRange(0xC100, 0xCFFF, MemoryAccessType.Any)
@@ -67,7 +69,7 @@ namespace InnoWerks.Computers.Apple
             bus.AddDevice(this);
         }
 
-        public bool TryRead(ushort address, out byte value)
+        public bool DoRead(ushort address, out byte value)
         {
             value = 0;
 
@@ -120,7 +122,7 @@ namespace InnoWerks.Computers.Apple
             return false;
         }
 
-        public bool TryWrite(ushort address, byte value)
+        public bool DoWrite(ushort address, byte value)
         {
             if (!ShouldIntercept(address))
             {

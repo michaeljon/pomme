@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace InnoWerks.Computers.Apple.Tests
@@ -26,6 +27,17 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var (handler, _, _) = CreateHandler();
             Assert.AreEqual("IntC8Handler", handler.Name);
+        }
+
+        // ------------------------------------------------------------------ //
+        // InterceptPriority
+        // ------------------------------------------------------------------ //
+
+        [TestMethod]
+        public void PriorityIsSoftSwitch()
+        {
+            var (handler, _, _) = CreateHandler();
+            Assert.AreEqual(InterceptPriority.SoftSwitch, handler.InterceptPriority);
         }
 
         // ------------------------------------------------------------------ //
@@ -69,202 +81,220 @@ namespace InnoWerks.Computers.Apple.Tests
         }
 
         // ------------------------------------------------------------------ //
-        // HandlesRead
+        // AddressRanges — covers $C300-$C3FF and $CFFF
         // ------------------------------------------------------------------ //
 
         [TestMethod]
-        public void HandlesReadReturnsTrueForC300()
+        public void AddressRangesContainsC300ForRead()
         {
             var (handler, _, _) = CreateHandler();
-            Assert.IsTrue(handler.HandlesRead(0xC300));
+            Assert.IsTrue(handler.AddressRanges.Any(r => r.Contains(0xC300, MemoryAccessType.Read)));
         }
 
         [TestMethod]
-        public void HandlesReadReturnsTrueForC3FF()
+        public void AddressRangesContainsC3FFForRead()
         {
             var (handler, _, _) = CreateHandler();
-            Assert.IsTrue(handler.HandlesRead(0xC3FF));
+            Assert.IsTrue(handler.AddressRanges.Any(r => r.Contains(0xC3FF, MemoryAccessType.Read)));
         }
 
         [TestMethod]
-        public void HandlesReadReturnsTrueForCFFF()
+        public void AddressRangesContainsCFFFForRead()
         {
             var (handler, _, _) = CreateHandler();
-            Assert.IsTrue(handler.HandlesRead(0xCFFF));
+            Assert.IsTrue(handler.AddressRanges.Any(r => r.Contains(0xCFFF, MemoryAccessType.Read)));
         }
 
         [TestMethod]
-        public void HandlesReadReturnsFalseForC2FF()
+        public void AddressRangesContainsC300ForWrite()
         {
             var (handler, _, _) = CreateHandler();
-            Assert.IsFalse(handler.HandlesRead(0xC2FF));
+            Assert.IsTrue(handler.AddressRanges.Any(r => r.Contains(0xC300, MemoryAccessType.Write)));
         }
 
         [TestMethod]
-        public void HandlesReadReturnsFalseForC400()
+        public void AddressRangesContainsCFFFForWrite()
         {
             var (handler, _, _) = CreateHandler();
-            Assert.IsFalse(handler.HandlesRead(0xC400));
+            Assert.IsTrue(handler.AddressRanges.Any(r => r.Contains(0xCFFF, MemoryAccessType.Write)));
         }
 
         [TestMethod]
-        public void HandlesReadReturnsFalseForCFFE()
+        public void AddressRangesDoesNotContainC2FF()
         {
             var (handler, _, _) = CreateHandler();
-            Assert.IsFalse(handler.HandlesRead(0xCFFE));
-        }
-
-        // ------------------------------------------------------------------ //
-        // HandlesWrite
-        // ------------------------------------------------------------------ //
-
-        [TestMethod]
-        public void HandlesWriteReturnsTrueForC300()
-        {
-            var (handler, _, _) = CreateHandler();
-            Assert.IsTrue(handler.HandlesWrite(0xC300));
+            Assert.IsFalse(handler.AddressRanges.Any(r => r.Contains(0xC2FF, MemoryAccessType.Read)));
         }
 
         [TestMethod]
-        public void HandlesWriteReturnsTrueForC3FF()
+        public void AddressRangesDoesNotContainC400()
         {
             var (handler, _, _) = CreateHandler();
-            Assert.IsTrue(handler.HandlesWrite(0xC3FF));
+            Assert.IsFalse(handler.AddressRanges.Any(r => r.Contains(0xC400, MemoryAccessType.Read)));
         }
 
         [TestMethod]
-        public void HandlesWriteReturnsTrueForCFFF()
+        public void AddressRangesDoesNotContainCFFE()
         {
             var (handler, _, _) = CreateHandler();
-            Assert.IsTrue(handler.HandlesWrite(0xCFFF));
-        }
-
-        [TestMethod]
-        public void HandlesWriteReturnsFalseForC200()
-        {
-            var (handler, _, _) = CreateHandler();
-            Assert.IsFalse(handler.HandlesWrite(0xC200));
+            Assert.IsFalse(handler.AddressRanges.Any(r => r.Contains(0xCFFE, MemoryAccessType.Read)));
         }
 
         // ------------------------------------------------------------------ //
-        // Read $C300–$C3FF — enables IntC8RomEnabled when SlotC3Rom is off
+        // DoRead $C300–$C3FF — enables IntC8RomEnabled when SlotC3Rom is off
         // ------------------------------------------------------------------ //
 
         [TestMethod]
-        public void ReadC300WithSlotC3RomDisabledEnablesIntC8Rom()
+        public void DoReadC300WithSlotC3RomDisabledEnablesIntC8Rom()
         {
             var (handler, _, state) = CreateHandler();
             state.State[SoftSwitch.SlotC3RomEnabled] = false;
             state.State[SoftSwitch.IntC8RomEnabled] = false;
 
-            handler.Read(0xC300);
+            handler.DoRead(0xC300, out _);
 
             Assert.IsTrue(state.State[SoftSwitch.IntC8RomEnabled]);
         }
 
         [TestMethod]
-        public void ReadC3FFWithSlotC3RomDisabledEnablesIntC8Rom()
+        public void DoReadC3FFWithSlotC3RomDisabledEnablesIntC8Rom()
         {
             var (handler, _, state) = CreateHandler();
             state.State[SoftSwitch.SlotC3RomEnabled] = false;
             state.State[SoftSwitch.IntC8RomEnabled] = false;
 
-            handler.Read(0xC3FF);
+            handler.DoRead(0xC3FF, out _);
 
             Assert.IsTrue(state.State[SoftSwitch.IntC8RomEnabled]);
         }
 
         [TestMethod]
-        public void ReadC300WithSlotC3RomEnabledDoesNotEnableIntC8Rom()
+        public void DoReadC300WithSlotC3RomEnabledDoesNotEnableIntC8Rom()
         {
             var (handler, _, state) = CreateHandler();
             state.State[SoftSwitch.SlotC3RomEnabled] = true;
             state.State[SoftSwitch.IntC8RomEnabled] = false;
 
-            handler.Read(0xC300);
+            handler.DoRead(0xC300, out _);
 
             Assert.IsFalse(state.State[SoftSwitch.IntC8RomEnabled]);
         }
 
         [TestMethod]
-        public void ReadC300WhenIntC8RomAlreadyEnabledDoesNotChangState()
+        public void DoReadC300WhenIntC8RomAlreadyEnabledDoesNotChangeState()
         {
             var (handler, _, state) = CreateHandler();
             state.State[SoftSwitch.SlotC3RomEnabled] = false;
-            state.State[SoftSwitch.IntC8RomEnabled] = true; // already enabled
+            state.State[SoftSwitch.IntC8RomEnabled] = true;
 
-            handler.Read(0xC300);
+            handler.DoRead(0xC300, out _);
 
             Assert.IsTrue(state.State[SoftSwitch.IntC8RomEnabled]);
         }
 
         // ------------------------------------------------------------------ //
-        // Read $CFFF — disables IntC8RomEnabled
+        // DoRead $CFFF — disables IntC8RomEnabled
         // ------------------------------------------------------------------ //
 
         [TestMethod]
-        public void ReadCfffDisablesIntC8Rom()
+        public void DoReadCfffDisablesIntC8Rom()
         {
             var (handler, _, state) = CreateHandler();
             state.State[SoftSwitch.IntC8RomEnabled] = true;
 
-            handler.Read(0xCFFF);
+            handler.DoRead(0xCFFF, out _);
 
             Assert.IsFalse(state.State[SoftSwitch.IntC8RomEnabled]);
         }
 
         [TestMethod]
-        public void ReadCfffWhenAlreadyDisabledLeavesIntC8RomDisabled()
+        public void DoReadCfffWhenAlreadyDisabledLeavesIntC8RomDisabled()
         {
             var (handler, _, state) = CreateHandler();
             state.State[SoftSwitch.IntC8RomEnabled] = false;
 
-            handler.Read(0xCFFF);
+            handler.DoRead(0xCFFF, out _);
 
             Assert.IsFalse(state.State[SoftSwitch.IntC8RomEnabled]);
         }
 
         // ------------------------------------------------------------------ //
-        // Write $C300–$C3FF — same enable logic as read
+        // DoWrite $C300–$C3FF — same enable logic as DoRead
         // ------------------------------------------------------------------ //
 
         [TestMethod]
-        public void WriteC300WithSlotC3RomDisabledEnablesIntC8Rom()
+        public void DoWriteC300WithSlotC3RomDisabledEnablesIntC8Rom()
         {
             var (handler, _, state) = CreateHandler();
             state.State[SoftSwitch.SlotC3RomEnabled] = false;
             state.State[SoftSwitch.IntC8RomEnabled] = false;
 
-            handler.Write(0xC300, 0);
+            handler.DoWrite(0xC300, 0);
 
             Assert.IsTrue(state.State[SoftSwitch.IntC8RomEnabled]);
         }
 
         [TestMethod]
-        public void WriteC300WithSlotC3RomEnabledDoesNotEnableIntC8Rom()
+        public void DoWriteC300WithSlotC3RomEnabledDoesNotEnableIntC8Rom()
         {
             var (handler, _, state) = CreateHandler();
             state.State[SoftSwitch.SlotC3RomEnabled] = true;
             state.State[SoftSwitch.IntC8RomEnabled] = false;
 
-            handler.Write(0xC300, 0);
+            handler.DoWrite(0xC300, 0);
 
             Assert.IsFalse(state.State[SoftSwitch.IntC8RomEnabled]);
         }
 
         // ------------------------------------------------------------------ //
-        // Write $CFFF — disables IntC8RomEnabled
+        // DoWrite $CFFF — disables IntC8RomEnabled
         // ------------------------------------------------------------------ //
 
         [TestMethod]
-        public void WriteCfffDisablesIntC8Rom()
+        public void DoWriteCfffDisablesIntC8Rom()
         {
             var (handler, _, state) = CreateHandler();
             state.State[SoftSwitch.IntC8RomEnabled] = true;
 
-            handler.Write(0xCFFF, 0);
+            handler.DoWrite(0xCFFF, 0);
 
             Assert.IsFalse(state.State[SoftSwitch.IntC8RomEnabled]);
+        }
+
+        // ------------------------------------------------------------------ //
+        // DoRead/DoWrite return value — handler observes but does not intercept
+        // ------------------------------------------------------------------ //
+
+        [TestMethod]
+        public void DoReadC300ReturnsFalse()
+        {
+            var (handler, _, state) = CreateHandler();
+            state.State[SoftSwitch.SlotC3RomEnabled] = false;
+
+            var handled = handler.DoRead(0xC300, out _);
+
+            Assert.IsFalse(handled, "IntC8Handler should not intercept reads — it only observes");
+        }
+
+        [TestMethod]
+        public void DoReadCfffReturnsFalse()
+        {
+            var (handler, _, _) = CreateHandler();
+
+            var handled = handler.DoRead(0xCFFF, out _);
+
+            Assert.IsFalse(handled, "IntC8Handler should not intercept reads — it only observes");
+        }
+
+        [TestMethod]
+        public void DoWriteC300ReturnsFalse()
+        {
+            var (handler, _, state) = CreateHandler();
+            state.State[SoftSwitch.SlotC3RomEnabled] = false;
+
+            var handled = handler.DoWrite(0xC300, 0);
+
+            Assert.IsFalse(handled, "IntC8Handler should not intercept writes — it only observes");
         }
 
         // ------------------------------------------------------------------ //
@@ -272,13 +302,11 @@ namespace InnoWerks.Computers.Apple.Tests
         // ------------------------------------------------------------------ //
 
         [TestMethod]
-        public void ReadC300WithSlotC3RomDisabledRemapsC8Range()
+        public void DoReadC300WithSlotC3RomDisabledRemapsC8Range()
         {
-            // After enabling IntC8RomEnabled the active read map at $C8–$CF
-            // should no longer be null. Load a 16k ROM so intCxRom has data.
             var state = MachineStateBuilder.Default().Build();
             var rom = new byte[16 * 1024];
-            rom[0x800] = 0xAB;   // intCxRom[8] = page $C8, offset 0
+            rom[0x800] = 0xAB;
             var memory = Memory128kFactory.CreateWithState(state);
             memory.LoadProgramToRom(rom);
 
@@ -286,16 +314,15 @@ namespace InnoWerks.Computers.Apple.Tests
             var handler = new IntC8Handler(memory, state, bus);
 
             state.State[SoftSwitch.SlotC3RomEnabled] = false;
-            handler.Read(0xC300); // enables IntC8RomEnabled and triggers Remap
+            handler.DoRead(0xC300, out _);
 
-            // $C800 should now resolve to intCxRom[8]
             var page = memory.ResolveRead(0xC800);
             Assert.IsNotNull(page);
             Assert.AreEqual(MemoryPageType.Rom, page.MemoryPageType);
         }
 
         [TestMethod]
-        public void ReadCfffDisablesC8RangeRemap()
+        public void DoReadCfffDisablesC8RangeRemap()
         {
             var state = MachineStateBuilder.Default().Build();
             var memory = Memory128kFactory.CreateWithState(state);
@@ -303,12 +330,10 @@ namespace InnoWerks.Computers.Apple.Tests
             var bus = new AppleBusTestDouble();
             var handler = new IntC8Handler(memory, state, bus);
 
-            // First enable, then disable
             state.State[SoftSwitch.IntC8RomEnabled] = true;
             memory.Remap();
-            handler.Read(0xCFFF); // disables IntC8RomEnabled, triggers Remap
+            handler.DoRead(0xCFFF, out _);
 
-            // With CurrentSlot=0 and IntC8RomEnabled=false, $C8–$CF is null
             var page = memory.ResolveRead(0xC800);
             Assert.IsNull(page);
         }

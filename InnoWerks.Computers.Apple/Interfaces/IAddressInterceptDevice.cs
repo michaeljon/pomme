@@ -2,6 +2,15 @@ using System.Collections.Generic;
 
 namespace InnoWerks.Computers.Apple
 {
+    public enum InterceptPriority
+    {
+        AddressIntercept = 0,
+
+        SoftSwitch = 1,
+
+        SlotDevice = 2,
+    }
+
     /// <summary>
     /// <para>
     /// A device that monitors a range of bus addresses and can optionally
@@ -26,25 +35,25 @@ namespace InnoWerks.Computers.Apple
     {
         string Name { get; }
 
+        InterceptPriority InterceptPriority { get; }
+
         /// <summary>
         /// Called on every bus read to an address in the device's registered range.
-        /// The device examines the access and decides whether to intercept it.
         /// Returns true if the device handled the read (value is set to the
         /// result); false if the bus should continue with normal routing.
         /// </summary>
-        bool TryRead(ushort address, out byte value);
+        bool DoRead(ushort address, out byte value);
 
         /// <summary>
         /// Called on every bus write to an address in the device's registered range.
-        /// The device examines the access and decides whether to intercept it.
         /// Returns true if the device consumed the write; false if the bus
         /// should continue with normal routing.
         /// </summary>
-        bool TryWrite(ushort address, byte value);
+        bool DoWrite(ushort address, byte value);
 
         /// <summary>
         /// The address ranges this device is interested in. The bus will only
-        /// call TryRead/TryWrite for addresses within these ranges.
+        /// call DoRead/DoWrite for addresses within these ranges.
         /// </summary>
         IReadOnlyList<AddressRange> AddressRanges { get; }
 
