@@ -1,0 +1,25 @@
+{
+  "appleModel": "appleIIeEnhanced",
+  "showInternals": true,
+  "breakpoints": [],
+  "slots": [
+    {
+      "deviceType": "mouse",
+      "slotNumber": 4
+    },
+    {
+      "deviceType": "diskii",
+      "slotNumber": 6,
+      "driveOne": {
+        "image": "disks/A2eDiagnostics_v2.1.dsk",
+        "readOnly": false
+      }
+    },
+    {
+      "deviceType": "thunderClock",
+      "slotNumber": 7
+    }
+  ],
+  "monochrome": false,
+  "color": "white"
+}

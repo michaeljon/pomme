@@ -211,6 +211,7 @@ namespace InnoWerks.Emulators.AppleIIe
                 }
             }
 
+            appleBus.FillEmptySlots(cpu);
             appleBus.LoadProgramToRom(mainRom);
 
             // load any breakpoints

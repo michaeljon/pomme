@@ -32,14 +32,18 @@ namespace InnoWerks.Computers.Apple
             WriteProtected = 0x29,
         }
 
+        // https://web.archive.org/web/20060125103416/http://web.pdx.edu/~heiss/technotes/pdos/tn.pdos.21.html
         private enum SmartPortErrors
         {
-            Success = 0,
-            InvalidCommand = 0x01,
-            BadParameterCount = 0x04,
-            InvalidUnit = 0x011,
-            InvalidCode = 0x021,
-            BadBlockNumber = 0x02d,
+            IOError = 0x27,
+            NoDevice = 0x28,
+            WriteProtected = 0x2B,
+            Offline = 0x2F,
+            VolumeDirMissing = 0x45,
+            NotProDOS = 0x52,
+            VolumeControlBlockFull = 0x55,
+            BadBufferAddr = 0x56,
+            DuplicateVolumeOnline = 0x57
         };
 
         private const byte SmartPort = 0x00;

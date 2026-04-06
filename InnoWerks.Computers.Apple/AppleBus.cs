@@ -14,8 +14,6 @@ namespace InnoWerks.Computers.Apple
 
         private readonly Memory128k memoryBlocks;
 
-        public ISlotDevice[] SlotDevices { get; } = new SlotRomDevice[8];
-
         private readonly List<IAddressInterceptDevice> interceptDevices = [];
 
         // 64K dispatch tables — each entry is a list of devices interested in that address
@@ -24,9 +22,13 @@ namespace InnoWerks.Computers.Apple
         private readonly List<IAddressInterceptDevice>[] writeDispatch =
             new List<IAddressInterceptDevice>[ushort.MaxValue + 1];
 
+        private readonly IntC8Handler intC8Handler;
+        private readonly KeylatchHandler keylatchHandler;
+        private readonly SlotHandler slotHandler;
+
         private readonly MachineState machineState;
 
-        private bool reportKeyboardLatchAll = true;
+        public ISlotDevice[] SlotDevices => slotHandler.SlotDevices;
 
         public AppleBus(AppleConfiguration configuration, Memory128k memoryBlocks, MachineState machineState)
         {
@@ -38,41 +40,46 @@ namespace InnoWerks.Computers.Apple
             this.memoryBlocks = memoryBlocks;
             this.machineState = machineState;
 
-            AddDevice(new IntC8Handler(memoryBlocks, machineState, this));
+            intC8Handler = new IntC8Handler(memoryBlocks, machineState, this);
+            keylatchHandler = new KeylatchHandler(memoryBlocks, machineState, this);
+            slotHandler = new SlotHandler(memoryBlocks, machineState, this);
+
+            AddDevice(intC8Handler);
+            AddDevice(keylatchHandler);
+            AddDevice(slotHandler);
+        }
+
+        public void FillEmptySlots(ICpu cpu)
+        {
+            ArgumentNullException.ThrowIfNull(cpu, nameof(cpu));
+            slotHandler.FillEmptySlots(cpu);
         }
 
         public void AddDevice(ISlotDevice slotDevice)
         {
             ArgumentNullException.ThrowIfNull(slotDevice, nameof(slotDevice));
 
-            if (SlotDevices[slotDevice.Slot] != null)
+            if (slotHandler.SlotDevices[slotDevice.Slot] != null)
             {
-                throw new ArgumentException($"There is already a device {SlotDevices[slotDevice.Slot].Name} in slot {slotDevice.Slot}");
+                throw new ArgumentException($"There is already a device {slotHandler.SlotDevices[slotDevice.Slot].Name} in slot {slotDevice.Slot}");
             }
 
             slotDevice.Reset();
 
-            if (slotDevice is not SlotRomDevice slotRomDevice)
+            if (slotDevice is SlotRomDevice slotRomDevice)
             {
-                throw new ArgumentNullException($"Device being added implements ISlotDevice but is not a SlotRomDevice");
+                if (slotRomDevice.HasRom)
+                {
+                    memoryBlocks.LoadSlotCxRom(slotDevice.Slot, slotRomDevice.Rom);
+                }
+
+                if (slotRomDevice.ExpansionRom != null)
+                {
+                    memoryBlocks.LoadSlotC8Rom(slotDevice.Slot, slotRomDevice.ExpansionRom);
+                }
             }
 
-            SlotDevices[slotDevice.Slot] = slotDevice;
-
-            if (slotRomDevice.HasRom)
-            {
-                memoryBlocks.LoadSlotCxRom(slotDevice.Slot, slotRomDevice.Rom);
-            }
-
-            if (slotRomDevice.ExpansionRom != null)
-            {
-                memoryBlocks.LoadSlotC8Rom(slotDevice.Slot, slotRomDevice.ExpansionRom);
-            }
-
-            if (slotDevice.Slot == 1)
-            {
-                reportKeyboardLatchAll = false;
-            }
+            slotHandler.SlotDevices[slotDevice.Slot] = slotDevice;
         }
 
         public void AddDevice(IAddressInterceptDevice interceptDevice)
@@ -134,60 +141,6 @@ namespace InnoWerks.Computers.Apple
                 }
             }
 
-            if (address >= 0xC000 && address <= 0xC08F)
-            {
-                return 0x00;
-            }
-            else if (address >= 0xC090 && address <= 0xC0FF)
-            {
-                var slot = (address >> 4) & 7;
-                var slotDevice = SlotDevices[slot];
-
-                if (slotDevice?.HandlesRead(address) == true)
-                {
-                    return slotDevice.Read(address);
-                }
-
-                return 0xFF;
-            }
-            else if ((address >= 0xC100 && address <= 0xC2FF) || (address >= 0xC400 && address <= 0xC7FF))
-            {
-                // Any access to $Cn00-$CnFF selects this slot for subsequent
-                // $C800-$CFFF expansion ROM routing, regardless of soft switch state
-                var slot = (address >> 8) & 7;
-                if (machineState.CurrentSlot != slot)
-                {
-                    machineState.CurrentSlot = slot;
-                    memoryBlocks.Remap();
-                }
-
-                if (machineState.State[SoftSwitch.IntCxRomEnabled] == false)
-                {
-                    var slotDevice = SlotDevices[slot];
-
-                    if (slotDevice?.HandlesRead(address) == true)
-                    {
-                        return slotDevice.Read(address);
-                    }
-                }
-            }
-            else if (address >= 0xC800 && address <= 0xCFFF)
-            {
-                if (machineState.State[SoftSwitch.IntCxRomEnabled] == false && machineState.State[SoftSwitch.IntC8RomEnabled] == false)
-                {
-                    var slot = machineState.CurrentSlot;
-                    if (slot != 0)
-                    {
-                        var slotDevice = SlotDevices[slot];
-
-                        if (slotDevice?.HandlesRead(address) == true)
-                        {
-                            return slotDevice.Read(address);
-                        }
-                    }
-                }
-            }
-
             return memoryBlocks.Read(address);
         }
 
@@ -204,63 +157,6 @@ namespace InnoWerks.Computers.Apple
                     if (device.DoWrite(address, value))
                     {
                         return;
-                    }
-                }
-            }
-
-            if (address >= 0xC000 && address <= 0xC08F)
-            {
-                CheckClearKeystrobe(address);
-
-                return;
-            }
-            else if (address >= 0xC090 && address <= 0xC0FF)
-            {
-                var slot = (address >> 4) & 7;
-                var slotDevice = SlotDevices[slot];
-
-                if (slotDevice?.HandlesWrite(address) == true)
-                {
-                    // SimDebugger.Info("Write IO {0} {1:X4}\n", slot, address);
-                    slotDevice.Write(address, value);
-                }
-
-                return;
-            }
-            else if ((address >= 0xC100 && address <= 0xC2FF) || (address >= 0xC400 && address <= 0xC7FF))
-            {
-                var slot = (address >> 8) & 7;
-                if (machineState.CurrentSlot != slot)
-                {
-                    machineState.CurrentSlot = slot;
-                    memoryBlocks.Remap();
-                }
-
-                if (machineState.State[SoftSwitch.IntCxRomEnabled] == false)
-                {
-                    var slotDevice = SlotDevices[slot];
-
-                    if (slotDevice?.HandlesWrite(address) == true)
-                    {
-                        slotDevice.Write(address, value);
-                        return;
-                    }
-                }
-            }
-            else if (address >= 0xC800 && address <= 0xCFFF)
-            {
-                if (machineState.State[SoftSwitch.IntCxRomEnabled] == false && machineState.State[SoftSwitch.IntC8RomEnabled] == false)
-                {
-                    var slot = machineState.CurrentSlot;
-                    if (slot != 0)
-                    {
-                        var slotDevice = SlotDevices[slot];
-
-                        if (slotDevice?.HandlesWrite(address) == true)
-                        {
-                            slotDevice.Write(address, value);
-                            return;
-                        }
                     }
                 }
             }
@@ -302,9 +198,11 @@ namespace InnoWerks.Computers.Apple
                 interceptDevice.Reset();
             }
 
-            for (var slot = 0; slot < SlotDevices.Length; slot++)
+            // slotHandler.Reset();
+
+            if (slotHandler.SlotDevices[1] != null)
             {
-                SlotDevices[slot]?.Reset();
+                keylatchHandler.ReportKeyboardLatchAll = false;
             }
 
             memoryBlocks.Remap();
@@ -317,15 +215,12 @@ namespace InnoWerks.Computers.Apple
         {
             CycleCount++;
 
-            for (var slot = 0; slot < SlotDevices.Length; slot++)
-            {
-                SlotDevices[slot]?.Tick();
-            }
-
             foreach (var interceptDevice in interceptDevices)
             {
                 interceptDevice.Tick();
             }
+
+            // slotHandler.Tick();
 
             transactionCycles++;
         }
@@ -344,48 +239,6 @@ namespace InnoWerks.Computers.Apple
             }
 
             list.Add(device);
-        }
-
-        private byte CheckKeyboardLatch(ushort address)
-        {
-            if (reportKeyboardLatchAll == false)
-            {
-                return 0x00;
-            }
-
-            // all these addresses return the KSTRB and ASCII value
-            if (address >= 0xC001 && address <= 0xC00F)
-            {
-                return machineState.PeekKeyboard();
-            }
-
-            // 0xC010 is handled directly by the keyboard as the "owning" device
-
-            // if the IOU is disabled then we only handle the MMU soft switch
-            if (machineState.State[SoftSwitch.IOUDisabled] == true)
-            {
-                return 0x00;
-            }
-
-            if (address >= 0xC001 && address <= 0xC01F)
-            {
-                return machineState.KeyLatch;
-            }
-
-            return 0x00;
-        }
-
-        private void CheckClearKeystrobe(ushort address)
-        {
-            if (reportKeyboardLatchAll == false)
-            {
-                return;
-            }
-
-            if (address >= 0xC010 && address <= 0xC01F)
-            {
-                machineState.ClearKeyboardStrobe();
-            }
         }
     }
 }

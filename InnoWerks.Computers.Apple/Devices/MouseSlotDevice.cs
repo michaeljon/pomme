@@ -99,6 +99,8 @@ namespace InnoWerks.Computers.Apple
             // Identification bytes — scanned by ProDOS and applications like A2DeskTop
             // to locate the mouse card.  These specific values match the original Apple
             // Mouse Interface Card ROM signature.
+            //
+            // https://web.archive.org/web/20050418233724/http://web.pdx.edu/~heiss/technotes/misc/tn.misc.08.html
             Rom[0x05] = 0x38;  // ID byte
             Rom[0x07] = 0x18;  // ID byte
             Rom[0x0B] = 0x01;  // ID byte
