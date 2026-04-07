@@ -8,15 +8,15 @@ This is a complete Apple IIe emulator written in C#, built on MonoGame for rende
 
 ## Solution Structure
 
-| Project | Purpose |
-|---|---|
-| `InnoWerks.Processors` | Opcode and instruction set definitions |
-| `InnoWerks.Simulators.Sim6502` | 6502/65C02 CPU emulation core |
-| `InnoWerks.Computers.Apple` | Apple II hardware (Computer, memory, bus, devices) |
-| `InnoWerks.Emulators.AppleIIe` | Main emulator app (MonoGame UI, renderers, audio) |
-| `InnoWerks.Assemblers.Asm6502` | 6502 assembler (used to build device ROMs at runtime) |
-| `InnoWerks.Disassemblers.Dasm6502` | 6502 disassembler (debug tooling) |
-| Test projects | Unit tests and Harte 65x02 test suite integration |
+| Project                            | Purpose                                               |
+| ---------------------------------- | ----------------------------------------------------- |
+| `InnoWerks.Processors`             | Opcode and instruction set definitions                |
+| `InnoWerks.Simulators.Sim6502`     | 6502/65C02 CPU emulation core                         |
+| `InnoWerks.Computers.Apple`        | Apple II hardware (Computer, memory, bus, devices)    |
+| `InnoWerks.Emulators.AppleIIe`     | Main emulator app (MonoGame UI, renderers, audio)     |
+| `InnoWerks.Assemblers.Asm6502`     | 6502 assembler (used to build device ROMs at runtime) |
+| `InnoWerks.Disassemblers.Dasm6502` | 6502 disassembler (debug tooling)                     |
+| Test projects                      | Unit tests and Harte 65x02 test suite integration     |
 
 The `ConsoleTools` projects are developer utilities not part of the emulator itself.
 
@@ -74,6 +74,7 @@ The `ConsoleTools` projects are developer utilities not part of the emulator its
 `Computer` is the composition root for all Apple IIe hardware. It owns the CPU, bus, memory, machine state, and all devices. The emulator interacts with the hardware exclusively through `Computer`.
 
 **Responsibilities:**
+
 - Constructs and wires CPU, bus, memory, IOU, MMU, IntC8Handler, KeylatchHandler, SlotHandler
 - Factory methods for adding devices: `AddDiskIIController()`, `AddMockingboard()`, `AddMouse()`, `AddThunderclock()`, `AddGenericBlockDevice()`, `AddNoSlotClock()`
 - `Build()` fills unoccupied slots (1-7) with `EmptySlotDevice`
@@ -100,14 +101,14 @@ The CPU is modeled in two layers:
 
 All 256 opcode slots are implemented in `Cpu6502.cs`:
 
-| Category | Mnemonics | Count |
-|---|---|---|
-| RMW combos | SLO, RLA, SRE, RRA, DCP, ISC | 42 |
-| Store/load combos | SAX, LAX | 10 |
-| Immediate ALU | ANC, ALR, ARR, AXS, USBC | 6 |
-| Unstable | ANE, LXA, SHA, SHX, SHY, TAS, LAS | 8 |
-| Multi-byte NOPs | DOP | 27 |
-| Processor halt | KIL | 12 |
+| Category          | Mnemonics                         | Count |
+| ----------------- | --------------------------------- | ----- |
+| RMW combos        | SLO, RLA, SRE, RRA, DCP, ISC      | 42    |
+| Store/load combos | SAX, LAX                          | 10    |
+| Immediate ALU     | ANC, ALR, ARR, AXS, USBC          | 6     |
+| Unstable          | ANE, LXA, SHA, SHX, SHY, TAS, LAS | 8     |
+| Multi-byte NOPs   | DOP                               | 27    |
+| Processor halt    | KIL                               | 12    |
 
 The magic constant for ANE/LXA is `0xEE` (matches Harte test expectations).
 
@@ -149,6 +150,7 @@ public byte Read(ushort address)
 ### Slot Device Routing
 
 Slot devices (`$C090-$C0FF`, `$Cn00-$CnFF`, `$C800-$CFFF`) are routed through `SlotHandler`, which:
+
 1. Extracts the slot number from the address
 2. Checks soft switches (`IntCxRomEnabled`, `IntC8RomEnabled`)
 3. Sets `CurrentSlot` and triggers `Remap()` when the selected slot changes
@@ -181,17 +183,18 @@ public interface IAddressInterceptDevice
 
 Devices are sorted by priority within each dispatch table entry:
 
-| Priority | Value | Examples |
-|---|---|---|
-| AddressIntercept | 0 | NoSlotClockDevice |
-| IntC8 | 1 | IntC8Handler |
-| SoftSwitch | 2 | IOU, MMU, KeylatchHandler |
-| SlotDevice | 3 | SlotHandler |
-| Default | 4 | DefaultSoftSwitchHandler |
+| Priority         | Value | Examples                  |
+| ---------------- | ----- | ------------------------- |
+| AddressIntercept | 0     | NoSlotClockDevice         |
+| IntC8            | 1     | IntC8Handler              |
+| SoftSwitch       | 2     | IOU, MMU, KeylatchHandler |
+| SlotDevice       | 3     | SlotHandler               |
+| Default          | 4     | DefaultSoftSwitchHandler  |
 
 ### AddressRange
 
 Supports three construction modes:
+
 - **Contiguous:** `new AddressRange(0xC000, 0xC08F, MemoryAccessType.Any)`
 - **Discrete:** `new AddressRange(new HashSet<ushort> { 0xC000, 0xC010 }, MemoryAccessType.Read)`
 - **Single:** `new AddressRange(0xCFFF, MemoryAccessType.Any)`
@@ -217,6 +220,7 @@ public interface ISlotDevice
 ### SlotRomDevice (abstract base)
 
 Base class for all slot devices. Provides:
+
 - Address range helpers (`IoBaseAddressLo/Hi`, `RomBaseAddressLo/Hi`, `ExpansionBaseAddressLo/Hi`)
 - ROM and expansion ROM storage
 - Abstract methods: `DoIo()`, `DoCx()`, `DoC8()`
@@ -232,16 +236,16 @@ The Apple IIe's 128KB is organized as 64KB main + 64KB auxiliary RAM. Two indepe
 
 **Address space layout:**
 
-| Range | Description |
-|---|---|
-| `$0000–$BFFF` | Main/aux RAM (switchable) |
+| Range         | Description                                    |
+| ------------- | ---------------------------------------------- |
+| `$0000–$BFFF` | Main/aux RAM (switchable)                      |
 | `$C000–$C07F` | On-board I/O (IOU: keyboard, speaker, paddles) |
-| `$C080–$C08F` | Language card / MMU control |
-| `$C090–$C0FF` | Slot device I/O registers |
-| `$C100–$C7FF` | Per-slot ROM (256 bytes each, slots 1–7) |
-| `$C800–$CFFF` | Shared slot expansion ROM (2KB) |
-| `$D000–$DFFF` | Language card (bank 1 or bank 2, ROM or RAM) |
-| `$E000–$FFFF` | System ROM |
+| `$C080–$C08F` | Language card / MMU control                    |
+| `$C090–$C0FF` | Slot device I/O registers                      |
+| `$C100–$C7FF` | Per-slot ROM (256 bytes each, slots 1–7)       |
+| `$C800–$CFFF` | Shared slot expansion ROM (2KB)                |
+| `$D000–$DFFF` | Language card (bank 1 or bank 2, ROM or RAM)   |
+| `$E000–$FFFF` | System ROM                                     |
 
 **Banking soft switches:** `LcBank2`, `LcReadEnabled`, `LcWriteEnabled`, `AuxRead`, `AuxWrite`, `ZpAux`, `Store80`, `IntCxRomEnabled`, `IntC8RomEnabled`, `SlotC3RomEnabled`
 
@@ -256,6 +260,7 @@ All soft-switch flags live in `MachineState` as a `Dictionary<SoftSwitch, bool>`
 ### IOU
 
 Implements `IAddressInterceptDevice` with discrete address sets for read and write. Handles:
+
 - Keyboard latch (`$C000-$C00F` mirrors), strobe (`$C010`), and queue
 - Speaker toggle (`$C030`)
 - Paddle/joystick inputs and game strobe
@@ -266,6 +271,7 @@ Implements `IAddressInterceptDevice` with discrete address sets for read and wri
 ### MMU
 
 Implements `IAddressInterceptDevice`. Handles:
+
 - Language card read/write/bank control (`$C080-$C08F`)
 - Auxiliary memory routing
 - CxROM/C3ROM/C8ROM banking
@@ -295,7 +301,7 @@ Emulates the Apple Disk II controller with two drives. State change callback (`O
 
 `InsertDisk(drive, path)` and `EjectDisk(drive)` are the public API for disk management. Write-through flushing occurs on motor-off and on reset/reboot.
 
-`FloppyDisk` handles nibble encoding/decoding using 6-and-2 GCR. The denibblizer follows JACE's algorithm for correct XOR chain reversal and bit unscrambling.
+`FloppyDisk` handles nibble encoding/decoding using 6-and-2 GCR. The denibblizer follows JACE's algorithm for correct XOR chain reversal and bit unscrambling. (Thanks Brendan)
 
 ### Mockingboard A/B
 
@@ -357,13 +363,13 @@ AY-3-8910 Programmable Sound Generator. 3 tone channels, noise generator (17-bit
 
 `Display` reads the active soft switches each frame and delegates to the appropriate renderer.
 
-| Mode | Renderer | Resolution | Notes |
-|---|---|---|---|
-| Text 40-col | `TextModeRenderer` | 40×24 characters | 8×8 font from character ROM |
-| Text 80-col | `TextModeRenderer` | 80×24 characters | Interleaved main/aux RAM |
-| Lo-res | `LoresRenderer` | 40×48 blocks | 16 colors, 7×4 pixels/block |
-| Hi-res | `HiresRenderer` | 280×192 | Color artifacts; rendered at 560px wide |
-| Double hi-res | `DhiresRenderer` | 560×192 | 16-color; requires aux RAM |
+| Mode          | Renderer           | Resolution       | Notes                                   |
+| ------------- | ------------------ | ---------------- | --------------------------------------- |
+| Text 40-col   | `TextModeRenderer` | 40×24 characters | 8×8 font from character ROM             |
+| Text 80-col   | `TextModeRenderer` | 80×24 characters | Interleaved main/aux RAM                |
+| Lo-res        | `LoresRenderer`    | 40×48 blocks     | 16 colors, 7×4 pixels/block             |
+| Hi-res        | `HiresRenderer`    | 280×192          | Color artifacts; rendered at 560px wide |
+| Double hi-res | `DhiresRenderer`   | 560×192          | 16-color; requires aux RAM              |
 
 ---
 
@@ -386,6 +392,7 @@ AY-3-8910 Programmable Sound Generator. 3 tone channels, noise generator (17-bit
 **Location:** `InnoWerks.Emulators.AppleIIe/Renderers/ToolbarRenderer.cs`
 
 A toolbar above the Apple display shows:
+
 - **Reset** button (soft reset, same as Ctrl+F1)
 - **Reboot** button (hard reboot, same as Ctrl+F2)
 - **Disk II drive icons** — four states: disk inserted motor off, disk inserted motor on, empty motor off, empty motor on
@@ -422,6 +429,7 @@ MonoGame Draw():
 **Location:** `InnoWerks.Emulators.AppleIIe/configurations/`
 
 JSON configuration files specify:
+
 - Apple model (`appleIIeEnhanced`)
 - Slot device assignments (type, slot number, disk images)
 - `noSlotClock: true` to install the DS1215
@@ -429,6 +437,7 @@ JSON configuration files specify:
 - Breakpoints
 
 Example:
+
 ```json
 {
   "appleModel": "appleIIeEnhanced",
@@ -436,8 +445,11 @@ Example:
   "slots": [
     { "deviceType": "mouse", "slotNumber": 2 },
     { "deviceType": "mockingboard", "slotNumber": 4 },
-    { "deviceType": "diskii", "slotNumber": 6,
-      "driveOne": { "image": "disks/dos33.dsk" } }
+    {
+      "deviceType": "diskii",
+      "slotNumber": 6,
+      "driveOne": { "image": "disks/dos33.dsk" }
+    }
   ]
 }
 ```
@@ -446,34 +458,34 @@ Example:
 
 ## Test Infrastructure
 
-| Test Suite | What it covers |
-|---|---|
-| **Harte 6502/65C02** | Cycle-accurate JSON tests for all 256 opcodes across 4 CPU variants |
-| **Via6522Tests** | Timer countdown, IRQ flag management, port callbacks, register read/write |
-| **AY38910Tests** | Bus control protocol, register masking, clock output |
-| **ComputerTests** | Construction, Build, Reset, device factory methods |
-| **NoSlotClockTests** | Unlock sequence, clock data BCD, soft switch gating |
-| **DiskIISlotDeviceTests** | Drive access, insert/eject, state change callbacks |
-| **FloppyDiskTests** | Nibblize/denibblize round-trip, sector-level verification |
-| **SlotRomDeviceTests** | I/O dispatch, Cx/C8 ROM routing, address ranges |
-| **AppleBusTests** | Cycle counting, transactions, soft switch routing, memory access |
-| **IouTests** | Display mode switches, keyboard, paddles, VBL, annunciators |
-| **MmuTests** | Language card sequencing, memory banking, ROM control |
-| **IntC8HandlerTests** | C300/CFFF side effects, address ranges |
-| **AddressRangeTests** | Contiguous, discrete, single-address, access type filtering |
-| **Memory128kTests** | Page mapping, read/write routing |
+| Test Suite                | What it covers                                                            |
+| ------------------------- | ------------------------------------------------------------------------- |
+| **Harte 6502/65C02**      | Cycle-accurate JSON tests for all 256 opcodes across 4 CPU variants       |
+| **Via6522Tests**          | Timer countdown, IRQ flag management, port callbacks, register read/write |
+| **AY38910Tests**          | Bus control protocol, register masking, clock output                      |
+| **ComputerTests**         | Construction, Build, Reset, device factory methods                        |
+| **NoSlotClockTests**      | Unlock sequence, clock data BCD, soft switch gating                       |
+| **DiskIISlotDeviceTests** | Drive access, insert/eject, state change callbacks                        |
+| **FloppyDiskTests**       | Nibblize/denibblize round-trip, sector-level verification                 |
+| **SlotRomDeviceTests**    | I/O dispatch, Cx/C8 ROM routing, address ranges                           |
+| **AppleBusTests**         | Cycle counting, transactions, soft switch routing, memory access          |
+| **IouTests**              | Display mode switches, keyboard, paddles, VBL, annunciators               |
+| **MmuTests**              | Language card sequencing, memory banking, ROM control                     |
+| **IntC8HandlerTests**     | C300/CFFF side effects, address ranges                                    |
+| **AddressRangeTests**     | Contiguous, discrete, single-address, access type filtering               |
+| **Memory128kTests**       | Page mapping, read/write routing                                          |
 
 ---
 
 ## Key Design Patterns
 
-| Pattern | Where used |
-|---|---|
-| **Composition Root** | `Computer` class orchestrates all hardware |
-| **Template Method** | `Cpu6502Core` (abstract) / `Cpu65C02` (concrete) |
-| **Strategy** | Video renderers (one per display mode) |
-| **Observer** | Soft switch writes trigger `Remap()` on memory |
-| **Dispatch Table** | 64K bus dispatch arrays; CPU opcode dictionary |
-| **Intercept Hook** | `ProDOSSlotDevice` SmartPort driver in managed code |
-| **DSP Chain** | Audio filter pipeline (LP → HP → gate → gain → clip) |
-| **Priority Queue** | Dispatch table entries sorted by `InterceptPriority` |
+| Pattern              | Where used                                           |
+| -------------------- | ---------------------------------------------------- |
+| **Composition Root** | `Computer` class orchestrates all hardware           |
+| **Template Method**  | `Cpu6502Core` (abstract) / `Cpu65C02` (concrete)     |
+| **Strategy**         | Video renderers (one per display mode)               |
+| **Observer**         | Soft switch writes trigger `Remap()` on memory       |
+| **Dispatch Table**   | 64K bus dispatch arrays; CPU opcode dictionary       |
+| **Intercept Hook**   | `ProDOSSlotDevice` SmartPort driver in managed code  |
+| **DSP Chain**        | Audio filter pipeline (LP → HP → gate → gain → clip) |
+| **Priority Queue**   | Dispatch table entries sorted by `InterceptPriority` |
