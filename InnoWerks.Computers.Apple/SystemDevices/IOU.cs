@@ -178,8 +178,6 @@ namespace InnoWerks.Computers.Apple
                 new (handlesRead, MemoryAccessType.Read),
                 new (handlesWrite, MemoryAccessType.Write),
             ];
-
-            bus.AddDevice(this);
         }
 
         public IReadOnlyList<AddressRange> AddressRanges
@@ -517,10 +515,10 @@ namespace InnoWerks.Computers.Apple
 
         private byte InVerticalBlank()
         {
-            var frameIndex = bus.CycleCount / VideoTiming.FrameCycles;
-            var frameCycle = (int)(bus.CycleCount % VideoTiming.FrameCycles);
+            var frameIndex = bus.CycleCount / Computer.FrameCycles;
+            var frameCycle = (int)(bus.CycleCount % Computer.FrameCycles);
 
-            bool inVbl = frameCycle >= VideoTiming.VblStart;
+            bool inVbl = frameCycle >= Computer.VblStart;
 
             // SimDebugger.Info($" --> busCycle={bus.CycleCount}, frame#={frameIndex}, frameCycle={frameCycle}, inVbl=={inVbl}\n");
 

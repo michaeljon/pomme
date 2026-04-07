@@ -51,13 +51,13 @@ namespace InnoWerks.Computers.Apple.Tests
         public int TickCount { get; private set; }
 
         public StubSlotDevice(int slot, ICpu cpu, IAppleBus bus, MachineState state)
-            : base(slot, $"StubSlot{slot}", cpu, bus, state) { }
+            : base(slot, $"StubSlot{slot}", null) { }
 
         public StubSlotDevice(int slot, ICpu cpu, IAppleBus bus, MachineState state, byte[] cxRom)
-            : base(slot, $"StubSlot{slot}", cpu, bus, state, cxRom) { }
+            : base(slot, $"StubSlot{slot}", null, cxRom) { }
 
         public StubSlotDevice(int slot, ICpu cpu, IAppleBus bus, MachineState state, byte[] cxRom, byte[] c8Rom)
-            : base(slot, $"StubSlot{slot}", cpu, bus, state, cxRom, c8Rom) { }
+            : base(slot, $"StubSlot{slot}", null, cxRom, c8Rom) { }
 
         public override bool HandlesRead(ushort address) => true;
         public override bool HandlesWrite(ushort address) => true;

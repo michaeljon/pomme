@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using InnoWerks.Simulators;
 
 namespace InnoWerks.Computers.Apple
 {
@@ -21,14 +20,9 @@ namespace InnoWerks.Computers.Apple
 
         public DiskIISlotDevice(
             int slot,
-            ICpu cpu,
-            IAppleBus bus,
-            MachineState machineState)
-            : base(slot, "Disk II Controller", cpu, bus, machineState)
+            Computer computer)
+            : base(slot, "Disk II Controller", computer)
         {
-            ArgumentNullException.ThrowIfNull(cpu, nameof(cpu));
-            ArgumentNullException.ThrowIfNull(bus, nameof(bus));
-
             currentDrive = drive1;
 
             HasRom = true;
@@ -36,8 +30,6 @@ namespace InnoWerks.Computers.Apple
 
             var diskIIRom = File.ReadAllBytes("roms/DiskII.rom");
             Array.Copy(diskIIRom, Rom, diskIIRom.Length);
-
-            bus.AddDevice(this);
         }
 
         protected override byte DoIo(MemoryAccessType ioType, ushort address, byte value)

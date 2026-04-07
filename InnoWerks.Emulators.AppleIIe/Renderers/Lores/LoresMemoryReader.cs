@@ -7,16 +7,14 @@ namespace InnoWerks.Emulators.AppleIIe
 {
     public sealed class LoresMemoryReader
     {
-        private readonly Memory128k ram;
-        private readonly MachineState machineState;
+        private readonly Computer computer;
 
         private readonly bool eightyColumnMode;
         private readonly int page;
 
-        public LoresMemoryReader(Memory128k ram, MachineState machineState, bool eightyColumnMode, int page)
+        public LoresMemoryReader(Computer computer, bool eightyColumnMode, int page)
         {
-            this.ram = ram;
-            this.machineState = machineState;
+            this.computer = computer;
             this.eightyColumnMode = eightyColumnMode;
             this.page = page;
         }
@@ -57,7 +55,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
         private void ReadLores40(LoresBuffer loresBuffer, int page, int rows = 24)
         {
-            var memory = ram.Read((byte)(page == 2 ? 0x08 : 0x04), 4);
+            var memory = computer.Memory.Read((byte)(page == 2 ? 0x08 : 0x04), 4);
 
             for (var row = 0; row < rows; row++)
             {
@@ -72,8 +70,8 @@ namespace InnoWerks.Emulators.AppleIIe
 
         private void ReadLores80(LoresBuffer loresBuffer, int page, int rows = 24)
         {
-            var main = ram.GetMain(0x04, 4);
-            var aux = ram.GetAux(0x04, 4);
+            var main = computer.Memory.GetMain(0x04, 4);
+            var aux = computer.Memory.GetAux(0x04, 4);
 
             for (var row = 0; row < rows; row++)
             {

@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics;
 using InnoWerks.Computers.Apple;
-using InnoWerks.Simulators;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -24,20 +23,17 @@ namespace InnoWerks.Emulators.AppleIIe
 
         public HiresRenderer(
             GraphicsDevice graphicsDevice,
-            Cpu6502Core cpu,
-            IBus bus,
-            Memory128k memoryBlocks,
-            MachineState machineState,
+            Computer computer,
 
             int page,
             Color? monochromeColor)
-            : base(graphicsDevice, cpu, bus, memoryBlocks, machineState)
+            : base(graphicsDevice, computer)
         {
             this.page = page;
             this.monochromeColor = monochromeColor;
 
             hiresBuffer = new HiresBuffer();
-            hiresMemoryReader = new(memoryBlocks, machineState, page);
+            hiresMemoryReader = new(computer, page);
 
             screenTexture = new Texture2D(graphicsDevice, DisplayCharacteristics.HiresAppleWidth, DisplayCharacteristics.AppleDisplayHeight);
         }

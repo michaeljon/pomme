@@ -54,8 +54,6 @@ namespace InnoWerks.Computers.Apple
         private const ushort StatScreenHole = 0x0778;
         private const ushort ModeScreenHole = 0x07F8;
 
-        // private const int CyclesPerUpdate = (int)(1020484L / 60L);
-
         // Mouse state
         private int mouseX;
         private int mouseY;
@@ -72,11 +70,10 @@ namespace InnoWerks.Computers.Apple
 
         public bool IsMouseCaptured { get; private set; }
 
-        public MouseSlotDevice(int slot, ICpu cpu, IAppleBus bus, MachineState machineState)
-            : base(slot, "Apple Mouse Interface Card", cpu, bus, machineState)
+        public MouseSlotDevice(int slot, Computer computer)
+            : base(slot, "Apple Mouse Interface Card", computer)
         {
-            ArgumentNullException.ThrowIfNull(cpu, nameof(cpu));
-            ArgumentNullException.ThrowIfNull(bus, nameof(bus));
+            ArgumentNullException.ThrowIfNull(computer, nameof(computer));
 
             var initializers = new List<(byte vector, Func<ICpu, IBus, bool> handler)>
             {
@@ -119,10 +116,8 @@ namespace InnoWerks.Computers.Apple
                 Rom[vector] = (byte)(InterceptBase + vector);
 
                 // now wire up our intercept handlers per the vectors above
-                cpu.AddIntercept((ushort)(baseAddr + Rom[vector]), handler);
+                computer.Processor.AddIntercept((ushort)(baseAddr + Rom[vector]), handler);
             }
-
-            bus.AddDevice(this);
         }
 
         // Called by Emulator.cs each frame with the current host mouse state.

@@ -18,7 +18,7 @@ namespace InnoWerks.Computers.Apple.Tests
         private static (AppleBus Bus, Memory128k Memory, MachineState State) CreateBare()
         {
             var (memory, state) = Memory128kFactory.CreateDefault();
-            var bus = new AppleBus(DefaultConfig, memory, state);
+            var bus = new AppleBus(memory, []);
             return (bus, memory, state);
         }
 
@@ -29,7 +29,7 @@ namespace InnoWerks.Computers.Apple.Tests
         private static (AppleBus Bus, Memory128k Memory, MachineState State) CreateWithDevices()
         {
             var (memory, state) = Memory128kFactory.CreateDefault();
-            var bus = new AppleBus(DefaultConfig, memory, state);
+            var bus = new AppleBus(memory, []);
             _ = new MMU(memory, state, bus);
             _ = new IOU(memory, state, bus);
             return (bus, memory, state);
@@ -211,7 +211,7 @@ namespace InnoWerks.Computers.Apple.Tests
             rom[0x2000] = 0xEA;  // intEFRom[0] → page $E0, offset 0
 
             var (memory, state) = Memory128kFactory.CreateWith16kRom(rom);
-            var bus = new AppleBus(DefaultConfig, memory, state);
+            var bus = new AppleBus(memory, []);
 
             Assert.AreEqual((byte)0xEA, bus.Read(0xE000));
         }
@@ -331,7 +331,7 @@ namespace InnoWerks.Computers.Apple.Tests
             // MMU.Reset sets LcBank2=true; verify it was called on AddDevice
             var (memory, state) = Memory128kFactory.CreateDefault();
             state.State[SoftSwitch.LcBank2] = false;
-            var bus = new AppleBus(DefaultConfig, memory, state);
+            var bus = new AppleBus(memory, []);
             _ = new MMU(memory, state, bus); // constructor calls bus.AddDevice(this)
             Assert.IsTrue(state.State[SoftSwitch.LcBank2]);
         }

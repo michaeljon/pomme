@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using InnoWerks.Computers.Apple;
-using InnoWerks.Processors;
 using InnoWerks.Simulators;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -21,10 +20,6 @@ namespace InnoWerks.Emulators.AppleIIe
 {
     public class Emulator : Game
     {
-        // Constants
-        private const int AppleClockSpeed = 1020484;
-        private const float FramesPerSecond = 59.94f;
-
         private long totalCyclesExecuted;
 
         //
@@ -35,12 +30,7 @@ namespace InnoWerks.Emulators.AppleIIe
         //
         // The Apple IIe itself
         //
-        private AppleBus appleBus;
-        private Memory128k memoryBlocks;
-        private MachineState machineState;
-        private IOU iou;
-        private MMU mmu;
-        private Cpu65C02 cpu;
+        private Computer computer;
         private MouseSlotDevice mouseDevice;
         private MockingboardSlotDevice mockingboardDevice;
 
@@ -109,7 +99,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
             IsMouseVisible = true;
             IsFixedTimeStep = true;
-            TargetElapsedTime = TimeSpan.FromSeconds(1.0 / FramesPerSecond);
+            TargetElapsedTime = TimeSpan.FromSeconds(1.0 / Computer.FramesPerSecond);
 
             audioSource = new();
             audioRenderer = new();
@@ -124,44 +114,24 @@ namespace InnoWerks.Emulators.AppleIIe
 
             var mainRom = File.ReadAllBytes("roms/Apple2e_Enhanced.rom");
 
-            var config = new AppleConfiguration(emulatorConfiguration.AppleModel)
-            {
-                CpuClass = CpuClass.WDC65C02,
-                HasAuxMemory = true,
-                Has80Column = true,
-                HasLowercase = true,
-                RamSize = 128
-            };
-
-            machineState = new MachineState();
-            memoryBlocks = new Memory128k(machineState);
-
-            appleBus = new AppleBus(config, memoryBlocks, machineState);
-            iou = new IOU(memoryBlocks, machineState, appleBus);
-            mmu = new MMU(memoryBlocks, machineState, appleBus);
+            computer = new(emulatorConfiguration.AppleModel, mainRom);
 
             if (emulatorConfiguration.NoSlotClock)
             {
-                _ = new NoSlotClockDevice(machineState, appleBus);
+                computer.AddNoSlotClock();
             }
-
-            cpu = Cpu6502Factory.Construct<Cpu65C02>(
-                CpuClass.WDC65C02,
-                appleBus,
-                (cpu, programCounter) => { },
-                (cpu) => { });
 
             foreach (var slot in emulatorConfiguration.Slots)
             {
                 switch (slot.DeviceType)
                 {
                     case DeviceType.Mouse:
-                        mouseDevice = new MouseSlotDevice(slot.SlotNumber, cpu, appleBus, machineState);
+                        mouseDevice = computer.AddMouse(slot.SlotNumber);
                         break;
 
                     case DeviceType.HardDisk:
                         var hdDevice = slot as ConfiguredHardDisk;
-                        var hardDrive = new ProDOSSlotDevice(slot.SlotNumber, hdDevice.Smartport, cpu, appleBus, machineState);
+                        var hardDrive = computer.AddGenericBlockDevice(slot.SlotNumber);
 
                         if (hdDevice.DriveOne != null && string.IsNullOrEmpty(hdDevice.DriveOne.Image) == false)
                         {
@@ -187,32 +157,29 @@ namespace InnoWerks.Emulators.AppleIIe
 
                     case DeviceType.DiskII:
                         var diskiiDevice = slot as ConfiguredDiskIIDevice;
-                        var floppyDrive = new DiskIISlotDevice(slot.SlotNumber, cpu, appleBus, machineState);
+                        var diskiiController = computer.AddDiskIIController(slot.SlotNumber);
 
                         if (diskiiDevice.DriveOne != null && string.IsNullOrEmpty(diskiiDevice.DriveOne.Image) == false)
                         {
-                            floppyDrive.InsertDisk(0, diskiiDevice.DriveOne.Image);
+                            diskiiController.InsertDisk(0, diskiiDevice.DriveOne.Image);
                         }
 
                         if (diskiiDevice.DriveTwo != null && string.IsNullOrEmpty(diskiiDevice.DriveTwo.Image) == false)
                         {
-                            floppyDrive.InsertDisk(1, diskiiDevice.DriveTwo.Image);
+                            diskiiController.InsertDisk(1, diskiiDevice.DriveTwo.Image);
                         }
 
                         break;
 
                     case DeviceType.ThunderClock:
-                        _ = new ThunderClockSlotDevice(slot.SlotNumber, cpu, appleBus, machineState);
+                        _ = computer.AddThunderclock(slot.SlotNumber);
                         break;
 
                     case DeviceType.Mockingboard:
-                        mockingboardDevice = new MockingboardSlotDevice(slot.SlotNumber, cpu, appleBus, machineState);
+                        mockingboardDevice = computer.AddMockingboard(slot.SlotNumber);
                         break;
                 }
             }
-
-            appleBus.FillEmptySlots(cpu);
-            appleBus.LoadProgramToRom(mainRom);
 
             // load any breakpoints
             foreach (var bp in emulatorConfiguration.Breakpoints)
@@ -220,17 +187,18 @@ namespace InnoWerks.Emulators.AppleIIe
                 breakpoints.Add(bp);
             }
 
-            cpu.Reset();
+            computer.Build();
+            computer.Reset();
 
             base.Initialize();
         }
 
         protected override void LoadContent()
         {
-            display = new Display(GraphicsDevice, cpu, appleBus, memoryBlocks, machineState);
+            display = new Display(GraphicsDevice, computer);
 
             display.LoadContent(emulatorConfiguration.ResolveMonochromeColor(), Content);
-            display.ConfigureToolbar(appleBus.SlotDevices);
+            display.ConfigureToolbar(computer.SlotDevices);
         }
 
         private static Color? ResolveMonochromeColor(string monochrome) =>
@@ -312,7 +280,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
             // send other keys on to the "computer"
             UpdateKeyboard(currentState, previousKeyboardState);
-            audioRenderer.UpdateAudio(appleBus.CycleCount, audioSource, mockingboardDevice);
+            audioRenderer.UpdateAudio(computer.CycleCount, audioSource, mockingboardDevice);
 
             previousKeyboardState = currentState;
 
@@ -334,11 +302,11 @@ namespace InnoWerks.Emulators.AppleIIe
 
         private void RunCpuForFrame()
         {
-            var targetCycles = appleBus.CycleCount + VideoTiming.FrameCycles;
+            var targetCycles = computer.CycleCount + Computer.FrameCycles;
 
-            while (appleBus.CycleCount < targetCycles)
+            while (computer.CycleCount < targetCycles)
             {
-                if (breakpoints.Contains(cpu.Registers.ProgramCounter))
+                if (breakpoints.Contains(computer.Processor.Registers.ProgramCounter))
                 {
                     cpuPaused = true;
                     break;
@@ -350,17 +318,17 @@ namespace InnoWerks.Emulators.AppleIIe
 
         private void StepCpuOnce()
         {
-            var nextInstruction = cpu.PeekInstruction();
+            var nextInstruction = computer.Processor.PeekInstruction();
 
-            bool previousSpeakerState = machineState.State[SoftSwitch.Speaker];
+            bool previousSpeakerState = computer.MachineState.State[SoftSwitch.Speaker];
 
             cpuTraceBuffer.Add(nextInstruction);
-            cpu.Step();
+            computer.Processor.Step();
 
             // Check for toggles
-            if (machineState.State[SoftSwitch.Speaker] != previousSpeakerState)
+            if (computer.MachineState.State[SoftSwitch.Speaker] != previousSpeakerState)
             {
-                audioSource.TouchSpeaker(appleBus.CycleCount);
+                audioSource.TouchSpeaker(computer.CycleCount);
             }
         }
 
@@ -372,7 +340,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
         private void FlushAllDisks()
         {
-            foreach (var device in appleBus.SlotDevices)
+            foreach (var device in computer.SlotDevices)
             {
                 if (device is DiskIISlotDevice diskDevice)
                 {
@@ -390,7 +358,7 @@ namespace InnoWerks.Emulators.AppleIIe
                 case ToolbarAction.Reset:
                     cpuPaused = true;
                     FlushAllDisks();
-                    cpu.Reset();
+                    computer.Processor.Reset();
                     audioRenderer.Clear();
                     audioSource.Clear();
                     cpuPaused = false;
@@ -399,8 +367,7 @@ namespace InnoWerks.Emulators.AppleIIe
                 case ToolbarAction.Reboot:
                     cpuPaused = true;
                     FlushAllDisks();
-                    cpu.Reset();
-                    memoryBlocks.Reset();
+                    computer.Reset();
                     audioRenderer.Clear();
                     audioSource.Clear();
                     cpuPaused = false;
@@ -441,7 +408,7 @@ namespace InnoWerks.Emulators.AppleIIe
                 {
                     cpuPaused = true;
                     FlushAllDisks();
-                    cpu.Reset();
+                    computer.Processor.Reset();
 
                     audioRenderer.Clear();
                     audioSource.Clear();
@@ -452,8 +419,7 @@ namespace InnoWerks.Emulators.AppleIIe
                 {
                     cpuPaused = true;
                     FlushAllDisks();
-                    cpu.Reset();
-                    memoryBlocks.Reset();
+                    computer.Reset();
 
                     audioRenderer.Clear();
                     audioSource.Clear();
@@ -469,7 +435,7 @@ namespace InnoWerks.Emulators.AppleIIe
                         // The OS automatically generates these when holding Ctrl!
                         if ((ascii & 0x1f) >= 1 && (ascii & 0x1f) <= 26)
                         {
-                            iou.InjectKey((byte)(ascii & 0x1f));
+                            computer.IOU.InjectKey((byte)(ascii & 0x1f));
                         }
                     }
                 }
@@ -537,7 +503,7 @@ namespace InnoWerks.Emulators.AppleIIe
             joystickButton0 = current.Buttons.A == ButtonState.Pressed;
             joystickButton1 = current.Buttons.B == ButtonState.Pressed;
 
-            iou.UpdateJoystick(pdl0, pdl1, pdl2, pdl3, joystickButton0, joystickButton1);
+            computer.IOU.UpdateJoystick(pdl0, pdl1, pdl2, pdl3, joystickButton0, joystickButton1);
         }
 
         public void UpdateKeyboard(KeyboardState currentState, KeyboardState previousState)
@@ -555,14 +521,14 @@ namespace InnoWerks.Emulators.AppleIIe
             }
 
             // --- ARROW KEYS ---
-            if (IsJustPressed(Keys.Left)) iou.InjectKey(0x88);
-            if (IsJustPressed(Keys.Right)) iou.InjectKey(0x95);
-            if (IsJustPressed(Keys.Down)) iou.InjectKey(0x8A);
-            if (IsJustPressed(Keys.Up)) iou.InjectKey(0x8B);
+            if (IsJustPressed(Keys.Left)) computer.IOU.InjectKey(0x88);
+            if (IsJustPressed(Keys.Right)) computer.IOU.InjectKey(0x95);
+            if (IsJustPressed(Keys.Down)) computer.IOU.InjectKey(0x8A);
+            if (IsJustPressed(Keys.Up)) computer.IOU.InjectKey(0x8B);
 
             // --- OPEN / SOLID APPLE (keyboard OR joystick button) ---
-            iou.OpenApple(currentState.IsKeyDown(Keys.LeftAlt) || joystickButton0);
-            iou.SolidApple(currentState.IsKeyDown(Keys.RightAlt) || joystickButton1);
+            computer.IOU.OpenApple(currentState.IsKeyDown(Keys.LeftAlt) || joystickButton0);
+            computer.IOU.SolidApple(currentState.IsKeyDown(Keys.RightAlt) || joystickButton1);
         }
 
         private void HandleResize(object sender, EventArgs e)
@@ -598,7 +564,7 @@ namespace InnoWerks.Emulators.AppleIIe
                 }
 
                 byte appleAscii = (byte)((c & 0x7F) | 0x80);
-                iou.InjectKey(appleAscii);
+                computer.IOU.InjectKey(appleAscii);
             }
             // 3. Handle Ctrl+Letter combinations (ASCII 1 to 26)
             // The OS automatically generates these when holding Ctrl!
@@ -606,11 +572,11 @@ namespace InnoWerks.Emulators.AppleIIe
             {
                 // c is already the correct 1-26 value. Just add the Apple II high-bit.
                 byte appleCtrlAscii = (byte)(c | 0x80);
-                iou.InjectKey(appleCtrlAscii);
+                computer.IOU.InjectKey(appleCtrlAscii);
             }
             else
             {
-                iou.InjectKey((byte)c);
+                computer.IOU.InjectKey((byte)c);
             }
         }
     }

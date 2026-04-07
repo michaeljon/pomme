@@ -58,15 +58,12 @@ namespace InnoWerks.Computers.Apple
             new AddressRange(0xC100, 0xCFFF, MemoryAccessType.Any)
         ];
 
-        public NoSlotClockDevice(MachineState machineState, IAppleBus bus)
+        public NoSlotClockDevice(Computer computer)
         {
-            ArgumentNullException.ThrowIfNull(machineState, nameof(machineState));
-            ArgumentNullException.ThrowIfNull(bus, nameof(bus));
+            ArgumentNullException.ThrowIfNull(computer, nameof(computer));
 
-            this.bus = bus;
-            this.machineState = machineState;
-
-            bus.AddDevice(this);
+            this.bus = computer.Bus;
+            this.machineState = computer.MachineState;
         }
 
         public bool DoRead(ushort address, out byte value)

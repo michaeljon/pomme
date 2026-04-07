@@ -30,9 +30,6 @@ namespace InnoWerks.Computers.Apple
     /// </summary>
     public sealed class ThunderClockSlotDevice : SlotRomDevice
     {
-        // TODO: fix this, it's shared all over the damned place
-        private const int AppleClockSpeed = 1020484;
-
         private bool strobe;
         private bool clock;
         private bool irqEnabled;
@@ -46,14 +43,13 @@ namespace InnoWerks.Computers.Apple
 
         private readonly Stack<bool> bitBuffer = new();
 
-        public ThunderClockSlotDevice(int slot, ICpu cpu, IAppleBus bus, MachineState machineState)
-            : base(slot, "ThunderClock Plus", cpu, bus, machineState)
+        public ThunderClockSlotDevice(int slot, Computer computer)
+            : base(slot, "ThunderClock Plus", computer)
         {
-            ArgumentNullException.ThrowIfNull(cpu, nameof(cpu));
-            ArgumentNullException.ThrowIfNull(bus, nameof(bus));
+            ArgumentNullException.ThrowIfNull(computer, nameof(computer));
 
-            this.cpu = cpu;
-            this.bus = bus;
+            this.cpu = computer.Processor;
+            this.bus = computer.Bus;
 
             // ROM is 2k on disk but only 0x700 bytes count. the first
             // 256 bytes are mirrored in the expansion rom
@@ -66,8 +62,6 @@ namespace InnoWerks.Computers.Apple
             HasAuxRom = true;
             ExpansionRom = new byte[MemoryPage.ExpansionRomSize];
             Array.Copy(romBytes, ExpansionRom, 0x0700);
-
-            bus.AddDevice(this);
         }
 
         //
@@ -125,13 +119,13 @@ namespace InnoWerks.Computers.Apple
                 switch (value & 0x38)
                 {
                     case 0x20:
-                        timerRate = AppleClockSpeed / 64;
+                        timerRate = Computer.AppleClockSpeed / 64;
                         break;
                     case 0x28:
-                        timerRate = AppleClockSpeed / 256;
+                        timerRate = Computer.AppleClockSpeed / 256;
                         break;
                     case 0x30:
-                        timerRate = AppleClockSpeed / 2048;
+                        timerRate = Computer.AppleClockSpeed / 2048;
                         break;
 
                     default:

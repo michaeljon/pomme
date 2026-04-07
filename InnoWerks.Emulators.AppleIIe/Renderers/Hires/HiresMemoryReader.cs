@@ -7,15 +7,13 @@ namespace InnoWerks.Emulators.AppleIIe
 {
     public sealed class HiresMemoryReader
     {
-        private readonly Memory128k ram;
-        private readonly MachineState machineState;
+        private readonly Computer computer;
 
         private readonly int page;
 
-        public HiresMemoryReader(Memory128k ram, MachineState machineState, int page)
+        public HiresMemoryReader(Computer computer, int page)
         {
-            this.ram = ram;
-            this.machineState = machineState;
+            this.computer = computer;
             this.page = page;
         }
 
@@ -43,7 +41,7 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             ArgumentNullException.ThrowIfNull(buffer);
 
-            var memory = ram.Read((byte)(page == 2 ? 0x40 : 0x20), 32);
+            var memory = computer.Memory.Read((byte)(page == 2 ? 0x40 : 0x20), 32);
 
             for (int y = 0; y < rows; y++)
             {

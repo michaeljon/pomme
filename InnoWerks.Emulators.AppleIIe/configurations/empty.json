@@ -1,14 +1,8 @@
 {
   "appleModel": "appleIIeEnhanced",
   "showInternals": true,
-  "noSlotClock": true,
   "breakpoints": [],
-  "slots": [
-    {
-      "deviceType": "mouse",
-      "slotNumber": 2
-    }
-  ],
+  "slots": [],
   "monochrome": false,
   "color": "white"
 }

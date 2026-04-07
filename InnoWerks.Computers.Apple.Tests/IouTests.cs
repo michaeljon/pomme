@@ -562,7 +562,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public void ReadRdVblBarReturns0x00WhenInVerticalBlank()
         {
             var (iou, _, _, bus) = CreateIou();
-            AdvanceCycles(bus, VideoTiming.VblStart);
+            AdvanceCycles(bus, Computer.VblStart);
             Assert.AreEqual((byte)0x00, DoRead(iou, SoftSwitchAddress.RDVBLBAR));
         }
 
@@ -570,7 +570,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public void ReadRdVblBarReturns0x80AfterVblEnds()
         {
             var (iou, _, _, bus) = CreateIou();
-            AdvanceCycles(bus, VideoTiming.FrameCycles + 1);
+            AdvanceCycles(bus, Computer.FrameCycles + 1);
             Assert.AreEqual((byte)0x80, DoRead(iou, SoftSwitchAddress.RDVBLBAR));
         }
     }

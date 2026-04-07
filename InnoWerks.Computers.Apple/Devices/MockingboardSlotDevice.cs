@@ -38,15 +38,12 @@ namespace InnoWerks.Computers.Apple
 
         public MockingboardSlotDevice(
             int slot,
-            ICpu cpu,
-            IAppleBus bus,
-            MachineState machineState)
-            : base(slot, "Mockingboard", cpu, bus, machineState)
+            Computer computer)
+            : base(slot, "Mockingboard", computer)
         {
-            ArgumentNullException.ThrowIfNull(cpu, nameof(cpu));
-            ArgumentNullException.ThrowIfNull(bus, nameof(bus));
+            ArgumentNullException.ThrowIfNull(computer, nameof(computer));
 
-            this.cpu = cpu;
+            this.cpu = computer.Processor;
 
             // wire up VIA port B writes to the PSGs
             via1.OnPortBWrite = (portB, portA) => psg1.SetBusControl(portB, portA);
@@ -55,8 +52,6 @@ namespace InnoWerks.Computers.Apple
             // wire up VIA IRQ lines to the CPU
             via1.OnIrqChanged = (active) => UpdateIrq();
             via2.OnIrqChanged = (active) => UpdateIrq();
-
-            bus.AddDevice(this);
         }
 
         public override bool HandlesRead(ushort address)

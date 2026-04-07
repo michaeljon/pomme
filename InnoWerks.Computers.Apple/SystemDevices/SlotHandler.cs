@@ -17,23 +17,22 @@ namespace InnoWerks.Computers.Apple
 
         private readonly MachineState machineState;
 
+        private readonly ISlotDevice[] slotDevices;
+
         public string Name => $"SlotHandler";
 
         public InterceptPriority InterceptPriority => InterceptPriority.SlotDevice;
 
         public bool ReportKeyboardLatchAll { get; set; } = true;
 
-        public ISlotDevice[] SlotDevices { get; } = new ISlotDevice[8];
-
-        public SlotHandler(Memory128k memoryBlocks, MachineState machineState, IAppleBus bus)
+        public SlotHandler(Computer computer)
         {
-            ArgumentNullException.ThrowIfNull(machineState, nameof(machineState));
-            ArgumentNullException.ThrowIfNull(memoryBlocks, nameof(memoryBlocks));
-            ArgumentNullException.ThrowIfNull(bus, nameof(bus));
+            ArgumentNullException.ThrowIfNull(computer, nameof(computer));
 
-            this.machineState = machineState;
-            this.memoryBlocks = memoryBlocks;
-            this.bus = bus;
+            this.machineState = computer.MachineState;
+            this.memoryBlocks = computer.Memory;
+            this.bus = computer.Bus;
+            this.slotDevices = computer.SlotDevices;
 
             AddressRanges =
             [
@@ -51,7 +50,7 @@ namespace InnoWerks.Computers.Apple
             if (address >= 0xC090 && address <= 0xC0FF)
             {
                 var slot = (address >> 4) & 7;
-                var slotDevice = SlotDevices[slot];
+                var slotDevice = slotDevices[slot];
 
                 if (slotDevice?.HandlesRead(address) == true)
                 {
@@ -72,7 +71,7 @@ namespace InnoWerks.Computers.Apple
 
                 if (machineState.State[SoftSwitch.IntCxRomEnabled] == false)
                 {
-                    var slotDevice = SlotDevices[slot];
+                    var slotDevice = slotDevices[slot];
 
                     if (slotDevice?.HandlesRead(address) == true)
                     {
@@ -88,7 +87,7 @@ namespace InnoWerks.Computers.Apple
                     var slot = machineState.CurrentSlot;
                     if (slot != 0)
                     {
-                        var slotDevice = SlotDevices[slot];
+                        var slotDevice = slotDevices[slot];
 
                         if (slotDevice?.HandlesRead(address) == true)
                         {
@@ -107,7 +106,7 @@ namespace InnoWerks.Computers.Apple
             if (address >= 0xC090 && address <= 0xC0FF)
             {
                 var slot = (address >> 4) & 7;
-                var slotDevice = SlotDevices[slot];
+                var slotDevice = slotDevices[slot];
 
                 if (slotDevice?.HandlesWrite(address) == true)
                 {
@@ -127,7 +126,7 @@ namespace InnoWerks.Computers.Apple
 
                 if (machineState.State[SoftSwitch.IntCxRomEnabled] == false)
                 {
-                    var slotDevice = SlotDevices[slot];
+                    var slotDevice = slotDevices[slot];
 
                     if (slotDevice?.HandlesWrite(address) == true)
                     {
@@ -143,7 +142,7 @@ namespace InnoWerks.Computers.Apple
                     var slot = machineState.CurrentSlot;
                     if (slot != 0)
                     {
-                        var slotDevice = SlotDevices[slot];
+                        var slotDevice = slotDevices[slot];
 
                         if (slotDevice?.HandlesWrite(address) == true)
                         {
@@ -161,37 +160,17 @@ namespace InnoWerks.Computers.Apple
 
         public void Tick()
         {
-            for (var slot = 0; slot < SlotDevices.Length; slot++)
+            for (var slot = 0; slot < slotDevices.Length; slot++)
             {
-                SlotDevices[slot]?.Tick();
+                slotDevices[slot]?.Tick();
             }
         }
 
         public void Reset()
         {
-            for (var slot = 0; slot < SlotDevices.Length; slot++)
+            for (var slot = 0; slot < slotDevices.Length; slot++)
             {
-                SlotDevices[slot]?.Reset();
-            }
-        }
-
-        public void FillEmptySlots(ICpu cpu)
-        {
-            ArgumentNullException.ThrowIfNull(cpu, nameof(cpu));
-
-            for (var i = 0; i < SlotDevices.Length; i++)
-            {
-                if (SlotDevices[i] == null)
-                {
-                    var emptySlotDevice = new EmptySlotDevice(i, cpu, bus, machineState);
-
-                    if (emptySlotDevice.Rom?.Length == MemoryPage.PageSize)
-                    {
-                        memoryBlocks.LoadSlotCxRom(emptySlotDevice.Slot, emptySlotDevice.Rom);
-                    }
-
-                    SlotDevices[i] = emptySlotDevice;
-                }
+                slotDevices[slot]?.Reset();
             }
         }
     }

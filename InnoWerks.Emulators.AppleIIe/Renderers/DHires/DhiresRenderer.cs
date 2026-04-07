@@ -1,9 +1,6 @@
-// #define MONOCHROME
-
 using System;
 using System.Diagnostics;
 using InnoWerks.Computers.Apple;
-using InnoWerks.Simulators;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -26,19 +23,16 @@ namespace InnoWerks.Emulators.AppleIIe
 
         public DhiresRenderer(
             GraphicsDevice graphicsDevice,
-            Cpu6502Core cpu,
-            IBus bus,
-            Memory128k memoryBlocks,
-            MachineState machineState,
+            Computer computer,
             int page,
             Color? monochromeColor = null)
-            : base(graphicsDevice, cpu, bus, memoryBlocks, machineState)
+            : base(graphicsDevice, computer)
         {
             this.page = page;
             this.monochromeColor = monochromeColor;
 
             dhiresBuffer = new DhiresBuffer();
-            dhiresMemoryReader = new(memoryBlocks, machineState, page);
+            dhiresMemoryReader = new(computer, page);
 
             monochromeBits = new bool[DisplayCharacteristics.AppleDisplayHeight][];
             for (int i = 0; i < DisplayCharacteristics.AppleDisplayHeight; i++)
@@ -100,19 +94,12 @@ namespace InnoWerks.Emulators.AppleIIe
 
                     int baseIndex = rowOffset + (x * 4);
 
-#if MONOCHROME
-                    screenPixels[baseIndex] = (p.Color & 0x01) != 0 ? DisplayCharacteristics.DHiresWhite : DisplayCharacteristics.DHiresBlack;
-                    screenPixels[baseIndex + 1] = (p.Color & 0x02) != 0 ? DisplayCharacteristics.DHiresWhite : DisplayCharacteristics.DHiresBlack;
-                    screenPixels[baseIndex + 2] = (p.Color & 0x04) != 0 ? DisplayCharacteristics.DHiresWhite : DisplayCharacteristics.DHiresBlack;
-                    screenPixels[baseIndex + 3] = (p.Color & 0x08) != 0 ? DisplayCharacteristics.DHiresWhite : DisplayCharacteristics.DHiresBlack;
-#else
                     var drawColor = DisplayCharacteristics.DHiresPalette[p.Color];
 
                     screenPixels[baseIndex] = drawColor;
                     screenPixels[baseIndex + 1] = drawColor;
                     screenPixels[baseIndex + 2] = drawColor;
                     screenPixels[baseIndex + 3] = drawColor;
-#endif
                 }
             }
         }

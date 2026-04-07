@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using InnoWerks.Computers.Apple;
-using InnoWerks.Simulators;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -35,21 +34,18 @@ namespace InnoWerks.Emulators.AppleIIe
 
         public TextModeRenderer(
             GraphicsDevice graphicsDevice,
-            Cpu6502Core cpu,
-            IBus bus,
-            Memory128k memoryBlocks,
-            MachineState machineState,
+            Computer computer,
             bool eightyColumnMode,
             int page,
             Color textColor)
-            : base(graphicsDevice, cpu, bus, memoryBlocks, machineState)
+            : base(graphicsDevice, computer)
         {
             this.eightyColumnMode = eightyColumnMode;
             this.page = page;
             this.textColor = textColor;
 
             LoadCharacterRom(graphicsDevice);
-            textMemoryReader = new(memoryBlocks, machineState, eightyColumnMode, page);
+            textMemoryReader = new(computer, eightyColumnMode, page);
         }
 
         public override ushort GetYOffsetAddress(int y)

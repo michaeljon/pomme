@@ -7,15 +7,13 @@ namespace InnoWerks.Emulators.AppleIIe
 {
     public sealed class DhiresMemoryReader
     {
-        private readonly Memory128k ram;
-        private readonly MachineState machineState;
+        private readonly Computer computer;
 
         private readonly int page;
 
-        public DhiresMemoryReader(Memory128k ram, MachineState machineState, int page)
+        public DhiresMemoryReader(Computer computer, int page)
         {
-            this.ram = ram;
-            this.machineState = machineState;
+            this.computer = computer;
             this.page = page;
         }
 
@@ -86,8 +84,8 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             ArgumentNullException.ThrowIfNull(bits);
 
-            var main = ram.GetMain((byte)(page == 2 ? 0x40 : 0x20), 32);
-            var aux = ram.GetAux((byte)(page == 2 ? 0x40 : 0x20), 32);
+            var main = computer.Memory.GetMain((byte)(page == 2 ? 0x40 : 0x20), 32);
+            var aux = computer.Memory.GetAux((byte)(page == 2 ? 0x40 : 0x20), 32);
 
             for (int y = 0; y < rows; y++)
             {
@@ -111,8 +109,8 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             ArgumentNullException.ThrowIfNull(buffer);
 
-            var main = ram.GetMain((byte)(page == 2 ? 0x40 : 0x20), 32);
-            var aux = ram.GetAux((byte)(page == 2 ? 0x40 : 0x20), 32);
+            var main = computer.Memory.GetMain((byte)(page == 2 ? 0x40 : 0x20), 32);
+            var aux = computer.Memory.GetAux((byte)(page == 2 ? 0x40 : 0x20), 32);
 
             for (int y = 0; y < rows; y++)
             {

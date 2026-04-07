@@ -7,8 +7,6 @@ namespace InnoWerks.Computers.Apple
 
     public sealed class EmptySlotDevice : ISlotDevice
     {
-        private readonly MachineState machineState;
-
         public int Slot { get; }
 
         public string Name { get; }
@@ -35,13 +33,8 @@ namespace InnoWerks.Computers.Apple
         public bool HandlesWrite(ushort address) =>
             address >= IoBaseAddressLo && address <= IoBaseAddressHi;
 
-        public EmptySlotDevice(int slot, ICpu cpu, IAppleBus bus, MachineState machineState)
+        public EmptySlotDevice(int slot)
         {
-            ArgumentNullException.ThrowIfNull(cpu, nameof(cpu));
-            ArgumentNullException.ThrowIfNull(bus, nameof(bus));
-            ArgumentNullException.ThrowIfNull(machineState, nameof(machineState));
-
-            this.machineState = machineState;
             Slot = slot;
             Name = $"Empty slot {slot} device";
 

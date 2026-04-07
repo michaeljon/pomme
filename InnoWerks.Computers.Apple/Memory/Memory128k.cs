@@ -287,7 +287,7 @@ namespace InnoWerks.Computers.Apple
             else
             {
                 // walk each slot and hook up its rom
-                for (var slot = 0; slot < 8; slot++)
+                for (var slot = 0; slot < loSlotRom.Length; slot++)
                 {
                     activeRead[0xC0 + slot] = loSlotRom[slot];
                 }

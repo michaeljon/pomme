@@ -7,16 +7,14 @@ namespace InnoWerks.Emulators.AppleIIe
 {
     public sealed class TextMemoryReader
     {
-        private readonly Memory128k ram;
-        private readonly MachineState machineState;
+        private readonly Computer computer;
 
         private readonly bool eightyColumnMode;
         private readonly int page;
 
-        public TextMemoryReader(Memory128k ram, MachineState machineState, bool eightyColumnMode, int page)
+        public TextMemoryReader(Computer computer, bool eightyColumnMode, int page)
         {
-            this.ram = ram;
-            this.machineState = machineState;
+            this.computer = computer;
             this.eightyColumnMode = eightyColumnMode;
             this.page = page;
         }
@@ -57,7 +55,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
         private void Read40Column(TextBuffer textBuffer, int start = 0, int count = 24)
         {
-            var memory = ram.Read((byte)(page == 2 ? 0x08 : 0x04), 4);
+            var memory = computer.Memory.Read((byte)(page == 2 ? 0x08 : 0x04), 4);
 
             for (var row = start; row < start + count; row++)
             {
@@ -72,8 +70,8 @@ namespace InnoWerks.Emulators.AppleIIe
 
         private void Read80Column(TextBuffer textBuffer, int start = 0, int count = 24)
         {
-            var main = ram.GetMain(0x04, 4);
-            var aux = ram.GetAux(0x04, 4);
+            var main = computer.Memory.GetMain(0x04, 4);
+            var aux = computer.Memory.GetAux(0x04, 4);
 
             for (var row = start; row < start + count; row++)
             {
@@ -133,7 +131,7 @@ namespace InnoWerks.Emulators.AppleIIe
             else if (value >= 0x40 && value <= 0x5F)
             {
                 // mouse text, remap to upper case
-                if (machineState.State[SoftSwitch.AltCharSet] == false)
+                if (computer.MachineState.State[SoftSwitch.AltCharSet] == false)
                 {
                     value &= 0xBF;
                     attr |= TextAttributes.Flash;

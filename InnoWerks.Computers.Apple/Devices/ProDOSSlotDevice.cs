@@ -124,13 +124,10 @@ namespace InnoWerks.Computers.Apple
         public ProDOSSlotDevice(
             int slot,
             bool asSmartport,
-            ICpu cpu,
-            IAppleBus bus,
-            MachineState machineState)
-            : base(slot, "ProDOS Controller", cpu, bus, machineState)
+            Computer computer)
+            : base(slot, "ProDOS Controller", computer)
         {
-            ArgumentNullException.ThrowIfNull(cpu, nameof(cpu));
-            ArgumentNullException.ThrowIfNull(bus, nameof(bus));
+            ArgumentNullException.ThrowIfNull(computer, nameof(computer));
 
             HasRom = true;
             Rom = new byte[MemoryPage.PageSize];
@@ -170,15 +167,13 @@ namespace InnoWerks.Computers.Apple
             // drive entry point
             Rom[0xFF] = EntryPoint;
 
-            bus.AddDevice(this);
-
             if (asSmartport)
             {
                 // cpu.AddIntercept(0xC000 + EntryPoint + 0x03 + slot * 0x100, HandleSmartportIntercept);
             }
             else
             {
-                cpu.AddIntercept(0xC000 + EntryPoint + slot * 0x100, HandleHardDiskIntercept);
+                computer.Processor.AddIntercept(0xC000 + EntryPoint + slot * 0x100, HandleHardDiskIntercept);
             }
         }
 

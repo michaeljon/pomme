@@ -73,34 +73,24 @@ namespace InnoWerks.Emulators.AppleIIe
 
         private Color textColor;
 
-        private readonly Cpu6502Core cpu;
-        private readonly IBus bus;
-        private readonly MachineState machineState;
+        private readonly Computer computer;
 
         private bool disposed;
 
         public DebugToolsRenderer(
             GraphicsDevice graphicsDevice,
-            Cpu6502Core cpu,
-            IBus bus,
-            Memory128k memoryBlocks,
-            MachineState machineState,
+            Computer computer,
 
             ContentManager contentManager,
             Color textColor
             )
         {
             ArgumentNullException.ThrowIfNull(graphicsDevice);
-            ArgumentNullException.ThrowIfNull(cpu);
-            ArgumentNullException.ThrowIfNull(bus);
-            ArgumentNullException.ThrowIfNull(memoryBlocks);
-            ArgumentNullException.ThrowIfNull(machineState);
+            ArgumentNullException.ThrowIfNull(computer);
 
             ArgumentNullException.ThrowIfNull(contentManager);
 
-            this.machineState = machineState;
-            this.cpu = cpu;
-            this.bus = bus;
+            this.computer = computer;
 
             this.textColor = textColor;
 
@@ -162,12 +152,12 @@ namespace InnoWerks.Emulators.AppleIIe
             int x = rectangle.X + 8;
             int y = rectangle.Y + 8;
 
-            DrawKeyValue(spriteBatch, $"PC:", $"{cpu.Registers.ProgramCounter:X4}", x, ref y);
-            DrawKeyValue(spriteBatch, $"A:", $"{cpu.Registers.A:X2}", x, ref y);
-            DrawKeyValue(spriteBatch, $"X:", $"{cpu.Registers.X:X2}", x, ref y);
-            DrawKeyValue(spriteBatch, $"Y:", $"{cpu.Registers.Y:X2}", x, ref y);
-            DrawKeyValue(spriteBatch, $"SP:", $"{cpu.Registers.StackPointer:X2}", x, ref y);
-            DrawKeyValue(spriteBatch, $"PS:", $"{cpu.Registers.InternalGetFlagsDisplay}", x, ref y);
+            DrawKeyValue(spriteBatch, $"PC:", $"{computer.Processor.Registers.ProgramCounter:X4}", x, ref y);
+            DrawKeyValue(spriteBatch, $"A:", $"{computer.Processor.Registers.A:X2}", x, ref y);
+            DrawKeyValue(spriteBatch, $"X:", $"{computer.Processor.Registers.X:X2}", x, ref y);
+            DrawKeyValue(spriteBatch, $"Y:", $"{computer.Processor.Registers.Y:X2}", x, ref y);
+            DrawKeyValue(spriteBatch, $"SP:", $"{computer.Processor.Registers.StackPointer:X2}", x, ref y);
+            DrawKeyValue(spriteBatch, $"PS:", $"{computer.Processor.Registers.InternalGetFlagsDisplay}", x, ref y);
         }
 
         private void DrawDebugSection(SpriteBatch spriteBatch, Rectangle rectangle, List<SoftSwitch> softSwitches)
@@ -179,7 +169,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
             foreach (var sw in softSwitches)
             {
-                DrawKeyValue(spriteBatch, $"{debugSwitchDisplay[sw]}:", $"{(machineState.State[sw] ? 1 : 0)}", x, ref y);
+                DrawKeyValue(spriteBatch, $"{debugSwitchDisplay[sw]}:", $"{(computer.MachineState.State[sw] ? 1 : 0)}", x, ref y);
             }
         }
 

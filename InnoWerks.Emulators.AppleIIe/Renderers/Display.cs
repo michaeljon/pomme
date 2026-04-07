@@ -20,10 +20,7 @@ namespace InnoWerks.Emulators.AppleIIe
         private Texture2D whitePixel;
         private RenderTarget2D appleTarget;
 
-        private readonly Cpu6502Core cpu;
-        private readonly IBus bus;
-        private readonly Memory128k memoryBlocks;
-        private readonly MachineState machineState;
+        private readonly Computer computer;
 
         private TextModeRenderer textPage1Renderer;
         private TextModeRenderer textPage2Renderer;
@@ -52,22 +49,13 @@ namespace InnoWerks.Emulators.AppleIIe
 
         public Display(
             GraphicsDevice graphicsDevice,
-            Cpu6502Core cpu,
-            IBus bus,
-            Memory128k memoryBlocks,
-            MachineState machineState)
+            Computer computer)
         {
             ArgumentNullException.ThrowIfNull(graphicsDevice);
-            ArgumentNullException.ThrowIfNull(cpu);
-            ArgumentNullException.ThrowIfNull(bus);
-            ArgumentNullException.ThrowIfNull(memoryBlocks);
-            ArgumentNullException.ThrowIfNull(machineState);
+            ArgumentNullException.ThrowIfNull(computer);
 
             this.graphicsDevice = graphicsDevice;
-            this.machineState = machineState;
-            this.cpu = cpu;
-            this.bus = bus;
-            this.memoryBlocks = memoryBlocks;
+            this.computer = computer;
         }
 
         public void LoadContent(Color? monochromeColor, ContentManager contentManager)
@@ -92,25 +80,25 @@ namespace InnoWerks.Emulators.AppleIIe
             whitePixel = new Texture2D(graphicsDevice, 1, 1);
             whitePixel.SetData([Color.White]);
 
-            textPage1Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, false, 1, textColor);
-            textPage2Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, false, 2, textColor);
-            loresPage1Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, false, 1, monochromeColor);
-            loresPage2Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, false, 2, monochromeColor);
-            hiresPage1Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, 1, monochromeColor);
-            hiresPage2Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, 2, monochromeColor);
+            textPage1Renderer = new(graphicsDevice, computer, false, 1, textColor);
+            textPage2Renderer = new(graphicsDevice, computer, false, 2, textColor);
+            loresPage1Renderer = new(graphicsDevice, computer, false, 1, monochromeColor);
+            loresPage2Renderer = new(graphicsDevice, computer, false, 2, monochromeColor);
+            hiresPage1Renderer = new(graphicsDevice, computer, 1, monochromeColor);
+            hiresPage2Renderer = new(graphicsDevice, computer, 2, monochromeColor);
 
-            text80Page1Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, true, 1, textColor);
-            text80Page2Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, true, 2, textColor);
-            dloresPage1Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, true, 1, monochromeColor);
-            dloresPage2Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, true, 2, monochromeColor);
-            dhiresPage1Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, 1, monochromeColor);
-            dhiresPage2Renderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, 2, monochromeColor);
+            text80Page1Renderer = new(graphicsDevice, computer, true, 1, textColor);
+            text80Page2Renderer = new(graphicsDevice, computer, true, 2, textColor);
+            dloresPage1Renderer = new(graphicsDevice, computer, true, 1, monochromeColor);
+            dloresPage2Renderer = new(graphicsDevice, computer, true, 2, monochromeColor);
+            dhiresPage1Renderer = new(graphicsDevice, computer, 1, monochromeColor);
+            dhiresPage2Renderer = new(graphicsDevice, computer, 2, monochromeColor);
 
             currentTextRenderer = textPage1Renderer;
             currentGraphicsRenderer = loresPage1Renderer;
 
             // debug stuff is always white
-            debugToolsRenderer = new(graphicsDevice, cpu, bus, memoryBlocks, machineState, contentManager, Color.White);
+            debugToolsRenderer = new(graphicsDevice, computer, contentManager, Color.White);
 
             toolbarRenderer = new ToolbarRenderer(graphicsDevice);
             toolbarRenderer.LoadContent(contentManager);
@@ -170,38 +158,38 @@ namespace InnoWerks.Emulators.AppleIIe
                 sortMode: SpriteSortMode.Deferred,
                 samplerState: SamplerState.PointClamp);
 
-            var page2 = machineState.State[SoftSwitch.Page2] == true && machineState.State[SoftSwitch.Store80] == false;
+            var page2 = computer.MachineState.State[SoftSwitch.Page2] == true && computer.MachineState.State[SoftSwitch.Store80] == false;
 
-            hiresMode = machineState.State[SoftSwitch.DoubleHiRes] == false;
-            dhiresMode = machineState.State[SoftSwitch.EightyColumnMode] == true &&
-                         machineState.State[SoftSwitch.DoubleHiRes] == true &&
-                         machineState.State[SoftSwitch.HiRes] == true;
+            hiresMode = computer.MachineState.State[SoftSwitch.DoubleHiRes] == false;
+            dhiresMode = computer.MachineState.State[SoftSwitch.EightyColumnMode] == true &&
+                         computer.MachineState.State[SoftSwitch.DoubleHiRes] == true &&
+                         computer.MachineState.State[SoftSwitch.HiRes] == true;
 
             currentTextRenderer
-                    = machineState.State[SoftSwitch.EightyColumnMode]
+                    = computer.MachineState.State[SoftSwitch.EightyColumnMode]
                             ? page2
                                     ? text80Page2Renderer : text80Page1Renderer
                             : page2
                                     ? textPage2Renderer : textPage1Renderer;
 
             currentGraphicsRenderer
-                    = machineState.State[SoftSwitch.EightyColumnMode] && machineState.State[SoftSwitch.DoubleHiRes]
-                            ? machineState.State[SoftSwitch.HiRes]
+                    = computer.MachineState.State[SoftSwitch.EightyColumnMode] && computer.MachineState.State[SoftSwitch.DoubleHiRes]
+                            ? computer.MachineState.State[SoftSwitch.HiRes]
                                     ? page2
                                             ? dhiresPage2Renderer : dhiresPage1Renderer
                                     : page2
                                             ? dloresPage2Renderer : dloresPage1Renderer
-                            : machineState.State[SoftSwitch.HiRes]
+                            : computer.MachineState.State[SoftSwitch.HiRes]
                                     ? page2
                                             ? hiresPage2Renderer : hiresPage1Renderer
                                     : page2
                                             ? loresPage2Renderer : loresPage1Renderer;
 
-            if (machineState.State[SoftSwitch.TextMode])
+            if (computer.MachineState.State[SoftSwitch.TextMode])
             {
                 currentTextRenderer.Draw(spriteBatch, new Rectangle(0, 0, 560, 192), 0, 192);
             }
-            else if (machineState.State[SoftSwitch.MixedMode])
+            else if (computer.MachineState.State[SoftSwitch.MixedMode])
             {
                 currentGraphicsRenderer.Draw(spriteBatch, new Rectangle(0, 0, 560, 192 - 4 * DisplayCharacteristics.AppleCellHeight), 0, 192 - 4 * DisplayCharacteristics.AppleCellHeight);
                 currentTextRenderer.Draw(spriteBatch, new Rectangle(0, 0, 560, 4 * DisplayCharacteristics.AppleCellHeight), 192 - 4 * DisplayCharacteristics.AppleCellHeight, 4 * DisplayCharacteristics.AppleCellHeight);

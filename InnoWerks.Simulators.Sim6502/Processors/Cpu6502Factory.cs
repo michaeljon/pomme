@@ -8,8 +8,8 @@ namespace InnoWerks.Simulators
         public static ICpu Construct(
             CpuClass cpuClass,
             IBus bus,
-            Action<ICpu, ushort> preExecutionCallback,
-            Action<ICpu> postExecutionCallback)
+            Action<ICpu, ushort> preExecutionCallback = null,
+            Action<ICpu> postExecutionCallback = null)
         {
             return cpuClass switch
             {
@@ -26,8 +26,8 @@ namespace InnoWerks.Simulators
         public static T Construct<T>(
             CpuClass cpuClass,
             IBus bus,
-            Action<ICpu, ushort> preExecutionCallback,
-            Action<ICpu> postExecutionCallback) where T : Cpu6502Core
+            Action<ICpu, ushort> preExecutionCallback = null,
+            Action<ICpu> postExecutionCallback = null) where T : Cpu6502Core
         {
             return cpuClass switch
             {

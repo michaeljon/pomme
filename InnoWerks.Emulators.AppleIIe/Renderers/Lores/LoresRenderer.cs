@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics;
 using InnoWerks.Computers.Apple;
-using InnoWerks.Simulators;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -21,22 +20,19 @@ namespace InnoWerks.Emulators.AppleIIe
 
         public LoresRenderer(
             GraphicsDevice graphicsDevice,
-            Cpu6502Core cpu,
-            IBus bus,
-            Memory128k memoryBlocks,
-            MachineState machineState,
+            Computer computer,
 
             bool eightyColumnMode,
             int page,
             Color? monochromeColor = null)
-            : base(graphicsDevice, cpu, bus, memoryBlocks, machineState)
+            : base(graphicsDevice, computer)
         {
             this.eightyColumnMode = eightyColumnMode;
             this.page = page;
             this.monochromeColor = monochromeColor;
 
             loresBuffer = new LoresBuffer(eightyColumnMode ? 80 : 40);
-            loresMemoryReader = new(memoryBlocks, machineState, eightyColumnMode, page);
+            loresMemoryReader = new(computer, eightyColumnMode, page);
         }
 
         public override ushort GetYOffsetAddress(int y)

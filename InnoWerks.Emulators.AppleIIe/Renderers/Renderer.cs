@@ -1,6 +1,5 @@
 using System;
 using InnoWerks.Computers.Apple;
-using InnoWerks.Simulators;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -15,9 +14,7 @@ namespace InnoWerks.Emulators.AppleIIe
         //
         protected Texture2D WhitePixel { get; init; }
 
-        protected Cpu6502Core Cpu { get; init; }
-        protected IBus Bus { get; init; }
-        protected MachineState MachineState { get; init; }
+        protected Computer Computer { get; init; }
 
         protected abstract void DoDispose(bool disposing);
 
@@ -33,21 +30,12 @@ namespace InnoWerks.Emulators.AppleIIe
 
         protected Renderer(
             GraphicsDevice graphicsDevice,
-            Cpu6502Core cpu,
-            IBus bus,
-            Memory128k memoryBlocks,
-            MachineState machineState
-        )
+            Computer computer)
         {
             ArgumentNullException.ThrowIfNull(graphicsDevice);
-            ArgumentNullException.ThrowIfNull(cpu);
-            ArgumentNullException.ThrowIfNull(bus);
-            ArgumentNullException.ThrowIfNull(memoryBlocks);
-            ArgumentNullException.ThrowIfNull(machineState);
+            ArgumentNullException.ThrowIfNull(computer);
 
-            MachineState = machineState;
-            Cpu = cpu;
-            Bus = bus;
+            Computer = computer;
 
             WhitePixel = new Texture2D(graphicsDevice, 1, 1);
             WhitePixel.SetData([Color.White]);

@@ -9,12 +9,11 @@ namespace InnoWerks.Emulators.AppleIIe
     {
         private readonly DynamicSoundEffectInstance instance;
 
-        private const double CyclesPerSecond = 1020484.0;
         private const int SampleRate = 44100;
 
         // Number of PSG clock ticks per audio sample
         // The AY-3-8910 on the Mockingboard is clocked at the Apple II system clock (1.0227 MHz)
-        private const double CyclesPerSample = CyclesPerSecond / SampleRate;
+        private const double CyclesPerSample = Computer.CyclesPerSecond / SampleRate;
 
         // We render one frame worth of audio at a time (e.g. 1/60th sec)
         private float[] floatBuffer = new float[2048];
@@ -55,7 +54,7 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             ArgumentNullException.ThrowIfNull(source);
 
-            double expectedTime = (double)totalSamplesGenerated * CyclesPerSecond / SampleRate;
+            double expectedTime = (double)totalSamplesGenerated * Computer.CyclesPerSecond / SampleRate;
             if (currentCpuCycle < expectedTime - 1000) // 1000 cycle tolerance
             {
                 totalSamplesGenerated = 0;
@@ -65,7 +64,7 @@ namespace InnoWerks.Emulators.AppleIIe
             }
 
             // 1. Calculate needed samples
-            double totalAudioSeconds = currentCpuCycle / CyclesPerSecond;
+            double totalAudioSeconds = currentCpuCycle / Computer.CyclesPerSecond;
             ulong targetSampleCount = (ulong)(totalAudioSeconds * SampleRate);
             ulong samplesToGenerate = targetSampleCount - totalSamplesGenerated;
 
@@ -91,8 +90,8 @@ namespace InnoWerks.Emulators.AppleIIe
                 ulong sampleIndex = totalSamplesGenerated + i + 1UL;
 
                 // High-Precision Timing
-                double sampleEndCycle = (sampleIndex * CyclesPerSecond) / SampleRate;
-                double sampleStartCycle = ((sampleIndex - 1) * CyclesPerSecond) / SampleRate;
+                double sampleEndCycle = (sampleIndex * Computer.CyclesPerSecond) / SampleRate;
+                double sampleStartCycle = ((sampleIndex - 1) * Computer.CyclesPerSecond) / SampleRate;
 
                 double currentCycle = sampleStartCycle;
                 float energySum = 0.0f;

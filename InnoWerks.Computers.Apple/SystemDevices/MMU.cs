@@ -96,8 +96,6 @@ namespace InnoWerks.Computers.Apple
                 new (handlesRead, MemoryAccessType.Read),
                 new (handlesWrite, MemoryAccessType.Write),
             ];
-
-            bus.AddDevice(this);
         }
 
         public IReadOnlyList<AddressRange> AddressRanges { get; init; }

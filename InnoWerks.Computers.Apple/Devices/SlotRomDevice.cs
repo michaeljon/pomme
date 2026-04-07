@@ -26,10 +26,6 @@ namespace InnoWerks.Computers.Apple
 
     public abstract class SlotRomDevice : ISlotDevice
     {
-        private readonly ICpu cpu;
-
-        private readonly IAppleBus bus;
-
         public const ushort IO_BASE_ADDR = 0xC080;
 
         public const ushort ROM_BASE_ADDR = 0xC000;
@@ -41,28 +37,25 @@ namespace InnoWerks.Computers.Apple
         public byte[] Rom { get; init; }
         public byte[] ExpansionRom { get; init; }
 
-        protected SlotRomDevice(int slot, string name, ICpu cpu, IAppleBus bus, MachineState machineState)
-            : this(slot, name, cpu, bus, machineState, null, null) { }
+        protected SlotRomDevice(int slot, string name, Computer computer)
+            : this(slot, name, computer, null, null) { }
 
-        protected SlotRomDevice(int slot, string name, ICpu cpu, IAppleBus bus, MachineState machineState, byte[] romImage)
-            : this(slot, name, cpu, bus, machineState, romImage, null) { }
+        protected SlotRomDevice(int slot, string name, Computer computer, byte[] romImage)
+            : this(slot, name, computer, romImage, null) { }
 
-        protected SlotRomDevice(int slot, string name, ICpu cpu, IAppleBus bus, MachineState machineState, byte[] cxRom, byte[] c8Rom)
+        protected SlotRomDevice(int slot, string name, Computer computer, byte[] cxRom, byte[] c8Rom)
         {
             ArgumentOutOfRangeException.ThrowIfGreaterThan(slot, 7, nameof(slot));
             ArgumentOutOfRangeException.ThrowIfLessThan(slot, 0, nameof(slot));
 
             ArgumentException.ThrowIfNullOrEmpty(name, nameof(name));
-            ArgumentNullException.ThrowIfNull(cpu, nameof(cpu));
-            ArgumentNullException.ThrowIfNull(bus, nameof(bus));
-            ArgumentNullException.ThrowIfNull(machineState, nameof(machineState));
+
+            ArgumentNullException.ThrowIfNull(computer, nameof(computer));
 
             Slot = slot;
             Name = name;
 
-            this.cpu = cpu;
-            this.bus = bus;
-            this.machineState = machineState;
+            machineState = computer.MachineState;
 
             if (cxRom != null)
             {
