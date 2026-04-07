@@ -50,14 +50,14 @@ namespace InnoWerks.Computers.Apple.Tests
         public int ResetCount { get; private set; }
         public int TickCount { get; private set; }
 
-        public StubSlotDevice(int slot, ICpu cpu, IAppleBus bus, MachineState state)
-            : base(slot, $"StubSlot{slot}", null) { }
+        public StubSlotDevice(int slot, Computer computer)
+            : base(slot, $"StubSlot{slot}", computer) { }
 
-        public StubSlotDevice(int slot, ICpu cpu, IAppleBus bus, MachineState state, byte[] cxRom)
-            : base(slot, $"StubSlot{slot}", null, cxRom) { }
+        public StubSlotDevice(int slot, Computer computer, byte[] cxRom)
+            : base(slot, $"StubSlot{slot}", computer, cxRom) { }
 
-        public StubSlotDevice(int slot, ICpu cpu, IAppleBus bus, MachineState state, byte[] cxRom, byte[] c8Rom)
-            : base(slot, $"StubSlot{slot}", null, cxRom, c8Rom) { }
+        public StubSlotDevice(int slot, Computer computer, byte[] cxRom, byte[] c8Rom)
+            : base(slot, $"StubSlot{slot}", computer, cxRom, c8Rom) { }
 
         public override bool HandlesRead(ushort address) => true;
         public override bool HandlesWrite(ushort address) => true;
@@ -96,25 +96,24 @@ namespace InnoWerks.Computers.Apple.Tests
     [TestClass]
     public class SlotRomDeviceTests
     {
+        private static Computer CreateComputer() =>
+            new(AppleModel.AppleIIeEnhanced, new byte[16 * 1024]);
+
         private static (StubSlotDevice Device, MachineState State) CreateForSlot(int slot)
         {
-            var state = new MachineState();
-            var cpu = new CpuTestDouble();
-            var bus = new AppleBusTestDouble();
-            var device = new StubSlotDevice(slot, cpu, bus, state);
-            return (device, state);
+            var computer = CreateComputer();
+            var device = new StubSlotDevice(slot, computer);
+            return (device, computer.MachineState);
         }
 
         private static (StubSlotDevice Device, MachineState State) CreateForSlot(
             int slot, byte[] cxRom, byte[] c8Rom = null)
         {
-            var state = new MachineState();
-            var cpu = new CpuTestDouble();
-            var bus = new AppleBusTestDouble();
+            var computer = CreateComputer();
             StubSlotDevice device = c8Rom != null
-                ? new StubSlotDevice(slot, cpu, bus, state, cxRom, c8Rom)
-                : new StubSlotDevice(slot, cpu, bus, state, cxRom);
-            return (device, state);
+                ? new StubSlotDevice(slot, computer, cxRom, c8Rom)
+                : new StubSlotDevice(slot, computer, cxRom);
+            return (device, computer.MachineState);
         }
 
         // ------------------------------------------------------------------ //
@@ -348,11 +347,9 @@ namespace InnoWerks.Computers.Apple.Tests
         [TestMethod]
         public void SlotGreaterThanSevenThrows()
         {
-            var state = new MachineState();
-            var cpu = new CpuTestDouble();
-            var bus = new AppleBusTestDouble();
+            var computer = CreateComputer();
             Assert.ThrowsException<ArgumentOutOfRangeException>(() =>
-                new StubSlotDevice(8, cpu, bus, state));
+                new StubSlotDevice(8, computer));
         }
 
         // ------------------------------------------------------------------ //

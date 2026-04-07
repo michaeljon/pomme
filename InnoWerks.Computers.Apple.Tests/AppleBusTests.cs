@@ -23,16 +23,12 @@ namespace InnoWerks.Computers.Apple.Tests
         }
 
         /// <summary>
-        /// Creates an AppleBus with MMU and IOU registered, which is the
-        /// standard Apple IIe configuration used for routing tests.
+        /// Creates a Computer (which owns bus, MMU, IOU, etc.) for integration tests.
         /// </summary>
-        private static (AppleBus Bus, Memory128k Memory, MachineState State) CreateWithDevices()
+        private static (Computer Computer, AppleBus Bus, MachineState State) CreateWithDevices()
         {
-            var (memory, state) = Memory128kFactory.CreateDefault();
-            var bus = new AppleBus(memory, []);
-            _ = new MMU(memory, state, bus);
-            _ = new IOU(memory, state, bus);
-            return (bus, memory, state);
+            var computer = new Computer(AppleModel.AppleIIeEnhanced, new byte[16 * 1024]);
+            return (computer, (AppleBus)computer.Bus, computer.MachineState);
         }
 
         // ------------------------------------------------------------------ //
@@ -128,20 +124,20 @@ namespace InnoWerks.Computers.Apple.Tests
         [TestMethod]
         public void ResetZeroesCycleCount()
         {
-            var (bus, _, _) = CreateWithDevices();
+            var (computer, bus, _) = CreateWithDevices();
             bus.Read(0x0100);
-            bus.Reset();
+            computer.Reset();
             Assert.AreEqual(0UL, bus.CycleCount);
         }
 
         [TestMethod]
         public void ResetClearsAllSoftSwitchStates()
         {
-            var (bus, _, state) = CreateWithDevices();
+            var (computer, bus, state) = CreateWithDevices();
             state.State[SoftSwitch.AuxRead] = true;
             state.State[SoftSwitch.AuxWrite] = true;
             state.State[SoftSwitch.ZpAux] = true;
-            bus.Reset();
+            computer.Reset();
             // All switches are forced to false, then device resets re-apply their defaults
             Assert.IsFalse(state.State[SoftSwitch.AuxRead]);
             Assert.IsFalse(state.State[SoftSwitch.AuxWrite]);
@@ -151,9 +147,9 @@ namespace InnoWerks.Computers.Apple.Tests
         [TestMethod]
         public void ResetAppliesIouDefaults()
         {
-            var (bus, _, state) = CreateWithDevices();
+            var (computer, bus, state) = CreateWithDevices();
             state.State[SoftSwitch.TextMode] = false;
-            bus.Reset();
+            computer.Reset();
             // IOU.Reset() sets TextMode=true and IOUDisabled=true
             Assert.IsTrue(state.State[SoftSwitch.TextMode]);
             Assert.IsTrue(state.State[SoftSwitch.IOUDisabled]);
@@ -162,9 +158,9 @@ namespace InnoWerks.Computers.Apple.Tests
         [TestMethod]
         public void ResetAppliesMmuDefaults()
         {
-            var (bus, _, state) = CreateWithDevices();
+            var (computer, bus, state) = CreateWithDevices();
             state.State[SoftSwitch.LcBank2] = false;
-            bus.Reset();
+            computer.Reset();
             // MMU.Reset() sets LcBank2=true
             Assert.IsTrue(state.State[SoftSwitch.LcBank2]);
         }
@@ -184,7 +180,7 @@ namespace InnoWerks.Computers.Apple.Tests
         [TestMethod]
         public void PeekAndPokeDoNotTriggerSoftSwitches()
         {
-            var (bus, _, state) = CreateWithDevices();
+            var (computer, bus, state) = CreateWithDevices();
             // Poke to $C051 (TXTSET) — if bus processed it as a soft-switch it
             // would set TextMode=true. Peek/Poke bypass devices entirely.
             state.State[SoftSwitch.TextMode] = false;
@@ -223,7 +219,7 @@ namespace InnoWerks.Computers.Apple.Tests
         [TestMethod]
         public void ReadC015RoutesThroughMmuReturnsIntCxRomStatus()
         {
-            var (bus, _, state) = CreateWithDevices();
+            var (computer, bus, state) = CreateWithDevices();
             state.State[SoftSwitch.IntCxRomEnabled] = false;
             Assert.AreEqual((byte)0x00, bus.Read(SoftSwitchAddress.RDCXROM));
         }
@@ -231,7 +227,7 @@ namespace InnoWerks.Computers.Apple.Tests
         [TestMethod]
         public void ReadC015ReturnsHighWhenIntCxRomEnabled()
         {
-            var (bus, _, state) = CreateWithDevices();
+            var (computer, bus, state) = CreateWithDevices();
             state.State[SoftSwitch.IntCxRomEnabled] = true;
             Assert.AreEqual((byte)0x80, bus.Read(SoftSwitchAddress.RDCXROM));
         }
@@ -239,7 +235,7 @@ namespace InnoWerks.Computers.Apple.Tests
         [TestMethod]
         public void ReadC050RoutesThroughIouClearingTextMode()
         {
-            var (bus, _, state) = CreateWithDevices();
+            var (computer, bus, state) = CreateWithDevices();
             state.State[SoftSwitch.TextMode] = true;
             bus.Read(SoftSwitchAddress.TXTCLR);
             Assert.IsFalse(state.State[SoftSwitch.TextMode]);
@@ -248,7 +244,7 @@ namespace InnoWerks.Computers.Apple.Tests
         [TestMethod]
         public void ReadC01ASoftSwitchReturnsTextModeStatus()
         {
-            var (bus, _, state) = CreateWithDevices();
+            var (computer, bus, state) = CreateWithDevices();
             state.State[SoftSwitch.TextMode] = true;
             Assert.AreEqual((byte)0x80, bus.Read(SoftSwitchAddress.RDTEXT));
         }
@@ -271,7 +267,7 @@ namespace InnoWerks.Computers.Apple.Tests
         [TestMethod]
         public void WriteC001RoutesThroughMmuSetsStore80()
         {
-            var (bus, _, state) = CreateWithDevices();
+            var (computer, bus, state) = CreateWithDevices();
             bus.Write(SoftSwitchAddress.SET80STORE, 0);
             Assert.IsTrue(state.State[SoftSwitch.Store80]);
         }
@@ -279,7 +275,7 @@ namespace InnoWerks.Computers.Apple.Tests
         [TestMethod]
         public void WriteC051RoutesThroughIouSetsTextMode()
         {
-            var (bus, _, state) = CreateWithDevices();
+            var (computer, bus, state) = CreateWithDevices();
             state.State[SoftSwitch.TextMode] = false;
             bus.Write(SoftSwitchAddress.TXTSET, 0);
             Assert.IsTrue(state.State[SoftSwitch.TextMode]);
@@ -304,19 +300,19 @@ namespace InnoWerks.Computers.Apple.Tests
         [TestMethod]
         public void LoadProgramToRomIsReadableAtEFRange()
         {
-            var (bus, _, _) = CreateBare();
+            var (bus, memory, _) = CreateBare();
             var rom = new byte[16 * 1024];
             rom[8 * 1024] = 0xFE; // intEFRom[0] → $E000
-            bus.LoadProgramToRom(rom);
+            memory.LoadProgramToRom(rom);
             Assert.AreEqual((byte)0xFE, bus.Read(0xE000));
         }
 
         [TestMethod]
         public void LoadProgramToRamIsReadableViaRead()
         {
-            var (bus, _, _) = CreateBare();
+            var (bus, memory, _) = CreateBare();
             var program = new byte[] { 0xEA, 0x60 };
-            bus.LoadProgramToRam(program, 0x0300);
+            memory.LoadProgramToRam(program, 0x0300);
             Assert.AreEqual((byte)0xEA, bus.Read(0x0300));
             Assert.AreEqual((byte)0x60, bus.Read(0x0301));
         }
@@ -326,14 +322,11 @@ namespace InnoWerks.Computers.Apple.Tests
         // ------------------------------------------------------------------ //
 
         [TestMethod]
-        public void AddSoftSwitchDeviceCallsResetOnDevice()
+        public void ComputerConstructorResetsDevices()
         {
-            // MMU.Reset sets LcBank2=true; verify it was called on AddDevice
-            var (memory, state) = Memory128kFactory.CreateDefault();
-            state.State[SoftSwitch.LcBank2] = false;
-            var bus = new AppleBus(memory, []);
-            _ = new MMU(memory, state, bus); // constructor calls bus.AddDevice(this)
-            Assert.IsTrue(state.State[SoftSwitch.LcBank2]);
+            // Computer construction creates MMU, whose Reset sets LcBank2=true
+            var computer = new Computer(AppleModel.AppleIIeEnhanced, new byte[16 * 1024]);
+            Assert.IsTrue(computer.MachineState.State[SoftSwitch.LcBank2]);
         }
     }
 }

@@ -69,7 +69,7 @@ namespace InnoWerks.Computers.Apple
             MMU = new MMU(Memory, MachineState, Bus);
             IntC8Handler = new IntC8Handler(Memory, MachineState, Bus);
             KeylatchHandler = new KeylatchHandler(Memory, MachineState, Bus);
-            SlotHandler = new SlotHandler(this);
+            SlotHandler = new SlotHandler(Memory, MachineState, Bus, SlotDevices);
 
             AddDevice(IOU);
             AddDevice(MMU);

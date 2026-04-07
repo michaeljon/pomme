@@ -14,7 +14,7 @@ namespace InnoWerks.Computers.Apple
 
         private readonly MachineState machineState;
 
-        public string Name => $"DummyIoHandler";
+        public string Name => "KeylatchHandler";
 
         public InterceptPriority InterceptPriority => InterceptPriority.SoftSwitch;
 

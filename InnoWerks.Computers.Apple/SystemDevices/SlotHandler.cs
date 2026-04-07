@@ -25,14 +25,17 @@ namespace InnoWerks.Computers.Apple
 
         public bool ReportKeyboardLatchAll { get; set; } = true;
 
-        public SlotHandler(Computer computer)
+        public SlotHandler(Memory128k memoryBlocks, MachineState machineState, IAppleBus bus, ISlotDevice[] slotDevices)
         {
-            ArgumentNullException.ThrowIfNull(computer, nameof(computer));
+            ArgumentNullException.ThrowIfNull(memoryBlocks, nameof(memoryBlocks));
+            ArgumentNullException.ThrowIfNull(machineState, nameof(machineState));
+            ArgumentNullException.ThrowIfNull(bus, nameof(bus));
+            ArgumentNullException.ThrowIfNull(slotDevices, nameof(slotDevices));
 
-            this.machineState = computer.MachineState;
-            this.memoryBlocks = computer.Memory;
-            this.bus = computer.Bus;
-            this.slotDevices = computer.SlotDevices;
+            this.machineState = machineState;
+            this.memoryBlocks = memoryBlocks;
+            this.bus = bus;
+            this.slotDevices = slotDevices;
 
             AddressRanges =
             [
