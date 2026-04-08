@@ -13,9 +13,9 @@ namespace InnoWerks.Simulators.Tests
     {
         public TestContext TestContext { get; set; }
 
-        protected static void DummyLoggerCallback(ICpu _1, IBus _2, int _3 = 0) { }
+        protected static void DummyLoggerCallback(I6502Cpu _1, IBus _2, int _3 = 0) { }
 
-        protected static void FlagsLoggerCallback(ICpu cpu, IBus memory, int lines = 0)
+        protected static void FlagsLoggerCallback(I6502Cpu cpu, IBus memory, int lines = 0)
         {
             ArgumentNullException.ThrowIfNull(cpu);
             ArgumentNullException.ThrowIfNull(memory);
@@ -26,7 +26,7 @@ namespace InnoWerks.Simulators.Tests
             PrintMemoryLines(memory, lines);
         }
 
-        protected static void LoggerCallback(ICpu cpu, IBus memory, int lines = 1)
+        protected static void LoggerCallback(I6502Cpu cpu, IBus memory, int lines = 1)
         {
             ArgumentNullException.ThrowIfNull(cpu);
             ArgumentNullException.ThrowIfNull(memory);
@@ -34,9 +34,9 @@ namespace InnoWerks.Simulators.Tests
             PrintMemoryLines(memory, lines);
         }
 
-        protected static void DummyTraceCallback(ICpu _1, ushort _2, IBus _3, Dictionary<ushort, LineInformation> _4 = null) { }
+        protected static void DummyTraceCallback(I6502Cpu _1, ushort _2, IBus _3, Dictionary<ushort, LineInformation> _4 = null) { }
 
-        protected static void FlagsTraceCallback(ICpu cpu, ushort _1, IBus memory, Dictionary<ushort, LineInformation> _2 = null)
+        protected static void FlagsTraceCallback(I6502Cpu cpu, ushort _1, IBus memory, Dictionary<ushort, LineInformation> _2 = null)
         {
             ArgumentNullException.ThrowIfNull(cpu);
             ArgumentNullException.ThrowIfNull(memory);
@@ -44,7 +44,7 @@ namespace InnoWerks.Simulators.Tests
             Console.WriteLine($"\tPC:{cpu.Registers.ProgramCounter:X4} {cpu.Registers.GetRegisterDisplay} {cpu.Registers.InternalGetFlagsDisplay}");
         }
 
-        protected static void TraceCallback(ICpu cpu, ushort programCounter, IBus memory, Dictionary<ushort, LineInformation> code)
+        protected static void TraceCallback(I6502Cpu cpu, ushort programCounter, IBus memory, Dictionary<ushort, LineInformation> code)
         {
             ArgumentNullException.ThrowIfNull(cpu);
             ArgumentNullException.ThrowIfNull(memory);
@@ -62,7 +62,7 @@ namespace InnoWerks.Simulators.Tests
             }
         }
 
-        protected ICpu RunTinyTest(IBus bus, Dictionary<ushort, LineInformation> code, CpuClass cpuClass, int lines = 1)
+        protected I6502Cpu RunTinyTest(IBus bus, Dictionary<ushort, LineInformation> code, CpuClass cpuClass, int lines = 1)
         {
             ArgumentNullException.ThrowIfNull(bus);
 
@@ -95,14 +95,12 @@ namespace InnoWerks.Simulators.Tests
             return cpu;
         }
 
-        protected (int intructionCount, int cycleCount) RunCpu(ICpu cpu, IBus bus)
+        protected (int intructionCount, ulong cycleCount) RunCpu(I6502Cpu cpu, IBus bus)
         {
             ArgumentNullException.ThrowIfNull(cpu);
             ArgumentNullException.ThrowIfNull(bus);
 
             var instructionCount = 0;
-
-            bus.BeginTransaction();
 
             while (true)
             {
@@ -117,7 +115,7 @@ namespace InnoWerks.Simulators.Tests
                 cpu.Step();
             }
 
-            return (instructionCount, bus.EndTransaction());
+            return (instructionCount, bus.CycleCount);
         }
 
         protected void PrintPage(IBus bus, byte page)

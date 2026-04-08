@@ -10,16 +10,16 @@ namespace InnoWerks.Computers.Apple.Tests
     // ------------------------------------------------------------------ //
 
     /// <summary>
-    /// Minimal ICpu test double — not used by SlotRomDevice beyond storage.
+    /// Minimal I6502Cpu test double — not used by SlotRomDevice beyond storage.
     /// </summary>
-    internal sealed class CpuTestDouble : ICpu
+    internal sealed class CpuTestDouble : I6502Cpu
     {
         public CpuClass CpuClass => CpuClass.WDC65C02;
         public Registers Registers { get; } = new Registers();
         public void Reset() { }
         public int Step(bool returnPriorToBreak = false) => 0;
         public CpuTraceEntry PeekInstruction() => default;
-        public void AddIntercept(ushort address, Func<ICpu, IBus, bool> handler) { }
+        public void AddIntercept(ushort address, Func<I6502Cpu, IBus, bool> handler) { }
         public void ClearIntercept(ushort address) { }
         public void ClearIntercepts() { }
         public void StackPush(byte b) { }

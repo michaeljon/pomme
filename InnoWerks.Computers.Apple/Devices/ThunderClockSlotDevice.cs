@@ -38,7 +38,7 @@ namespace InnoWerks.Computers.Apple
         private int timerRate;
         private int ticks;
 
-        private readonly ICpu cpu;
+        private readonly I6502Cpu cpu;
         private readonly IAppleBus bus;
 
         private readonly Stack<bool> bitBuffer = new();

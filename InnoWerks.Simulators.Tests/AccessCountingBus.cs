@@ -33,7 +33,7 @@ namespace InnoWerks.Simulators.Tests
 
         public ulong CycleCount { get; private set; }
 
-        public void SetCpu(ICpu cpu) { /* this is a no-op for the debug bus */ }
+        public void SetCpu(I6502Cpu cpu) { /* this is a no-op for the debug bus */ }
 
         public byte Peek(ushort address)
         {

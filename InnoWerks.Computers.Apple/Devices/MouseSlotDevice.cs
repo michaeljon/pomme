@@ -75,7 +75,7 @@ namespace InnoWerks.Computers.Apple
         {
             ArgumentNullException.ThrowIfNull(computer, nameof(computer));
 
-            var initializers = new List<(byte vector, Func<ICpu, IBus, bool> handler)>
+            var initializers = new List<(byte vector, Func<I6502Cpu, IBus, bool> handler)>
             {
                 (SetMouseVector, HandleSetMouse),
                 (ServeMouseVector, HandleServeMouse),
@@ -159,7 +159,7 @@ namespace InnoWerks.Computers.Apple
 
         // --- Firmware intercept handlers ---
 
-        private bool HandleInitMouse(ICpu cpu, IBus bus)
+        private bool HandleInitMouse(I6502Cpu cpu, IBus bus)
         {
             // verify that X and Y are correct on input
             if (cpu.Registers.X != 0xC0 + Slot || cpu.Registers.Y != (byte)(Slot << 4))
@@ -180,7 +180,7 @@ namespace InnoWerks.Computers.Apple
             return true;
         }
 
-        private bool HandleSetMouse(ICpu cpu, IBus bus)
+        private bool HandleSetMouse(I6502Cpu cpu, IBus bus)
         {
             // verify that X and Y are correct on input
             if (cpu.Registers.X != 0xC0 + Slot || cpu.Registers.Y != (byte)(Slot << 4))
@@ -201,7 +201,7 @@ namespace InnoWerks.Computers.Apple
             return true;
         }
 
-        private bool HandleReadMouse(ICpu cpu, IBus bus)
+        private bool HandleReadMouse(I6502Cpu cpu, IBus bus)
         {
             // verify that X and Y are correct on input
             if (cpu.Registers.X != 0xC0 + Slot || cpu.Registers.Y != (byte)(Slot << 4))
@@ -218,7 +218,7 @@ namespace InnoWerks.Computers.Apple
             return true;
         }
 
-        private bool HandleClearMouse(ICpu cpu, IBus bus)
+        private bool HandleClearMouse(I6502Cpu cpu, IBus bus)
         {
             // verify that X and Y are correct on input
             if (cpu.Registers.X != 0xC0 + Slot || cpu.Registers.Y != (byte)(Slot << 4))
@@ -238,7 +238,7 @@ namespace InnoWerks.Computers.Apple
             return true;
         }
 
-        private bool HandleHomeMouse(ICpu cpu, IBus bus)
+        private bool HandleHomeMouse(I6502Cpu cpu, IBus bus)
         {
             // verify that X and Y are correct on input
             if (cpu.Registers.X != 0xC0 + Slot || cpu.Registers.Y != (byte)(Slot << 4))
@@ -254,14 +254,14 @@ namespace InnoWerks.Computers.Apple
             return true;
         }
 
-        private bool HandlePosMouse(ICpu cpu, IBus bus)
+        private bool HandlePosMouse(I6502Cpu cpu, IBus bus)
         {
             // what do we do for this? can't bounce the mouse around
             cpu.Registers.Carry = false;
             return true;
         }
 
-        private bool HandleGetClamp(ICpu cpu, IBus bus)
+        private bool HandleGetClamp(I6502Cpu cpu, IBus bus)
         {
             var reg = bus.Peek(0x0478);
             var val = (reg - 0x47) switch
@@ -285,7 +285,7 @@ namespace InnoWerks.Computers.Apple
             return true;
         }
 
-        private bool HandleClampMouse(ICpu cpu, IBus bus)
+        private bool HandleClampMouse(I6502Cpu cpu, IBus bus)
         {
             // verify that X and Y are correct on input
             if (cpu.Registers.X != 0xC0 + Slot || cpu.Registers.Y != (byte)(Slot << 4))
@@ -320,7 +320,7 @@ namespace InnoWerks.Computers.Apple
             return true;
         }
 
-        private bool HandleServeMouse(ICpu cpu, IBus bus)
+        private bool HandleServeMouse(I6502Cpu cpu, IBus bus)
         {
             // this one DOES NOT check X and Y because it's called via interrupt
             MouseStatusFlags status = MouseStatusFlags.Reserved0;

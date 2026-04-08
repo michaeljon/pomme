@@ -16,11 +16,12 @@ The ROM uses a vector table (offsets $12–$1A) pointing to intercept handler of
 
 ## Intercept Handler Convention
 
-Handlers are `Func<ICpu, IBus, bool>`. Returning `true` causes the CPU to automatically perform RTS (pop return address, resume caller). Returning `false` falls through. This is the same model used by ProDOS block device. No handler should call `((Cpu6502Core)cpu).RTS(0, 0)` — that was the old model.
+Handlers are `Func<I6502Cpu, IBus, bool>`. Returning `true` causes the CPU to automatically perform RTS (pop return address, resume caller). Returning `false` falls through. This is the same model used by ProDOS block device. No handler should call `((Cpu6502Core)cpu).RTS(0, 0)` — that was the old model.
 
 ## Correct Screen Holes (per Apple Mouse User's Manual)
 
 For slot n:
+
 - $0478+n = MOUX1 (X lo)
 - $04F8+n = MOUY1 (Y lo)
 - $0578+n = MOUX2 (X hi)

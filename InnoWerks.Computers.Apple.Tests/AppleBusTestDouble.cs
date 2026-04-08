@@ -28,7 +28,7 @@ namespace InnoWerks.Computers.Apple.Tests
 
         public void AddDevice(IAddressInterceptDevice interceptDevice) { }
 
-        public void SetCpu(ICpu cpu) { }
+        public void SetCpu(I6502Cpu cpu) { }
 
         // ------------------------------------------------------------------ //
         // IBus — cycle / transaction tracking

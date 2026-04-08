@@ -177,7 +177,7 @@ namespace InnoWerks.Computers.Apple
             }
         }
 
-        private bool HandleHardDiskIntercept(ICpu cpu, IBus bus)
+        private bool HandleHardDiskIntercept(I6502Cpu cpu, IBus bus)
         {
             // assume we're good
             cpu.Registers.A = (byte)HarddiskErrors.Success;

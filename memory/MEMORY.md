@@ -55,7 +55,7 @@
 
 ## CPU Intercept Model
 
-- Handlers are `Func<ICpu, IBus, bool>` — return true for auto-RTS, false to fall through
+- Handlers are `Func<I6502Cpu, IBus, bool>` — return true for auto-RTS, false to fall through
 - See [feedback_intercept_model.md](feedback_intercept_model.md) for full details
 
 ## Mouse Interface Card

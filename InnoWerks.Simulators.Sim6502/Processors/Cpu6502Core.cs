@@ -14,7 +14,7 @@ namespace InnoWerks.Simulators
 {
 #pragma warning disable CA1819 // Properties should not return arrays
 
-    public abstract class Cpu6502Core : ICpu
+    public abstract class Cpu6502Core : I6502Cpu
     {
         // IRQ, reset, NMI vectors
         public const ushort IrqVectorH = 0xFFFF;
@@ -36,13 +36,13 @@ namespace InnoWerks.Simulators
 
         protected IBus bus { get; init; }
 
-        protected Action<ICpu, ushort> preExecutionCallback { get; init; }
+        protected Action<I6502Cpu, ushort> preExecutionCallback { get; init; }
 
-        protected Action<ICpu> postExecutionCallback { get; init; }
+        protected Action<I6502Cpu> postExecutionCallback { get; init; }
 
         protected bool illegalInstructionEncountered { get; set; }
 
-        protected Dictionary<ushort, Func<ICpu, IBus, bool>> intercepts { get; } = [];
+        protected Dictionary<ushort, Func<I6502Cpu, IBus, bool>> intercepts { get; } = [];
 
         private bool irqPending;
 
@@ -53,8 +53,8 @@ namespace InnoWerks.Simulators
         private bool stopped;
 
         protected Cpu6502Core(IBus bus,
-                                     Action<ICpu, ushort> preExecutionCallback,
-                                     Action<ICpu> postExecutionCallback)
+                                     Action<I6502Cpu, ushort> preExecutionCallback,
+                                     Action<I6502Cpu> postExecutionCallback)
         {
             this.bus = bus;
 
@@ -218,7 +218,7 @@ namespace InnoWerks.Simulators
             return new CpuTraceEntry(Registers.ProgramCounter, bus, bus.CycleCount, opCodeDefinition);
         }
 
-        public void AddIntercept(ushort address, Func<ICpu, IBus, bool> handler)
+        public void AddIntercept(ushort address, Func<I6502Cpu, IBus, bool> handler)
         {
             if (intercepts.ContainsKey(address))
             {

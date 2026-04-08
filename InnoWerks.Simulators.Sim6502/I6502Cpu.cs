@@ -10,7 +10,7 @@ using InnoWerks.Processors;
 
 namespace InnoWerks.Simulators
 {
-    public interface ICpu
+    public interface I6502Cpu
     {
         /// <summary>
         /// Describes the type of CPU: 6502, WDC 65C02, Synertek 65SC02, etc
@@ -58,15 +58,15 @@ namespace InnoWerks.Simulators
         /// </summary>
         /// <param name="address">Address that results in call</param>
         /// <param name="handler">Handler function for the intercept</param>
-        void AddIntercept(ushort address, Func<ICpu, IBus, bool> handler);
+        void AddIntercept(ushort address, Func<I6502Cpu, IBus, bool> handler);
 
-        void AddIntercept(int address, Func<ICpu, IBus, bool> handler) => AddIntercept((ushort)address, handler);
+        void AddIntercept(int address, Func<I6502Cpu, IBus, bool> handler) => AddIntercept((ushort)address, handler);
 
-        void AddIntercept(uint address, Func<ICpu, IBus, bool> handler) => AddIntercept((ushort)address, handler);
+        void AddIntercept(uint address, Func<I6502Cpu, IBus, bool> handler) => AddIntercept((ushort)address, handler);
 
-        void AddIntercept(long address, Func<ICpu, IBus, bool> handler) => AddIntercept((ushort)address, handler);
+        void AddIntercept(long address, Func<I6502Cpu, IBus, bool> handler) => AddIntercept((ushort)address, handler);
 
-        void AddIntercept(ulong address, Func<ICpu, IBus, bool> handler) => AddIntercept((ushort)address, handler);
+        void AddIntercept(ulong address, Func<I6502Cpu, IBus, bool> handler) => AddIntercept((ushort)address, handler);
 
         void ClearIntercept(ushort address);
 

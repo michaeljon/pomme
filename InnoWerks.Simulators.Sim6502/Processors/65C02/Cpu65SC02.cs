@@ -17,8 +17,8 @@ namespace InnoWerks.Simulators
         private readonly OpCodeDefinition[] instructionSet;
 
         public Cpu65SC02(IBus bus,
-                        Action<ICpu, ushort> preExecutionCallback,
-                        Action<ICpu> postExecutionCallback)
+                        Action<I6502Cpu, ushort> preExecutionCallback,
+                        Action<I6502Cpu> postExecutionCallback)
             : base(bus, preExecutionCallback, postExecutionCallback)
         {
             ArgumentNullException.ThrowIfNull(bus, nameof(bus));

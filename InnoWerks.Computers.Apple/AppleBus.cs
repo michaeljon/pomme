@@ -69,7 +69,7 @@ namespace InnoWerks.Computers.Apple
 
         public ulong CycleCount { get; private set; }
 
-        public void SetCpu(ICpu cpu)
+        public void SetCpu(I6502Cpu cpu)
         {
             ArgumentNullException.ThrowIfNull(cpu, nameof(cpu));
         }

@@ -43,7 +43,7 @@ namespace InnoWerks.Simulators.Tests
             return bus;
         }
 
-        private static ICpu CreateCpu(AccessCountingBus bus, CpuClass cpuClass)
+        private static I6502Cpu CreateCpu(AccessCountingBus bus, CpuClass cpuClass)
         {
             var cpu = Cpu6502Factory.Construct(
                 cpuClass, bus, null, null

@@ -34,7 +34,7 @@ namespace InnoWerks.Computers.Apple
         private readonly AY38910 psg1 = new();
         private readonly AY38910 psg2 = new();
 
-        private readonly ICpu cpu;
+        private readonly I6502Cpu cpu;
 
         public MockingboardSlotDevice(
             int slot,

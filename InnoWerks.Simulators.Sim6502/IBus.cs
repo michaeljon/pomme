@@ -25,7 +25,7 @@ namespace InnoWerks.Simulators
         /// </summary>
         ulong CycleCount { get; }
 
-        void SetCpu(ICpu cpu);
+        void SetCpu(I6502Cpu cpu);
 
         /// <summary>
         /// Allows for a non-cycle impacting read on the bus. This is

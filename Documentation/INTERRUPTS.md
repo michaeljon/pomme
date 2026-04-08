@@ -12,7 +12,7 @@ each is modeled in the emulator, the precise stack frame laid down on entry, and
 
 | File | Purpose |
 |------|---------|
-| `InnoWerks.Simulators.Sim6502/ICpu.cs` | `InjectInterrupt(bool nmi)` public API |
+| `InnoWerks.Simulators.Sim6502/I6502Cpu.cs` | `InjectInterrupt(bool nmi)` public API |
 | `InnoWerks.Simulators.Sim6502/Cpu6502Core.cs` | `HandleNMI()`, `HandleIRQ()`, pending flags, `Step()` dispatch |
 | `InnoWerks.Simulators.Tests/InterruptTests.cs` | Unit tests for all interrupt scenarios |
 

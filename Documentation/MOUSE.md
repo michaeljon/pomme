@@ -74,7 +74,7 @@ Calling a mouse firmware routine involves two indirections:
 1. **Vector lookup** — the caller reads the vector byte at `$Cn12`–`$Cn1A` (e.g. `$Cn14`
    for READMOUSE) to obtain the handler offset within the slot ROM page.
 2. **Handler call** — the caller JSRs to `$Cn00 + handler_offset` (e.g. `$C494`).
-3. **CPU intercept** — a `Func<ICpu, IBus, bool>` handler is registered at that address.
+3. **CPU intercept** — a `Func<I6502Cpu, IBus, bool>` handler is registered at that address.
    When the CPU's PC reaches it, the handler fires before any ROM byte is executed.
    Returning `true` causes the CPU to perform an automatic RTS (pop the return address and
    resume the caller); returning `false` falls through to whatever ROM byte follows.

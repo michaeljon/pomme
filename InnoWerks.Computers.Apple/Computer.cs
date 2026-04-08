@@ -22,7 +22,7 @@ namespace InnoWerks.Computers.Apple
 
         public const int VblStart = 12480;     // Start of vertical blank
 
-        public ICpu Processor { get; private set; }
+        public I6502Cpu Processor { get; private set; }
 
         public IAppleBus Bus { get; private set; }
 
