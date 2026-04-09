@@ -5,9 +5,9 @@ namespace InnoWerks.Computers.Apple.Tests
     [TestClass]
     public class MachineStateTests
     {
-        // ------------------------------------------------------------------ //
+        //
         // Constructor
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void AllSoftSwitchesInitializedToFalse()
@@ -47,9 +47,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsFalse(state.KeyStrobe);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // ResetKeyboard
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ResetKeyboardClearsStrobe()
@@ -69,9 +69,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0x00, state.KeyLatch);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // EnqueueKey
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void EnqueueKeySetslatchAndStrobe()
@@ -82,9 +82,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsTrue(state.KeyStrobe);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // ReadKeyboardData
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ReadKeyboardDataReturnsStrobeBitPlusLower7Bits()
@@ -127,9 +127,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0xFF, data);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // ClearKeyboardStrobe
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ClearKeyboardStrobeClearsStrobeWhenQueueEmpty()
@@ -150,9 +150,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0x42, state.KeyLatch);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // TryLoadNextKey
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void TryLoadNextKeyDoesNothingWhenQueueEmpty()
@@ -165,9 +165,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsFalse(state.KeyStrobe);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // PeekKeyboard
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void PeekKeyboardReturnsLatchOrHighBitWhenStrobeSet()
@@ -190,9 +190,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0x41, peeked);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // HandleReadStateToggle
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void HandleReadStateToggleSetsNewStateAndTriggersRemap()
@@ -231,9 +231,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0x00, result);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // HandleWriteStateToggle
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void HandleWriteStateToggleSetsNewState()
@@ -259,9 +259,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsTrue(state.State[SoftSwitch.AuxWrite]);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // FloatingValue
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void FloatingValueCallSucceeds()

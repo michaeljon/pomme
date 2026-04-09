@@ -6,9 +6,9 @@ namespace InnoWerks.Computers.Apple.Tests
     [TestClass]
     public class IouTests
     {
-        // ------------------------------------------------------------------ //
+        //
         // Helpers
-        // ------------------------------------------------------------------ //
+        //
 
         private static (IOU Iou, Memory128k Memory, MachineState State, AppleBusTestDouble Bus) CreateIou()
         {
@@ -28,7 +28,7 @@ namespace InnoWerks.Computers.Apple.Tests
         }
 
         private static bool AddressInRange(IOU iou, ushort address, MemoryAccessType accessType) =>
-            iou.AddressRanges.Any(r => r.Contains(address, accessType));
+            iou.AddressRanges.Any(r => r.InterestedIn(address, accessType));
 
         private static byte DoRead(IOU iou, ushort address)
         {
@@ -36,9 +36,9 @@ namespace InnoWerks.Computers.Apple.Tests
             return value;
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Name / identity
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void NameIsIou()
@@ -47,9 +47,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual("IOU", iou.Name);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Reset
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ResetSetsTextModeTrue()
@@ -87,9 +87,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0x00, state.KeyLatch);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // AddressRanges
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void AddressRangesContainsKbdForRead()
@@ -147,9 +147,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsFalse(AddressInRange(iou, 0x1000, MemoryAccessType.Read));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Display mode switches — read side (setters)
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ReadTxtClrSetsTextModeFalse()
@@ -220,9 +220,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsTrue(state.State[SoftSwitch.HiRes]);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Display mode switches — read status (getters)
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ReadRdTextReturns0x80WhenTextModeIsTrue()
@@ -264,9 +264,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0x80, DoRead(iou, SoftSwitchAddress.RDHIRES));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Display mode switches — write side
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void WriteTxtClrSetsTextModeFalse()
@@ -310,9 +310,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsTrue(state.State[SoftSwitch.EightyColumnMode]);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Keyboard
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ReadKbdReturnsKeyDataWithHighBitWhenStrobeIsSet()
@@ -368,9 +368,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0x42, state.KeyLatch);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Open Apple / Solid Apple buttons
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void OpenApplePressedSetsButton0()
@@ -421,9 +421,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0x80, DoRead(iou, SoftSwitchAddress.SOLIDAPPLE));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Annunciators
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ReadClrAn0ClearsAnnunciator0()
@@ -476,9 +476,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsTrue(state.State[SoftSwitch.Annunciator0]);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Speaker
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ReadSpkrTogglesSpeakerState()
@@ -499,9 +499,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual(initial, state.State[SoftSwitch.Speaker]);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Paddles and joystick
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ReadPaddle0BeforeTimerTriggerReturnsZero()
@@ -547,9 +547,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsFalse(state.State[SoftSwitch.Button1]);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Vertical blank
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ReadRdVblBarReturns0x80WhenNotInVerticalBlank()

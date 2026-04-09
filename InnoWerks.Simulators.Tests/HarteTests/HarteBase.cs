@@ -78,7 +78,7 @@ namespace InnoWerks.Simulators.Tests
                 }
 #endif
 
-                Assert.IsTrue(results.Count == 0, $"Failed with {results.Count} messages");
+                Assert.IsEmpty(results, $"Failed with {results.Count} messages");
             }
         }
 
@@ -245,7 +245,7 @@ namespace InnoWerks.Simulators.Tests
                 TestContext.WriteLine(result);
             }
 
-            Assert.AreEqual(0, results.Count, $"Failed some tests");
+            Assert.IsEmpty(results, $"Failed some tests");
         }
 
         protected void RunBatched(bool randomSampled)
@@ -308,7 +308,7 @@ namespace InnoWerks.Simulators.Tests
             }
 #endif
 
-            Assert.AreEqual(0, results.Count, $"Failed some tests");
+            Assert.IsEmpty(results, $"Failed some tests");
         }
     }
 }

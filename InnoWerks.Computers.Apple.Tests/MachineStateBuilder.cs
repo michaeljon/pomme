@@ -22,9 +22,9 @@ namespace InnoWerks.Computers.Apple.Tests
         /// <summary>Returns a builder with all soft-switches in their default (false) state.</summary>
         public static MachineStateBuilder Default() => new();
 
-        // ------------------------------------------------------------------ //
+        //
         // Generic toggle
-        // ------------------------------------------------------------------ //
+        //
 
         /// <summary>Sets <paramref name="softSwitch"/> to <paramref name="value"/> (default: true).</summary>
         public MachineStateBuilder With(SoftSwitch softSwitch, bool value = true)
@@ -33,9 +33,9 @@ namespace InnoWerks.Computers.Apple.Tests
             return this;
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Memory-mapping switches
-        // ------------------------------------------------------------------ //
+        //
 
         /// <summary>Enables 80-column store (text-page writes go to auxiliary RAM).</summary>
         public MachineStateBuilder WithStore80() => With(SoftSwitch.Store80);
@@ -49,9 +49,9 @@ namespace InnoWerks.Computers.Apple.Tests
         /// <summary>Routes zero page ($00–$01) to auxiliary RAM.</summary>
         public MachineStateBuilder WithZpAux() => With(SoftSwitch.ZpAux);
 
-        // ------------------------------------------------------------------ //
+        //
         // ROM / slot control switches
-        // ------------------------------------------------------------------ //
+        //
 
         /// <summary>Maps the internal CX ROM over the entire $C000–$CFFF range.</summary>
         public MachineStateBuilder WithIntCxRomEnabled() => With(SoftSwitch.IntCxRomEnabled);
@@ -62,9 +62,9 @@ namespace InnoWerks.Computers.Apple.Tests
         /// <summary>Maps the internal C8 ROM over $C800–$CFFF.</summary>
         public MachineStateBuilder WithIntC8RomEnabled() => With(SoftSwitch.IntC8RomEnabled);
 
-        // ------------------------------------------------------------------ //
+        //
         // Language Card switches
-        // ------------------------------------------------------------------ //
+        //
 
         /// <summary>Selects Language Card Bank 2 ($D000–$DFFF).</summary>
         public MachineStateBuilder WithLcBank2() => With(SoftSwitch.LcBank2);
@@ -75,9 +75,9 @@ namespace InnoWerks.Computers.Apple.Tests
         /// <summary>Enables writes to Language Card RAM in the $D000–$FFFF range.</summary>
         public MachineStateBuilder WithLcWriteEnabled() => With(SoftSwitch.LcWriteEnabled);
 
-        // ------------------------------------------------------------------ //
+        //
         // Video switches
-        // ------------------------------------------------------------------ //
+        //
 
         /// <summary>Selects display page 2.</summary>
         public MachineStateBuilder WithPage2() => With(SoftSwitch.Page2);
@@ -91,9 +91,9 @@ namespace InnoWerks.Computers.Apple.Tests
         /// <summary>Enables mixed (text + graphics) mode.</summary>
         public MachineStateBuilder WithMixedMode() => With(SoftSwitch.MixedMode);
 
-        // ------------------------------------------------------------------ //
+        //
         // Keyboard helpers
-        // ------------------------------------------------------------------ //
+        //
 
         /// <summary>Enqueues <paramref name="ascii"/> as a pending keypress.</summary>
         public MachineStateBuilder WithKey(byte ascii)
@@ -102,9 +102,9 @@ namespace InnoWerks.Computers.Apple.Tests
             return this;
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Terminal
-        // ------------------------------------------------------------------ //
+        //
 
         /// <summary>Returns the fully configured <see cref="MachineState"/>.</summary>
         public MachineState Build() => machineState;

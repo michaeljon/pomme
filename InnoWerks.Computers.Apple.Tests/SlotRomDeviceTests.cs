@@ -5,9 +5,9 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace InnoWerks.Computers.Apple.Tests
 {
-    // ------------------------------------------------------------------ //
+    //
     // Minimal test doubles
-    // ------------------------------------------------------------------ //
+    //
 
     /// <summary>
     /// Minimal I6502Cpu test double — not used by SlotRomDevice beyond storage.
@@ -89,9 +89,9 @@ namespace InnoWerks.Computers.Apple.Tests
         public override void Reset() => ResetCount++;
     }
 
-    // ------------------------------------------------------------------ //
+    //
     // Helper factory
-    // ------------------------------------------------------------------ //
+    //
 
     [TestClass]
     public class SlotRomDeviceTests
@@ -116,9 +116,9 @@ namespace InnoWerks.Computers.Apple.Tests
             return (device, computer.MachineState);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Identity / address ranges
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void SlotPropertyReflectsConstructorArgument()
@@ -165,9 +165,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsTrue(device.HasAuxRom);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // IO dispatch ($C080+slot*$10 … +$0F)
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ReadAtIoBaseAddressDispatchesToDoIo()
@@ -217,9 +217,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0x05, device.lastIoRegister);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // CX ROM dispatch ($C000+slot*$100 … +$FF) when IntCxRomEnabled=false
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ReadAtCxRomAddressDispatchesToDoCxWhenIntCxRomDisabled()
@@ -269,9 +269,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual(MemoryAccessType.Write, device.lastCxType);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // C8 expansion ROM dispatch ($C800–$CFFF)
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ReadAtC8RomAddressDispatchesToDoC8WhenIntCxRomDisabled()
@@ -326,9 +326,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual(MemoryAccessType.Write, device.lastC8Type);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Slot validation
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void SlotZeroIsValid()
@@ -352,9 +352,9 @@ namespace InnoWerks.Computers.Apple.Tests
                 new StubSlotDevice(8, computer));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Tick / Reset delegation
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void TickDelegatesToConcreteImplementation()

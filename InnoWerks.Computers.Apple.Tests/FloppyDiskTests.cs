@@ -11,9 +11,9 @@ namespace InnoWerks.Computers.Apple.Tests
     {
         private const string TestDataDir = "testdata";
 
-        // ------------------------------------------------------------------ //
+        //
         // Helpers
-        // ------------------------------------------------------------------ //
+        //
 
         /// <summary>
         /// Creates a working copy of a test DSK so the original is never modified.
@@ -35,9 +35,9 @@ namespace InnoWerks.Computers.Apple.Tests
             }
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Round-trip: load DSK → save DSK → compare bytes
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void RoundTrip_Dos33Dsk_SaveProducesBitIdenticalOutput()
@@ -54,7 +54,7 @@ namespace InnoWerks.Computers.Apple.Tests
 
                 var savedBytes = File.ReadAllBytes(workingPath);
 
-                Assert.AreEqual(originalBytes.Length, savedBytes.Length,
+                Assert.HasCount(originalBytes.Length, savedBytes,
                     "Saved file length differs from original");
 
                 for (var i = 0; i < originalBytes.Length; i++)
@@ -88,7 +88,7 @@ namespace InnoWerks.Computers.Apple.Tests
 
                 var savedBytes = File.ReadAllBytes(workingPath);
 
-                Assert.AreEqual(originalBytes.Length, savedBytes.Length,
+                Assert.HasCount(originalBytes.Length, savedBytes,
                     "Saved file length differs from original");
 
                 CollectionAssert.AreEqual(originalBytes, savedBytes,
@@ -100,9 +100,9 @@ namespace InnoWerks.Computers.Apple.Tests
             }
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Round-trip: verify every sector individually
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void RoundTrip_Dos33_EverySectorDecodesCorrectly()
@@ -141,9 +141,9 @@ namespace InnoWerks.Computers.Apple.Tests
             }
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Load → nibblize → denibblize consistency
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void NibblizeAndDenibblize_PreservesFileSize()
@@ -163,9 +163,9 @@ namespace InnoWerks.Computers.Apple.Tests
             }
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Write-protect prevents save
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void Save_DoesNotWriteWhenWriteProtected()
@@ -197,9 +197,9 @@ namespace InnoWerks.Computers.Apple.Tests
             }
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Nibble-level write and read back
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void WriteNibble_ReadNibble_RoundTrips()
@@ -244,9 +244,9 @@ namespace InnoWerks.Computers.Apple.Tests
             }
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Constants sanity
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void DiskPlainLength_Is143360()

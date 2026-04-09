@@ -5,9 +5,9 @@ namespace InnoWerks.Simulators.Tests
     [TestClass]
     public class RegisterMathTests
     {
-        // ------------------------------------------------------------------ //
+        //
         // Inc
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void IncReturnsOnePlusInput()
@@ -27,9 +27,9 @@ namespace InnoWerks.Simulators.Tests
             Assert.AreEqual((byte)0x80, RegisterMath.Inc(0x7F));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Dec
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void DecReturnsOneMinusInput()
@@ -49,9 +49,9 @@ namespace InnoWerks.Simulators.Tests
             Assert.AreEqual((byte)0x7F, RegisterMath.Dec(0x80));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // IsZero / IsNonZero
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void IsZeroReturnsTrueForZero()
@@ -91,9 +91,9 @@ namespace InnoWerks.Simulators.Tests
             Assert.IsFalse(RegisterMath.IsNonZero(0x100));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // IsHighBitSet / IsHighBitClear
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void IsHighBitSetReturnsTrueWhenBit7IsSet()
@@ -131,9 +131,9 @@ namespace InnoWerks.Simulators.Tests
             Assert.IsFalse(RegisterMath.IsHighBitClear(0x80));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // TruncateToByte
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void TruncateToByteKeepsLowByte()
@@ -153,9 +153,9 @@ namespace InnoWerks.Simulators.Tests
             Assert.AreEqual((byte)0x00, RegisterMath.TruncateToByte(0x00));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // LowByte / HighByte
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void LowByteExtractsLowOctet()
@@ -193,9 +193,9 @@ namespace InnoWerks.Simulators.Tests
             Assert.AreEqual((byte)0xFF, RegisterMath.HighByte(0xFF00));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // MakeShort
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void MakeShortCombinesHighAndLowBytes()

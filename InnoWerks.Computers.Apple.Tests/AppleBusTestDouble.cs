@@ -20,9 +20,9 @@ namespace InnoWerks.Computers.Apple.Tests
 
         private int transactionCycles;
 
-        // ------------------------------------------------------------------ //
+        //
         // IBus — device registration (no-ops for unit tests)
-        // ------------------------------------------------------------------ //
+        //
 
         public void AddDevice(ISlotDevice slotDevice) { }
 
@@ -30,9 +30,9 @@ namespace InnoWerks.Computers.Apple.Tests
 
         public void SetCpu(I6502Cpu cpu) { }
 
-        // ------------------------------------------------------------------ //
+        //
         // IBus — cycle / transaction tracking
-        // ------------------------------------------------------------------ //
+        //
 
         public ulong CycleCount { get; private set; }
 
@@ -40,9 +40,9 @@ namespace InnoWerks.Computers.Apple.Tests
 
         public int EndTransaction() => transactionCycles;
 
-        // ------------------------------------------------------------------ //
+        //
         // IBus — memory access
-        // ------------------------------------------------------------------ //
+        //
 
         public byte Peek(ushort address) => memory[address];
 
@@ -62,9 +62,9 @@ namespace InnoWerks.Computers.Apple.Tests
             memory[address] = value;
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // IBus — loading
-        // ------------------------------------------------------------------ //
+        //
 
         public void LoadProgramToRom(byte[] objectCode)
         {
@@ -87,9 +87,9 @@ namespace InnoWerks.Computers.Apple.Tests
             transactionCycles = 0;
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Test helpers
-        // ------------------------------------------------------------------ //
+        //
 
         /// <summary>Returns the number of cycle-affecting reads at <paramref name="address"/>.</summary>
         public int ReadCount(ushort address) => readCounts[address];
@@ -97,9 +97,9 @@ namespace InnoWerks.Computers.Apple.Tests
         /// <summary>Returns the number of cycle-affecting writes at <paramref name="address"/>.</summary>
         public int WriteCount(ushort address) => writeCounts[address];
 
-        // ------------------------------------------------------------------ //
+        //
         // Private
-        // ------------------------------------------------------------------ //
+        //
 
         private void Tick(int howMany)
         {

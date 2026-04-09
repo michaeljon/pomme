@@ -56,7 +56,7 @@ namespace InnoWerks.Computers.Apple
             isDiscrete = true;
         }
 
-        public bool Contains(ushort address, MemoryAccessType accessType)
+        public bool InterestedIn(ushort address, MemoryAccessType accessType)
         {
             if ((memoryAccessType & accessType) == 0)
             {

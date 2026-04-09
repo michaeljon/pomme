@@ -3,9 +3,9 @@ namespace InnoWerks.Assemblers.Tests
     [TestClass]
     public class NumberExtractorsTests
     {
-        // ------------------------------------------------------------------ //
+        //
         // Dollar-sign hex prefix ($)
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void DollarPrefixParsesHexByte()
@@ -37,9 +37,9 @@ namespace InnoWerks.Assemblers.Tests
             Assert.AreEqual((ushort)0x000A, NumberExtractors.ResolveNumber("$A"));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // 0x hex prefix
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ZeroXPrefixParsesHexByte()
@@ -59,9 +59,9 @@ namespace InnoWerks.Assemblers.Tests
             Assert.AreEqual((ushort)0xABCD, NumberExtractors.ResolveNumber("0xabcd"));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Percent binary prefix (%)
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void PercentPrefixParsesBinaryByte()
@@ -87,9 +87,9 @@ namespace InnoWerks.Assemblers.Tests
             Assert.AreEqual((ushort)1, NumberExtractors.ResolveNumber("%1"));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // 0b binary prefix
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ZeroBPrefixParsesBinaryByte()
@@ -109,9 +109,9 @@ namespace InnoWerks.Assemblers.Tests
             Assert.AreEqual((ushort)0xFF, NumberExtractors.ResolveNumber("0b11111111"));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Plain decimal
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void PlainDecimalParsesZero()
@@ -137,9 +137,9 @@ namespace InnoWerks.Assemblers.Tests
             Assert.AreEqual((ushort)255, NumberExtractors.ResolveNumber("255"));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Equivalent representations
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void DollarAndZeroXProduceSameResult()

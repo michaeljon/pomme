@@ -125,25 +125,25 @@ namespace InnoWerks.Processors.Tests
         [TestMethod]
         public void Verify6502InstructionCount()
         {
-            Assert.AreEqual(256, CpuInstructions.GetInstructionSet(CpuClass.WDC6502).Length);
+            Assert.HasCount(256, CpuInstructions.GetInstructionSet(CpuClass.WDC6502));
         }
 
         [TestMethod]
         public void Verify65C02InstructionCount()
         {
-            Assert.AreEqual(256, CpuInstructions.GetInstructionSet(CpuClass.WDC65C02).Length);
+            Assert.HasCount(256, CpuInstructions.GetInstructionSet(CpuClass.WDC65C02));
         }
 
         [TestMethod]
         public void Verify65SC02InstructionCount()
         {
-            Assert.AreEqual(256, CpuInstructions.GetInstructionSet(CpuClass.Rockwell65C02).Length);
+            Assert.HasCount(256, CpuInstructions.GetInstructionSet(CpuClass.Rockwell65C02));
         }
 
         [TestMethod]
         public void VerifyR65C02InstructionCount()
         {
-            Assert.AreEqual(256, CpuInstructions.GetInstructionSet(CpuClass.Synertek65C02).Length);
+            Assert.HasCount(256, CpuInstructions.GetInstructionSet(CpuClass.Synertek65C02));
         }
 
         [Ignore]

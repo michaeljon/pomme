@@ -5,9 +5,9 @@ namespace InnoWerks.Simulators.Tests
     [TestClass]
     public class RegistersTests
     {
-        // ------------------------------------------------------------------ //
+        //
         // Reset
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ResetZeroesAccumulator()
@@ -57,9 +57,9 @@ namespace InnoWerks.Simulators.Tests
             Assert.IsFalse(r.Decimal);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // SetNZ
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void SetNZSetsZeroFlagForZeroValue()
@@ -105,9 +105,9 @@ namespace InnoWerks.Simulators.Tests
             Assert.IsFalse(r.Negative);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Carry flag
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void CarryFlagSetAndGet()
@@ -134,9 +134,9 @@ namespace InnoWerks.Simulators.Tests
             Assert.AreEqual((byte)0x00, (byte)(r.ProcessorStatus & 0x01));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Zero flag
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ZeroFlagSetAndGet()
@@ -150,9 +150,9 @@ namespace InnoWerks.Simulators.Tests
             Assert.IsFalse(r.Zero);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Interrupt flag
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void InterruptFlagSetAndGet()
@@ -166,9 +166,9 @@ namespace InnoWerks.Simulators.Tests
             Assert.IsFalse(r.Interrupt);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Decimal flag
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void DecimalFlagSetAndGet()
@@ -182,9 +182,9 @@ namespace InnoWerks.Simulators.Tests
             Assert.IsFalse(r.Decimal);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Break flag
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void BreakFlagSetAndGet()
@@ -198,9 +198,9 @@ namespace InnoWerks.Simulators.Tests
             Assert.IsFalse(r.Break);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Unused flag
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void UnusedFlagSetAndGet()
@@ -214,9 +214,9 @@ namespace InnoWerks.Simulators.Tests
             Assert.IsFalse(r.Unused);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Overflow flag
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void OverflowFlagSetAndGet()
@@ -230,9 +230,9 @@ namespace InnoWerks.Simulators.Tests
             Assert.IsFalse(r.Overflow);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Negative flag
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void NegativeFlagSetAndGet()
@@ -246,9 +246,9 @@ namespace InnoWerks.Simulators.Tests
             Assert.IsFalse(r.Negative);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Flag isolation — setting one flag does not affect others
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void SettingCarryDoesNotAffectOverflow()
@@ -272,9 +272,9 @@ namespace InnoWerks.Simulators.Tests
             Assert.IsTrue(r.Negative);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // ProcessorStatus round-trip
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ProcessorStatusCanBeSetDirectlyAndFlagsReflectIt()
@@ -302,9 +302,9 @@ namespace InnoWerks.Simulators.Tests
             Assert.IsFalse(r.Unused);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // String display
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void GetRegisterDisplayContainsRegisterNames()

@@ -30,9 +30,9 @@ namespace InnoWerks.Computers.Apple.Tests
             }
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Name / identity
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void NameIsNoSlotClock()
@@ -48,22 +48,22 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual(InterceptPriority.AddressIntercept, nsc.InterceptPriority);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Address range
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void AddressRangeCoversC100ToCFFF()
         {
             var (nsc, _) = CreateNsc();
-            Assert.AreEqual(1, nsc.AddressRanges.Count);
-            Assert.IsTrue(nsc.AddressRanges[0].Contains(0xC100, MemoryAccessType.Read));
-            Assert.IsTrue(nsc.AddressRanges[0].Contains(0xCFFF, MemoryAccessType.Read));
+            Assert.HasCount(1, nsc.AddressRanges);
+            Assert.IsTrue(nsc.AddressRanges[0].InterestedIn(0xC100, MemoryAccessType.Read));
+            Assert.IsTrue(nsc.AddressRanges[0].InterestedIn(0xCFFF, MemoryAccessType.Read));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // ShouldIntercept — soft switch gating
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void DoReadReturnsFalseWhenIntCxRomDisabled()
@@ -87,9 +87,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsFalse(handled);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Unlock sequence
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void BeforeUnlockDoReadReturnsFalse()
@@ -132,9 +132,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsTrue(handled);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Clock data
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void UnlockedReadReturns64BitsOfClockData()
@@ -178,9 +178,9 @@ namespace InnoWerks.Computers.Apple.Tests
                 $"Month {month} (BCD ${monthBcd:X2}) is not in range 1-12");
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Reset
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ResetLocksDevice()

@@ -5,9 +5,9 @@ namespace InnoWerks.Computers.Apple.Tests
     [TestClass]
     public class Memory128kTests
     {
-        // ------------------------------------------------------------------ //
+        //
         // Helpers
-        // ------------------------------------------------------------------ //
+        //
 
         private static void AdvanceCycles(AppleBusTestDouble bus, int cycles)
         {
@@ -17,9 +17,9 @@ namespace InnoWerks.Computers.Apple.Tests
             }
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Address decomposition
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void GetPageExtractsHighByte()
@@ -49,9 +49,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0x00, memory.GetOffset(0x0500));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Basic read / write — main RAM
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ReadAfterWriteRoundTripsInMainRam()
@@ -78,9 +78,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual(0xFF, memory.Read(0xC000));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Reset
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ResetZeroesMainRam()
@@ -100,9 +100,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual(0x00, memory.GetAux(0x2000));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Direct access — GetMain / SetMain / GetAux / SetAux
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void SetMainAndGetMainBypassActiveMapping()
@@ -153,9 +153,9 @@ namespace InnoWerks.Computers.Apple.Tests
             }
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Auxiliary memory routing
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void DefaultMappingReadsFromMainMemory()
@@ -201,9 +201,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual(0x00, memory.GetAux(0x2000));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Zero page / stack auxiliary routing
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ZpAuxRemapsZeroPageToAuxMemory()
@@ -245,9 +245,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual(0x55, memory.Read(0x0200));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // 80-column store (text-page routing)
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void Store80WithPage2RoutesTextPage1WritesToAux()
@@ -278,9 +278,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual(0x77, memory.GetMain(0x0400));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Language Card — read enable
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void LcReadDisabledReadsRomAtHighAddresses()
@@ -358,9 +358,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual(0x22, memory.Read(0xD000));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // ROM loading
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void Load16kRomIsReadableAtEFRange()
@@ -406,9 +406,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual(0x60, memory.GetMain(0x0302));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Slot ROM loading
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void LoadSlotCxRomIsAccessibleWhenIntCxRomDisabled()
@@ -437,9 +437,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreNotEqual(0x55, memory.Read(0xC200));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // ResolveRead / ResolveWrite
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ResolveReadReturnsMainMemoryPageForRamAddress()

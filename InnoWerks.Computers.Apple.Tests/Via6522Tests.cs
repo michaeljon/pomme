@@ -5,9 +5,9 @@ namespace InnoWerks.Computers.Apple.Tests
     [TestClass]
     public class Via6522Tests
     {
-        // ------------------------------------------------------------------ //
+        //
         // Reset
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ResetClearsAllRegisters()
@@ -31,9 +31,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsFalse(via.IrqActive);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Data Direction Registers
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void WriteDdrbAndReadBack()
@@ -51,9 +51,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0x55, via.Read(0x03));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Output Registers — masked by DDR
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ReadOrbReturnsMaskedByDdrb()
@@ -83,9 +83,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0x99, via.Read(0x0F));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Timer 1 — free-running countdown
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void Timer1DecrementsOnTick()
@@ -133,9 +133,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsFalse(via.IrqActive);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Timer 1 — one-shot vs free-running
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void Timer1OneShotFiresInterruptOnce()
@@ -176,12 +176,12 @@ namespace InnoWerks.Computers.Apple.Tests
                 if (via.IrqActive) via.Read(0x04); // acknowledge
             }
 
-            Assert.IsTrue(irqCount > 1, $"Expected multiple interrupts, got {irqCount}");
+            Assert.IsGreaterThan(1, irqCount, $"Expected multiple interrupts, got {irqCount}");
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Timer 2
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void Timer2DecrementsAfterStarted()
@@ -208,9 +208,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsTrue(via.IrqActive);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Interrupt Enable Register (IER)
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void IerSetBitsWhenBit7IsHigh()
@@ -230,9 +230,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0x80, via.Read(0x0E)); // only bit 7 remains
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Interrupt Flag Register (IFR)
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void WritingToIfrClearsFlags()
@@ -248,9 +248,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsFalse(via.IrqActive);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Control Registers
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void AcrWriteAndReadBack()
@@ -268,9 +268,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0xAA, via.Read(0x0C));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Shift Register
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ShiftRegisterWriteAndReadBack()
@@ -280,9 +280,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0x42, via.Read(0x0A));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Port B Write Callback
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void WriteOrbInvokesCallback()
@@ -301,9 +301,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0xAA, capturedPortA);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // IRQ callback
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void IrqCallbackFiredOnInterrupt()
@@ -320,9 +320,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsTrue(irqFired);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Timer 1 latch
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void Timer1LatchReadBack()

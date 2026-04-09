@@ -6,9 +6,9 @@ namespace InnoWerks.Computers.Apple.Tests
     [TestClass]
     public class MmuTests
     {
-        // ------------------------------------------------------------------ //
+        //
         // Helpers
-        // ------------------------------------------------------------------ //
+        //
 
         private static (MMU Mmu, Memory128k Memory, MachineState State) CreateMmu()
         {
@@ -19,7 +19,7 @@ namespace InnoWerks.Computers.Apple.Tests
         }
 
         private static bool AddressInRange(MMU mmu, ushort address, MemoryAccessType accessType) =>
-            mmu.AddressRanges.Any(r => r.Contains(address, accessType));
+            mmu.AddressRanges.Any(r => r.InterestedIn(address, accessType));
 
         private static byte DoRead(MMU mmu, ushort address)
         {
@@ -27,9 +27,9 @@ namespace InnoWerks.Computers.Apple.Tests
             return value;
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Name / identity
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void NameIsMmu()
@@ -38,9 +38,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual("MMU", mmu.Name);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Reset
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ResetEnablesLcBank2()
@@ -62,9 +62,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsTrue(state.State[SoftSwitch.LcWriteEnabled]);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // AddressRanges
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void AddressRangesContainsRdLcBnk2ForRead()
@@ -129,9 +129,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsFalse(AddressInRange(mmu, 0x1000, MemoryAccessType.Read));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // AddressRanges — write
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void AddressRangesContainsClr80StoreForWrite()
@@ -154,9 +154,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsFalse(AddressInRange(mmu, 0xC090, MemoryAccessType.Write));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Status register reads
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ReadRdLcBnk2Returns0x80WhenLcBank2IsTrue()
@@ -230,9 +230,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0x80, DoRead(mmu, SoftSwitchAddress.RDC3ROM));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Write switches — memory banking
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void WriteClr80StoreClearsStore80()
@@ -302,9 +302,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsTrue(state.State[SoftSwitch.ZpAux]);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Write switches — CxROM banking
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void WriteSetSlotCxRomClearsIntCxRomEnabled()
@@ -340,9 +340,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsTrue(state.State[SoftSwitch.SlotC3RomEnabled]);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Language Card sequencing — $C080–$C08F
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ReadC080SelectsBank2AndEnablesReadOnly()

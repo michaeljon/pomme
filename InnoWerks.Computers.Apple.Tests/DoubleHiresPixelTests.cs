@@ -102,7 +102,7 @@ namespace InnoWerks.Computers.Apple
             ArgumentException.ThrowIfNullOrEmpty(color);
 
             var pixels = GetPixels(aux1, main1, aux2, main2);
-            Assert.AreEqual(7, pixels.Length);
+            Assert.HasCount(7, pixels);
 
             for (var p = 0; p < pixels.Length; p++)
             {
@@ -133,7 +133,7 @@ namespace InnoWerks.Computers.Apple
             ArgumentException.ThrowIfNullOrEmpty(color);
 
             var pixels = GetPixels([aux1, main1, aux2, main2]);
-            Assert.AreEqual(7, pixels.Length);
+            Assert.HasCount(7, pixels);
 
             for (var p = 0; p < pixels.Length; p++)
             {

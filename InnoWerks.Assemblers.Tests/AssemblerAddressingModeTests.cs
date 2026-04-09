@@ -5,9 +5,9 @@ namespace InnoWerks.Assemblers.Tests
     [TestClass]
     public class AssemblerAddressingModeTests
     {
-        // ------------------------------------------------------------------ //
+        //
         // Immediate — #$xx
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ImmediateModeParsesHexArgument()
@@ -40,9 +40,9 @@ namespace InnoWerks.Assemblers.Tests
             Assert.AreEqual(AddressingMode.Immediate, line.AddressingMode);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Zero Page — $xx (two hex digits)
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ZeroPageModeParsesAddressArgument()
@@ -65,9 +65,9 @@ namespace InnoWerks.Assemblers.Tests
             CollectionAssert.AreEqual(new byte[] { 0xA5, 0x42 }, assembler.ObjectCode);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Zero Page,X — $xx,X
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ZeroPageXModeParsesArgument()
@@ -90,9 +90,9 @@ namespace InnoWerks.Assemblers.Tests
             CollectionAssert.AreEqual(new byte[] { 0xB5, 0x42 }, assembler.ObjectCode);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Zero Page,Y — $xx,Y
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ZeroPageYModeParsesArgument()
@@ -116,9 +116,9 @@ namespace InnoWerks.Assemblers.Tests
             CollectionAssert.AreEqual(new byte[] { 0xB6, 0x42 }, assembler.ObjectCode);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Absolute — $xxxx (four hex digits)
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void AbsoluteModeParsesAddress()
@@ -141,9 +141,9 @@ namespace InnoWerks.Assemblers.Tests
             CollectionAssert.AreEqual(new byte[] { 0xAD, 0x34, 0x12 }, assembler.ObjectCode);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Absolute,X — $xxxx,X
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void AbsoluteXModeParsesArgument()
@@ -166,9 +166,9 @@ namespace InnoWerks.Assemblers.Tests
             CollectionAssert.AreEqual(new byte[] { 0xBD, 0x34, 0x12 }, assembler.ObjectCode);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Absolute,Y — $xxxx,Y
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void AbsoluteYModeParsesArgument()
@@ -191,9 +191,9 @@ namespace InnoWerks.Assemblers.Tests
             CollectionAssert.AreEqual(new byte[] { 0xB9, 0x34, 0x12 }, assembler.ObjectCode);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // (Indirect,X) — X-indexed indirect
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void XIndexedIndirectModeParsesArgument()
@@ -216,9 +216,9 @@ namespace InnoWerks.Assemblers.Tests
             CollectionAssert.AreEqual(new byte[] { 0xA1, 0x42 }, assembler.ObjectCode);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // (Indirect),Y — indirect Y-indexed
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void IndirectYIndexedModeParsesArgument()
@@ -241,9 +241,9 @@ namespace InnoWerks.Assemblers.Tests
             CollectionAssert.AreEqual(new byte[] { 0xB1, 0x42 }, assembler.ObjectCode);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Zero Page Indirect — ($xx) [65C02]
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ZeroPageIndirectModeParsesArgument()
@@ -266,9 +266,9 @@ namespace InnoWerks.Assemblers.Tests
             CollectionAssert.AreEqual(new byte[] { 0xB2, 0x42 }, assembler.ObjectCode);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Relative — branch instructions
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void RelativeModeParsesBranchTarget()
@@ -314,9 +314,9 @@ namespace InnoWerks.Assemblers.Tests
             CollectionAssert.AreEqual(new byte[] { 0xD0, 0x00, 0xEA }, assembler.ObjectCode);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Indirect — ($xxxx) for JMP
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void IndirectModeParsesJmpArgument()
@@ -339,9 +339,9 @@ namespace InnoWerks.Assemblers.Tests
             CollectionAssert.AreEqual(new byte[] { 0x6C, 0x34, 0x12 }, assembler.ObjectCode);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Absolute Indexed Indirect — ($xxxx,X) for JMP [65C02]
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void AbsoluteIndexedIndirectModeParsesArgument()

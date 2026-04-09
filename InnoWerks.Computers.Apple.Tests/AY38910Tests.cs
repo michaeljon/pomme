@@ -30,9 +30,9 @@ namespace InnoWerks.Computers.Apple.Tests
             return psg.ReadData();
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Reset
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ResetClearsAllRegisters()
@@ -43,9 +43,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0x00, ReadRegister(psg, 0x07));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Latch and write
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void LatchAndWriteRegister()
@@ -87,9 +87,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0x0F, ReadRegister(psg, 0x0D));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Bus control — reset
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ResetViaBusControl()
@@ -100,9 +100,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0x00, ReadRegister(psg, 0x07));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Clock — output
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ClockReturnsValueInRange()
@@ -127,7 +127,7 @@ namespace InnoWerks.Computers.Apple.Tests
             WriteRegister(psg, 0x0A, 0x00); // vol C = 0
 
             var sample = psg.Clock();
-            Assert.IsTrue(sample < 0.01f, $"Expected near-silence, got {sample}");
+            Assert.IsLessThan(0.01f, sample, $"Expected near-silence, got {sample}");
         }
 
         [TestMethod]
@@ -148,9 +148,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsTrue(hasNonZero, "Expected some non-zero output");
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Mixer register
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void MixerRegisterFullByteWritten()
@@ -160,9 +160,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0xAB, ReadRegister(psg, 0x07));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Tone period low — full byte
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void TonePeriodLowIsFullByte()

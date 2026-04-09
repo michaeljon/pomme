@@ -10,9 +10,9 @@ namespace InnoWerks.Computers.Apple.Tests
     /// </summary>
     public static class Memory128kFactory
     {
-        // ------------------------------------------------------------------ //
+        //
         // Bare / default
-        // ------------------------------------------------------------------ //
+        //
 
         /// <summary>
         /// Creates a <see cref="Memory128k"/> with all soft-switches in their
@@ -39,9 +39,9 @@ namespace InnoWerks.Computers.Apple.Tests
             return memory;
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // ROM variants
-        // ------------------------------------------------------------------ //
+        //
 
         /// <summary>
         /// Creates a <see cref="Memory128k"/> with a zeroed 16 KB ROM placeholder loaded.
@@ -91,9 +91,9 @@ namespace InnoWerks.Computers.Apple.Tests
             return (memory, state);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Pre-configured banking states
-        // ------------------------------------------------------------------ //
+        //
 
         /// <summary>
         /// Creates a <see cref="Memory128k"/> with auxiliary read and write
@@ -134,9 +134,9 @@ namespace InnoWerks.Computers.Apple.Tests
             return (CreateWithState(state), state);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Slot ROM helpers
-        // ------------------------------------------------------------------ //
+        //
 
         /// <summary>
         /// Creates a <see cref="Memory128k"/> and loads a 256-byte slot CX ROM

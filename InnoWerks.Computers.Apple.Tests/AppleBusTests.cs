@@ -5,9 +5,9 @@ namespace InnoWerks.Computers.Apple.Tests
     [TestClass]
     public class AppleBusTests
     {
-        // ------------------------------------------------------------------ //
+        //
         // Helpers
-        // ------------------------------------------------------------------ //
+        //
 
         private static AppleConfiguration DefaultConfig =>
             new AppleConfiguration(AppleModel.AppleIIe);
@@ -31,9 +31,9 @@ namespace InnoWerks.Computers.Apple.Tests
             return (computer, (AppleBus)computer.Bus, computer.MachineState);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Cycle counting
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void CycleCountStartsAtZero()
@@ -84,9 +84,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual(3UL, bus.CycleCount);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Transaction tracking
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void BeginEndTransactionReturnsZeroWhenNoAccesses()
@@ -117,9 +117,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual(1, bus.EndTransaction());
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Reset
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ResetZeroesCycleCount()
@@ -165,9 +165,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsTrue(state.State[SoftSwitch.LcBank2]);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Peek / Poke — bypass devices, go straight to Memory128k
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void PokeThenPeekRoundTrips()
@@ -188,9 +188,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsFalse(state.State[SoftSwitch.TextMode]);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Read routing — main memory
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ReadBelowC000RoutesToMemory()
@@ -212,9 +212,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0xEA, bus.Read(0xE000));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Read routing — soft switches ($C000–$C08F)
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ReadC015RoutesThroughMmuReturnsIntCxRomStatus()
@@ -249,9 +249,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0x80, bus.Read(SoftSwitchAddress.RDTEXT));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Read routing — slot I/O ($C090–$C0FF)
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ReadC090ToC0FFWithNoSlotDeviceReturnsFF()
@@ -260,9 +260,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0xFF, bus.Read(0xC090));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Write routing — soft switches ($C000–$C08F)
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void WriteC001RoutesThroughMmuSetsStore80()
@@ -281,9 +281,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsTrue(state.State[SoftSwitch.TextMode]);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Write routing — main memory
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void WriteBelowC000RoutesToMemory()
@@ -293,9 +293,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0xCC, bus.Peek(0x0500));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // LoadProgramToRom / LoadProgramToRam
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void LoadProgramToRomIsReadableAtEFRange()
@@ -317,9 +317,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual((byte)0x60, bus.Read(0x0301));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // AddDevice — soft-switch
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ComputerConstructorResetsDevices()

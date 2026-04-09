@@ -9,9 +9,9 @@ namespace InnoWerks.Computers.Apple.Tests
         private static Computer CreateComputer() =>
             new(AppleModel.AppleIIeEnhanced, new byte[16 * 1024]);
 
-        // ------------------------------------------------------------------ //
+        //
         // Construction
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ConstructorCreatesProcessor()
@@ -62,9 +62,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsNotNull(computer.SlotHandler);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Build — fills empty slots
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void BuildFillsEmptySlots()
@@ -98,9 +98,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.IsInstanceOfType<EmptySlotDevice>(computer.SlotDevices[1]);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Reset
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ResetClearsSoftSwitches()
@@ -142,9 +142,9 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.AreEqual(0UL, computer.CycleCount);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Add devices
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void AddDiskIIControllerReturnsDevice()
@@ -208,15 +208,15 @@ namespace InnoWerks.Computers.Apple.Tests
             Assert.ThrowsExactly<ArgumentException>(() => computer.AddDiskIIController(6));
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Slot devices array
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void SlotDevicesArrayHasEightEntries()
         {
             var computer = CreateComputer();
-            Assert.AreEqual(8, computer.SlotDevices.Length);
+            Assert.HasCount(8, computer.SlotDevices);
         }
 
         [TestMethod]
