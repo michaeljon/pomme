@@ -13,7 +13,7 @@ namespace InnoWerks.Computers.Apple
 
     public class MachineState
     {
-        private readonly Random rng = new();
+        private static readonly Random rng = new();
 
         private readonly Queue<byte> keyboardQueue = new();
 
@@ -104,7 +104,7 @@ namespace InnoWerks.Computers.Apple
         }
 
 #pragma warning disable CA5394 // Do not use insecure randomness
-        public byte FloatingValue => (byte)(rng.Next() & 0xFF);
+        public static byte FloatingValue => (byte)(rng.Next() & 0xFF);
 #pragma warning restore CA5394 // Do not use insecure randomness
 
         public byte HandleReadStateToggle(Memory128k memoryBlocks, SoftSwitch softSwitch, bool toState, bool floating = false)

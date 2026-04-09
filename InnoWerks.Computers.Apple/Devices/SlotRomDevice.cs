@@ -104,7 +104,7 @@ namespace InnoWerks.Computers.Apple
                 return Rom[address & 0xFF];
             }
 
-            return machineState.FloatingValue;
+            return MachineState.FloatingValue;
         }
 
         /// <summary>
@@ -118,7 +118,7 @@ namespace InnoWerks.Computers.Apple
                 return ExpansionRom[address - ExpansionBaseAddressLo];
             }
 
-            return machineState.FloatingValue;
+            return MachineState.FloatingValue;
         }
 
         public byte Read(ushort address)
@@ -137,7 +137,7 @@ namespace InnoWerks.Computers.Apple
                 return DoC8(MemoryAccessType.Read, address, 0x00);
             }
 
-            return machineState.FloatingValue;
+            return MachineState.FloatingValue;
         }
 
         public void Write(ushort address, byte value)

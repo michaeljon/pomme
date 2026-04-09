@@ -272,17 +272,13 @@ namespace InnoWerks.Emulators.AppleIIe
 
             RunEmulator();
 
-            // Toggle flashing every 100ms - should be about 1 in 10 frames,
-            // this would be much better handled by tracking number of cycles,
-            // which is closer to frame count and possibly VBL state
-            if (gameTime.ElapsedGameTime.TotalMilliseconds - lastTimer >= 100)
+            // Toggle flashing every ~250ms (close to the real Apple IIe
+            // flash rate of about 1.9 Hz)
+            lastTimer += gameTime.ElapsedGameTime.TotalMilliseconds;
+            if (lastTimer >= 250)
             {
-                lastTimer = 0;
-                flashOn = !flashOn;
-            }
-            else
-            {
-                lastTimer = gameTime.ElapsedGameTime.TotalMilliseconds;
+                lastTimer -= 250;
+                flashOn = flashOn == false;
             }
 
             // send other keys on to the "computer"

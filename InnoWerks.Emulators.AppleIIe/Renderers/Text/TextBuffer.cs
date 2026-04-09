@@ -6,12 +6,9 @@ namespace InnoWerks.Emulators.AppleIIe
     {
         private readonly TextCell[,] textBuffer;
 
-        public int Columns { get; set; }
-
-        public TextBuffer(int columns)
+        public TextBuffer()
         {
-            Columns = columns;
-            textBuffer = new TextCell[24, columns];
+            textBuffer = new TextCell[24, 80];
         }
 
         public TextCell Get(int row, int col) => textBuffer[row, col];

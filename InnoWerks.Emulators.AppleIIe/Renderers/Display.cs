@@ -197,12 +197,12 @@ namespace InnoWerks.Emulators.AppleIIe
 
             if (computer.MachineState.State[SoftSwitch.TextMode])
             {
-                currentTextRenderer.Draw(spriteBatch, new Rectangle(0, 0, 560, 192), 0, 192);
+                currentTextRenderer.Draw(spriteBatch, new Rectangle(0, 0, 560, 192), 0, 192, flashOn);
             }
             else if (computer.MachineState.State[SoftSwitch.MixedMode])
             {
                 currentGraphicsRenderer.Draw(spriteBatch, new Rectangle(0, 0, 560, 192 - 4 * DisplayCharacteristics.AppleCellHeight), 0, 192 - 4 * DisplayCharacteristics.AppleCellHeight);
-                currentTextRenderer.Draw(spriteBatch, new Rectangle(0, 0, 560, 4 * DisplayCharacteristics.AppleCellHeight), 192 - 4 * DisplayCharacteristics.AppleCellHeight, 4 * DisplayCharacteristics.AppleCellHeight);
+                currentTextRenderer.Draw(spriteBatch, new Rectangle(0, 0, 560, 4 * DisplayCharacteristics.AppleCellHeight), 192 - 4 * DisplayCharacteristics.AppleCellHeight, 4 * DisplayCharacteristics.AppleCellHeight, flashOn);
             }
             else
             {

@@ -50,7 +50,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
         public override string WhoAmiI => $"{nameof(DhiresRenderer)} page={page}";
 
-        public override void Draw(SpriteBatch spriteBatch, Rectangle rectangle, int start, int count)
+        public override void Draw(SpriteBatch spriteBatch, Rectangle rectangle, int start, int count, bool flashOn = false)
         {
             ArgumentNullException.ThrowIfNull(spriteBatch);
 

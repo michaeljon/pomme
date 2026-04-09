@@ -22,7 +22,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
         public abstract void RenderByte(SpriteBatch spriteBatch, int x, int y);
 
-        public abstract void Draw(SpriteBatch spriteBatch, Rectangle rectangle, int start, int count);
+        public abstract void Draw(SpriteBatch spriteBatch, Rectangle rectangle, int start, int count, bool flashOn = false);
 
         public virtual bool IsMixedMode => false;
 

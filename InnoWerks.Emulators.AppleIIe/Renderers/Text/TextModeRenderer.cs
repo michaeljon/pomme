@@ -28,7 +28,7 @@ namespace InnoWerks.Emulators.AppleIIe
         private Color textColor;
 
         private readonly TextMemoryReader textMemoryReader;
-
+        private readonly TextBuffer textBuffer = new();
         private readonly bool eightyColumnMode;
         private readonly int page;
 
@@ -57,7 +57,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
         public override string WhoAmiI => $"{nameof(TextModeRenderer)} page={page} eightyColumnMode={eightyColumnMode}";
 
-        public override void Draw(SpriteBatch spriteBatch, Rectangle rectangle, int start, int count)
+        public override void Draw(SpriteBatch spriteBatch, Rectangle rectangle, int start, int count, bool flashOn = false)
         {
             ArgumentNullException.ThrowIfNull(spriteBatch);
 
@@ -67,7 +67,6 @@ namespace InnoWerks.Emulators.AppleIIe
             start /= DisplayCharacteristics.AppleCellHeight;
             count /= DisplayCharacteristics.AppleCellHeight;
 
-            var textBuffer = new TextBuffer(cols);
             textMemoryReader.ReadTextPage(textBuffer, start, count);
 
             for (var row = start; row < start + count; row++)
@@ -76,7 +75,7 @@ namespace InnoWerks.Emulators.AppleIIe
                 {
                     var cell = textBuffer.Get(row, col);
 
-                    DrawChar(spriteBatch, cell, col, row);
+                    DrawChar(spriteBatch, cell, col, row, flashOn);
                 }
             }
         }
@@ -112,32 +111,27 @@ namespace InnoWerks.Emulators.AppleIIe
             charTexture.SetData(pixels);
         }
 
-        private void DrawChar(SpriteBatch spriteBatch, TextCell cell, int col, int row)
+        private void DrawChar(SpriteBatch spriteBatch, TextCell cell, int col, int row, bool flashOn)
         {
             var glyph = cell.Ascii;
+            var isFlashing = cell.Attr.HasFlag(TextAttributes.Flash);
 
-            var fg = textColor;
-            var bg = Color.Black;
+            // The character ROM stores glyphs with inverted pixel data for
+            // $80-$FF, so those need fg/bg swapped to display normally.
+            // Inverse and flash attributes then modify the appearance.
+            var inverse = (glyph & 0x80) == 0x80;
 
-            if (cell.Attr.HasFlag(TextAttributes.Inverse) || (glyph & 0x80) == 0x80)
+            if (cell.Attr.HasFlag(TextAttributes.Inverse))
             {
-                fg = Color.Black;
-                bg = textColor;
-
-                if (cell.Attr.HasFlag(TextAttributes.Flash))
-                {
-                    fg = textColor;
-                    bg = Color.Black;
-                }
+                inverse = true;
             }
-            else
+            else if (isFlashing == true)
             {
-                if (cell.Attr.HasFlag(TextAttributes.Flash))
-                {
-                    fg = Color.Black;
-                    bg = textColor;
-                }
+                inverse = flashOn;
             }
+
+            var fg = inverse ? Color.Black : textColor;
+            var bg = inverse ? textColor : Color.Black;
 
             var srcX = glyph % 16 * 8;
             var srcY = glyph / 16 * 8;

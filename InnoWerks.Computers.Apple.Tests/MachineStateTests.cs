@@ -266,9 +266,10 @@ namespace InnoWerks.Computers.Apple.Tests
         [TestMethod]
         public void FloatingValueCallSucceeds()
         {
-            var state = new MachineState();
-            // FloatingValue is random — just verify it returns without throwing
-            _ = state.FloatingValue;
+            var initial = MachineState.FloatingValue;
+            var subsequent = MachineState.FloatingValue;
+
+            Assert.AreNotEqual(initial, subsequent, "Floating bus should return different values from read to read");
         }
     }
 }

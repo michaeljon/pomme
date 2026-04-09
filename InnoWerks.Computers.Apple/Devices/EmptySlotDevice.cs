@@ -1,4 +1,3 @@
-using System;
 using InnoWerks.Simulators;
 
 namespace InnoWerks.Computers.Apple
@@ -18,31 +17,36 @@ namespace InnoWerks.Computers.Apple
 
         private ushort IoBaseAddressHi => (ushort)(SlotRomDevice.IO_BASE_ADDR + (Slot * 0x10) + 0x0F);
 
+        // 256 bytes
+        private ushort RomBaseAddressLo => (ushort)(SlotRomDevice.ROM_BASE_ADDR + (Slot * 0x100));
+
+        private ushort RomBaseAddressHi => (ushort)(SlotRomDevice.ROM_BASE_ADDR + (Slot * 0x100) + 0xFF);
+
         /// <summary>
         /// Returns true if the device actively handles reads at this address.
         /// Default claims $C0n0-$C0nF only. Override to claim $Cn00 or $C800
         /// ranges for devices with active hardware in those spaces.
         /// </summary>
         public bool HandlesRead(ushort address) =>
-            address >= IoBaseAddressLo && address <= IoBaseAddressHi;
+            address >= IoBaseAddressLo && address <= IoBaseAddressHi ||
+            address >= RomBaseAddressLo && address <= RomBaseAddressHi;
 
         /// <summary>
         /// Returns true if the device actively handles writes at this address.
         /// Default claims $C0n0-$C0nF only.
         /// </summary>
         public bool HandlesWrite(ushort address) =>
-            address >= IoBaseAddressLo && address <= IoBaseAddressHi;
+            address >= IoBaseAddressLo && address <= IoBaseAddressHi ||
+            address >= RomBaseAddressLo && address <= RomBaseAddressHi;
 
         public EmptySlotDevice(int slot)
         {
             Slot = slot;
             Name = $"Empty slot {slot} device";
-
-            Rom = new byte[MemoryPage.PageSize];
-            Array.Fill(Rom, (byte)0xFF);
         }
 
-        public byte Read(ushort address) => 0xFF;
+        // this should really just be reading from machineState
+        public byte Read(ushort address) => MachineState.FloatingValue;
 
         public void Write(ushort address, byte value) { /* NO-OP */ }
 

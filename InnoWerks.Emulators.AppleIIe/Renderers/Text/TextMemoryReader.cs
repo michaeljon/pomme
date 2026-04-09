@@ -113,34 +113,24 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             var attr = TextAttributes.None;
 
-            // if ((value & 0xC0) == 0x00)
-            // {
-            //     attr |= TextAttributes.Inverse;
-            // }
-
-            // if ((value & 0x40) == 0x00)
-            // {
-            //     attr |= TextAttributes.Flash;
-            // }
-
             if (value <= 0x3F)
             {
-                // inverse
+                // $00-$3F: Inverse
                 attr |= TextAttributes.Inverse;
-            }
-            else if (value >= 0x40 && value <= 0x5F)
-            {
-                // mouse text, remap to upper case
-                if (computer.MachineState.State[SoftSwitch.AltCharSet] == false)
-                {
-                    value &= 0xBF;
-                    attr |= TextAttributes.Flash;
-                }
             }
             else if (value <= 0x7F)
             {
-                // inverse
-                attr |= TextAttributes.Inverse;
+                if (computer.MachineState.State[SoftSwitch.AltCharSet] == false)
+                {
+                    // $40-$7F normal charset: Flashing, same glyphs as $00-$3F
+                    value &= 0x3F;
+                    attr |= TextAttributes.Flash;
+                }
+                else
+                {
+                    // $40-$7F alternate charset: Inverse (mousetext / lowercase)
+                    attr |= TextAttributes.Inverse;
+                }
             }
 
             return new TextCell(value, attr);
