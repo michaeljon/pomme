@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -11,7 +12,9 @@ namespace InnoWerks.Simulators.Tests
     {
         Read,
 
-        Write
+        Write,
+
+        None
     }
 
     public class JsonHarteRamEntry
@@ -53,17 +56,56 @@ namespace InnoWerks.Simulators.Tests
     }
 
     [DebuggerDisplay("{Address} {Value} {Type} [{Address.ToString(\"X4\")} {Value.ToString(\"X2\")}]")]
-    public class JsonHarteTestBusAccess
+    public struct JsonHarteTestBusAccess : IEquatable<JsonHarteTestBusAccess>
     {
+        public static JsonHarteTestBusAccess Dummy { get; } =
+            new()
+            {
+                Address = 0x0000,
+                Value = 0x00,
+                Type = CycleType.None
+            };
+
         public ushort Address { get; set; }
 
         public int Value { get; set; }
 
         public CycleType Type { get; set; }
 
-        public override string ToString()
+        public override readonly string ToString()
         {
             return $"${Address:X4}:${Value:X2} ({Address}:{Value}) {Type.ToString().ToLowerInvariant()}";
+        }
+
+        public override readonly bool Equals(object obj)
+        {
+            var other = (JsonHarteTestBusAccess)obj;
+
+            return other.Address == Address &&
+                   other.Value == Value &&
+                   other.Type == Type;
+        }
+
+        public override readonly int GetHashCode()
+        {
+            return HashCode.Combine(Address, Value, Type);
+        }
+
+        public static bool operator ==(JsonHarteTestBusAccess left, JsonHarteTestBusAccess right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(JsonHarteTestBusAccess left, JsonHarteTestBusAccess right)
+        {
+            return !(left == right);
+        }
+
+        public readonly bool Equals(JsonHarteTestBusAccess other)
+        {
+            return other.Address == Address &&
+                   other.Value == Value &&
+                   other.Type == Type;
         }
     }
 

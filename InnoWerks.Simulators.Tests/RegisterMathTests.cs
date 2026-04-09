@@ -218,9 +218,9 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void MakeShortRoundTripsWithLowAndHighByte()
         {
-            ushort original = 0xBEEF;
-            var reconstructed = RegisterMath.MakeShort(RegisterMath.HighByte(original), RegisterMath.LowByte(original));
-            Assert.AreEqual(original, reconstructed);
+            const ushort Original = 0xBEEF;
+            var reconstructed = RegisterMath.MakeShort(RegisterMath.HighByte(Original), RegisterMath.LowByte(Original));
+            Assert.AreEqual(Original, reconstructed);
         }
     }
 }

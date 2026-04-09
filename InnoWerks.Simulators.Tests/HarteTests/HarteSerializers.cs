@@ -39,7 +39,6 @@ namespace InnoWerks.Simulators.Tests
         public override void Write(Utf8JsonWriter writer, JsonHarteTestBusAccess value, JsonSerializerOptions options)
         {
             ArgumentNullException.ThrowIfNull(writer);
-            ArgumentNullException.ThrowIfNull(value);
             ArgumentNullException.ThrowIfNull(options);
 
             writer.WriteStartArray();

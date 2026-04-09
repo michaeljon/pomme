@@ -14,7 +14,7 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void BruceClarkExampleTestA()
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   SED",
@@ -34,7 +34,7 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void BruceClarkExampleTestB()
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   SED",
@@ -53,7 +53,7 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void BruceClarkExampleTestC()
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   SED",
@@ -73,7 +73,7 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void BruceClarkExampleTestD()
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   SED            ; Decimal mode (has no effect on this sequence)",
@@ -93,7 +93,7 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void BruceClarkExample1()
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   CLD            ; Binary mode (binary addition: 88 + 70 + 1 = 159)",
@@ -114,7 +114,7 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void BruceClarkExample2()
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   SED            ; Decimal mode (BCD addition: 58 + 46 + 1 = 105)",
@@ -135,7 +135,7 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void BruceClarkExample3()
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   SED            ; Decimal mode (BCD addition: 12 + 34 = 46)",
@@ -156,7 +156,7 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void BruceClarkExample4()
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   SED            ; Decimal mode (BCD addition: 15 + 26 = 41)",
@@ -177,7 +177,7 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void BruceClarkExample5()
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   SED            ; Decimal mode (BCD addition: 81 + 92 = 173)",
@@ -198,7 +198,7 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void BruceClarkExample6()
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   SED            ; Decimal mode (BCD subtraction: 46 - 12 = 34)",
@@ -219,7 +219,7 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void BruceClarkExample7()
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   SED            ; Decimal mode (BCD subtraction: 40 - 13 = 27)",
@@ -240,7 +240,7 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void BruceClarkExample8()
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   SED            ; Decimal mode (BCD subtraction: 32 - 2 - 1 = 29)",
@@ -261,7 +261,7 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void BruceClarkExample9()
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   SED            ; Decimal mode (BCD subtraction: 12 - 21)",
@@ -282,7 +282,7 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void BruceClarkExample10()
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   SED            ; Decimal mode (BCD subtraction: 21 - 34)",
@@ -303,7 +303,7 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void BruceClarkExample13()
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   SED",
@@ -323,7 +323,7 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void BruceClarkExample14()
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   SED",
@@ -344,7 +344,7 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void AppendixA1()
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   CLD",
@@ -365,7 +365,7 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void AppendixA2()
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   SED            ; decimal mode: 99 + 1",
@@ -386,7 +386,7 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void BruceClarkExample99()
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   SED",
@@ -411,7 +411,7 @@ namespace InnoWerks.Simulators.Tests
         [DataRow((byte)0x80, (byte)0xff, (byte)0x7f, true, false, true)]
         public void ClcAdcOverflowFlagTests(byte xx, byte yy, byte accum, bool c, bool z, bool v)
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   CLD",
@@ -438,7 +438,7 @@ namespace InnoWerks.Simulators.Tests
         [DataRow((byte)0x7f, (byte)0xff, (byte)0x80, false, false, true)]
         public void SecSbcOverflowFlagTests(byte xx, byte yy, byte accum, bool c, bool z, bool v)
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   CLD",
@@ -463,7 +463,7 @@ namespace InnoWerks.Simulators.Tests
         [DataRow((byte)0x3f, (byte)0x40, (byte)0x80, false, false, true)]
         public void SecAdcOverflowFlagTests(byte xx, byte yy, byte accum, bool c, bool z, bool v)
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   CLD",
@@ -488,7 +488,7 @@ namespace InnoWerks.Simulators.Tests
         [DataRow((byte)0xc0, (byte)0x40, (byte)0x7f, true, false, true)]
         public void ClcSbcOverflowFlagTests(byte xx, byte yy, byte accum, bool c, bool z, bool v)
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             var assembler = new Assembler(
                 [
                     $"   CLD",

@@ -112,8 +112,10 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void CarryFlagSetAndGet()
         {
-            var r = new Registers();
-            r.Carry = true;
+            var r = new Registers
+            {
+                Carry = true
+            };
             Assert.IsTrue(r.Carry);
             r.Carry = false;
             Assert.IsFalse(r.Carry);
@@ -122,8 +124,11 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void CarryFlagIsolatedInProcessorStatus()
         {
-            var r = new Registers { ProcessorStatus = 0x00 };
-            r.Carry = true;
+            var r = new Registers
+            {
+                ProcessorStatus = 0x00,
+                Carry = true
+            };
             Assert.AreEqual((byte)0x01, (byte)(r.ProcessorStatus & 0x01));
             r.Carry = false;
             Assert.AreEqual((byte)0x00, (byte)(r.ProcessorStatus & 0x01));
@@ -136,8 +141,10 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void ZeroFlagSetAndGet()
         {
-            var r = new Registers();
-            r.Zero = true;
+            var r = new Registers
+            {
+                Zero = true
+            };
             Assert.IsTrue(r.Zero);
             r.Zero = false;
             Assert.IsFalse(r.Zero);
@@ -150,8 +157,10 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void InterruptFlagSetAndGet()
         {
-            var r = new Registers();
-            r.Interrupt = true;
+            var r = new Registers
+            {
+                Interrupt = true
+            };
             Assert.IsTrue(r.Interrupt);
             r.Interrupt = false;
             Assert.IsFalse(r.Interrupt);
@@ -164,8 +173,10 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void DecimalFlagSetAndGet()
         {
-            var r = new Registers();
-            r.Decimal = true;
+            var r = new Registers
+            {
+                Decimal = true
+            };
             Assert.IsTrue(r.Decimal);
             r.Decimal = false;
             Assert.IsFalse(r.Decimal);
@@ -178,8 +189,10 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void BreakFlagSetAndGet()
         {
-            var r = new Registers();
-            r.Break = true;
+            var r = new Registers
+            {
+                Break = true
+            };
             Assert.IsTrue(r.Break);
             r.Break = false;
             Assert.IsFalse(r.Break);
@@ -192,8 +205,10 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void UnusedFlagSetAndGet()
         {
-            var r = new Registers();
-            r.Unused = true;
+            var r = new Registers
+            {
+                Unused = true
+            };
             Assert.IsTrue(r.Unused);
             r.Unused = false;
             Assert.IsFalse(r.Unused);
@@ -206,8 +221,10 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void OverflowFlagSetAndGet()
         {
-            var r = new Registers();
-            r.Overflow = true;
+            var r = new Registers
+            {
+                Overflow = true
+            };
             Assert.IsTrue(r.Overflow);
             r.Overflow = false;
             Assert.IsFalse(r.Overflow);
@@ -220,8 +237,10 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void NegativeFlagSetAndGet()
         {
-            var r = new Registers();
-            r.Negative = true;
+            var r = new Registers
+            {
+                Negative = true
+            };
             Assert.IsTrue(r.Negative);
             r.Negative = false;
             Assert.IsFalse(r.Negative);
@@ -234,17 +253,22 @@ namespace InnoWerks.Simulators.Tests
         [TestMethod]
         public void SettingCarryDoesNotAffectOverflow()
         {
-            var r = new Registers();
-            r.Overflow = true;
-            r.Carry = true;
+            var r = new Registers
+            {
+                Overflow = true,
+                Carry = true
+            };
             Assert.IsTrue(r.Overflow);
         }
 
         [TestMethod]
         public void ClearingCarryDoesNotAffectNegative()
         {
-            var r = new Registers { ProcessorStatus = 0xFF };
-            r.Carry = false;
+            var r = new Registers
+            {
+                ProcessorStatus = 0xFF,
+                Carry = false
+            };
             Assert.IsTrue(r.Negative);
         }
 

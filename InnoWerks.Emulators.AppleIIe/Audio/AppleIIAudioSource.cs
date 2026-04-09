@@ -1,8 +1,9 @@
+using System;
 using System.Collections.Concurrent;
 
 namespace InnoWerks.Emulators.AppleIIe
 {
-    public struct SpeakerToggle : System.IEquatable<SpeakerToggle>
+    public struct SpeakerToggle : IEquatable<SpeakerToggle>
     {
         // The absolute CPU cycle when it happened
         public ulong CycleTimestamp { get; set; }
@@ -24,7 +25,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
         public override readonly int GetHashCode()
         {
-            return (int)CycleTimestamp ^ State.GetHashCode();
+            return HashCode.Combine(CycleTimestamp, State);
         }
 
         public static bool operator ==(SpeakerToggle left, SpeakerToggle right)
@@ -37,7 +38,7 @@ namespace InnoWerks.Emulators.AppleIIe
             return !(left == right);
         }
 
-        public bool Equals(SpeakerToggle other)
+        public readonly bool Equals(SpeakerToggle other)
         {
             return other.CycleTimestamp == CycleTimestamp &&
                    other.State == State;

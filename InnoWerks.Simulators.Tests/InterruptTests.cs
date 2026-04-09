@@ -19,9 +19,9 @@ namespace InnoWerks.Simulators.Tests
         /// Sets up a bus with reset, NMI, and IRQ vectors pointing at known ISR locations,
         /// and places NOP instructions in main memory starting at MainStart.
         /// </summary>
-        private static AccessCountingBus CreateBus()
+        private static SimpleBus CreateBus()
         {
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
 
             // Reset vector -> MainStart ($0000)
             bus.Poke(Cpu6502Core.RstVectorL, (byte)(MainStart & 0xFF));
@@ -43,7 +43,7 @@ namespace InnoWerks.Simulators.Tests
             return bus;
         }
 
-        private static I6502Cpu CreateCpu(AccessCountingBus bus, CpuClass cpuClass)
+        private static I6502Cpu CreateCpu(SimpleBus bus, CpuClass cpuClass)
         {
             var cpu = Cpu6502Factory.Construct(
                 cpuClass, bus, null, null

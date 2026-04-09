@@ -133,7 +133,7 @@ namespace InnoWerks.Simulators.Tests
 
             if (expectedCount != BusAccesses.Count)
             {
-                return (false, 0, null, null);
+                return (false, 0, JsonHarteTestBusAccess.Dummy, JsonHarteTestBusAccess.Dummy);
             }
 
             for (var a = 0; a < expectedCount; a++)
@@ -147,7 +147,7 @@ namespace InnoWerks.Simulators.Tests
                 }
             }
 
-            return (true, 0, null, null);
+            return (true, 0, JsonHarteTestBusAccess.Dummy, JsonHarteTestBusAccess.Dummy);
         }
 
         public List<JsonHarteTestBusAccess> BusAccesses { get; init; }

@@ -25,7 +25,7 @@ namespace InnoWerks.Simulators.Tests
             );
             assembler.Assemble();
 
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             bus.LoadProgramToRam(assembler.ObjectCode, Origin);
 
             // power up initialization
@@ -65,7 +65,7 @@ namespace InnoWerks.Simulators.Tests
             );
             assembler.Assemble();
 
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             bus.LoadProgramToRam(assembler.ObjectCode, Origin);
 
             // power up initialization
@@ -105,7 +105,7 @@ namespace InnoWerks.Simulators.Tests
             );
             assembler.Assemble();
 
-            var bus = new AccessCountingBus();
+            var bus = new SimpleBus();
             bus.LoadProgramToRam(assembler.ObjectCode, Origin);
 
             // power up initialization
