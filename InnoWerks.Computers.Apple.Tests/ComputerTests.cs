@@ -1,3 +1,4 @@
+using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace InnoWerks.Computers.Apple.Tests
@@ -199,12 +200,12 @@ namespace InnoWerks.Computers.Apple.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(System.ArgumentException))]
         public void AddingTwoDevicesToSameSlotThrows()
         {
             var computer = CreateComputer();
             computer.AddDiskIIController(6);
-            computer.AddDiskIIController(6);
+
+            Assert.ThrowsExactly<ArgumentException>(() => computer.AddDiskIIController(6));
         }
 
         // ------------------------------------------------------------------ //

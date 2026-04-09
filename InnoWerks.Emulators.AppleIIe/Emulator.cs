@@ -37,7 +37,7 @@ namespace InnoWerks.Emulators.AppleIIe
         //
         // debug, etc.
         //
-        private CpuTraceBuffer cpuTraceBuffer = new(128);
+        private CpuTraceBuffer cpuTraceBuffer = new(48);
         private bool cpuPaused;
         private bool stepRequested;
         private readonly HashSet<ushort> breakpoints = [
@@ -86,6 +86,7 @@ namespace InnoWerks.Emulators.AppleIIe
             };
 
             hostLayout = HostLayout.ComputeLayout(
+                emulatorConfiguration.ShowInternals,
                 graphicsDeviceManager.PreferredBackBufferWidth,
                 graphicsDeviceManager.PreferredBackBufferHeight
             );
@@ -195,7 +196,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
         protected override void LoadContent()
         {
-            display = new Display(GraphicsDevice, computer);
+            display = new Display(GraphicsDevice, computer, emulatorConfiguration.ShowInternals);
 
             display.LoadContent(emulatorConfiguration.ResolveMonochromeColor(), Content);
             display.ConfigureToolbar(computer.SlotDevices);
@@ -234,14 +235,20 @@ namespace InnoWerks.Emulators.AppleIIe
                 }
             }
 
-            if (leftButtonJustPressed && !inAppleDisplay)
+            if (leftButtonJustPressed && inAppleDisplay == false)
             {
+                if (mouseDevice?.IsMouseCaptured == true)
+                {
+                    mouseDevice.Release();
+                    IsMouseVisible = true;
+                }
+
                 // check toolbar clicks first
                 if (hostLayout.Toolbar.Contains(mouse.Position))
                 {
                     HandleToolbarClick(mouse.Position);
                 }
-                else
+                else if (emulatorConfiguration.ShowInternals == true)
                 {
                     var cpuTraceEntry = display.HandleTraceClick(hostLayout, cpuTraceBuffer, mouse.Position);
 
@@ -318,11 +325,14 @@ namespace InnoWerks.Emulators.AppleIIe
 
         private void StepCpuOnce()
         {
-            var nextInstruction = computer.Processor.PeekInstruction();
+            if (emulatorConfiguration.ShowInternals == true)
+            {
+                var nextInstruction = computer.Processor.PeekInstruction();
+                cpuTraceBuffer.Add(nextInstruction);
+            }
 
-            bool previousSpeakerState = computer.MachineState.State[SoftSwitch.Speaker];
+            var previousSpeakerState = computer.MachineState.State[SoftSwitch.Speaker];
 
-            cpuTraceBuffer.Add(nextInstruction);
             computer.Processor.Step();
 
             // Check for toggles
@@ -356,21 +366,11 @@ namespace InnoWerks.Emulators.AppleIIe
             switch (action)
             {
                 case ToolbarAction.Reset:
-                    cpuPaused = true;
-                    FlushAllDisks();
-                    computer.Processor.Reset();
-                    audioRenderer.Clear();
-                    audioSource.Clear();
-                    cpuPaused = false;
+                    PerformBootSequence(coldBoot: false);
                     break;
 
                 case ToolbarAction.Reboot:
-                    cpuPaused = true;
-                    FlushAllDisks();
-                    computer.Reset();
-                    audioRenderer.Clear();
-                    audioSource.Clear();
-                    cpuPaused = false;
+                    PerformBootSequence(coldBoot: true);
                     break;
 
                 case ToolbarAction.DiskEject:
@@ -406,24 +406,12 @@ namespace InnoWerks.Emulators.AppleIIe
             {
                 if (IsJustPressed(Keys.F1))
                 {
-                    cpuPaused = true;
-                    FlushAllDisks();
-                    computer.Processor.Reset();
-
-                    audioRenderer.Clear();
-                    audioSource.Clear();
-                    cpuPaused = false;
+                    PerformBootSequence(coldBoot: false);
                 }
 
                 if (IsJustPressed(Keys.F2))
                 {
-                    cpuPaused = true;
-                    FlushAllDisks();
-                    computer.Reset();
-
-                    audioRenderer.Clear();
-                    audioSource.Clear();
-                    cpuPaused = false;
+                    PerformBootSequence(coldBoot: true);
                 }
 
                 var state = Keyboard.GetState();
@@ -541,6 +529,7 @@ namespace InnoWerks.Emulators.AppleIIe
             Debug.WriteLine($"{Window.ClientBounds.Width} x {Window.ClientBounds.Height}");
 
             hostLayout = HostLayout.ComputeLayout(
+                emulatorConfiguration.ShowInternals,
                 Window.ClientBounds.Width,
                 Window.ClientBounds.Height
             );
@@ -578,6 +567,22 @@ namespace InnoWerks.Emulators.AppleIIe
             {
                 computer.IOU.InjectKey((byte)c);
             }
+        }
+
+        private void PerformBootSequence(bool coldBoot)
+        {
+            cpuPaused = true;
+            FlushAllDisks();
+            computer.Reset(coldBoot);
+            audioRenderer.Clear();
+            audioSource.Clear();
+            cpuPaused = false;
+
+            // --- OPEN / SOLID APPLE (keyboard OR joystick button) ---
+            var currentState = Keyboard.GetState();
+
+            computer.IOU.OpenApple(currentState.IsKeyDown(Keys.LeftAlt) || joystickButton0);
+            computer.IOU.SolidApple(currentState.IsKeyDown(Keys.RightAlt) || joystickButton1);
         }
     }
 }

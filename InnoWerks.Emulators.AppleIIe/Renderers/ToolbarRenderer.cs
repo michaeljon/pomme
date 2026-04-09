@@ -108,7 +108,7 @@ namespace InnoWerks.Emulators.AppleIIe
                                 GetIcon = () =>
                                 {
                                     var d = diskDevice.GetDrive(driveNum);
-                                    return (d.HasDisk, d.IsOn()) switch
+                                    return (d.HasDisk, diskDevice.IsMotorOn(driveNum)) switch
                                     {
                                         (true, true) => disk2On,
                                         (true, false) => disk2Off,

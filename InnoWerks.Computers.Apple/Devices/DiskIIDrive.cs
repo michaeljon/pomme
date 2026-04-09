@@ -7,15 +7,14 @@ namespace InnoWerks.Computers.Apple
     {
         FloppyDisk floppyDisk;
 
-        private int halfTrack;
+        internal int halfTrack;
         private int trackStartOffset;
         private int nibbleOffset;
         private bool writeMode;
-        private bool driveOn;
-        private int magnets;
-        private byte latch;
+        internal int magnets;
+        internal byte latch;
         private int spinCount;
-        private bool isDirty;
+        internal bool isDirty;
 
         private readonly int driveNumber;
 
@@ -38,8 +37,7 @@ namespace InnoWerks.Computers.Apple
             EjectDisk();
             floppyDisk = new FloppyDisk(path);
 
-            driveOn = false;
-            magnets = 0;
+            Reset();
         }
 
         public void EjectDisk()
@@ -49,18 +47,19 @@ namespace InnoWerks.Computers.Apple
                 floppyDisk?.Save();
             }
 
-            isDirty = false;
             floppyDisk = null;
+
+            Reset();
         }
 
         public void Reset()
         {
+            nibbleOffset = 0;
             isDirty = false;
-            driveOn = false;
             magnets = 0;
         }
 
-        public void Step(int register)
+        public void Step(int register, bool motorEnabled)
         {
             // switch drive head stepper motor magnets on/off
             int magnet = (register >> 1) & 0x3;
@@ -68,7 +67,7 @@ namespace InnoWerks.Computers.Apple
             magnets |= (register & 0x1) << magnet;
 
             // step the drive head according to stepper magnet changes
-            if (driveOn)
+            if (motorEnabled == true)
             {
                 int delta = driveHeadStepDelta[halfTrack & 0x3][magnets];
                 if (delta != 0)
@@ -101,15 +100,10 @@ namespace InnoWerks.Computers.Apple
             }
         }
 
-        public void SetOn(bool b)
+        public void MotorOff()
         {
-            if (driveOn && !b)
-            {
-                // motor turning off — flush any pending writes
-                Flush();
-            }
-
-            driveOn = b;
+            // motor turning off — flush any pending writes
+            Flush();
         }
 
         public void Flush()
@@ -121,16 +115,11 @@ namespace InnoWerks.Computers.Apple
             }
         }
 
-        public bool IsOn()
-        {
-            return driveOn;
-        }
-
         public bool HasDisk => floppyDisk != null;
 
-        public byte ReadLatch()
+        public byte ReadLatch(bool motorEnabled)
         {
-            byte result = 0x7F;
+            var result = (byte)0x7F;
 
             if (writeMode == false)
             {
@@ -140,7 +129,7 @@ namespace InnoWerks.Computers.Apple
                     if (floppyDisk != null)
                     {
                         result = floppyDisk.ReadNibble(trackStartOffset + nibbleOffset);
-                        if (IsOn())
+                        if (motorEnabled == true)
                         {
                             nibbleOffset++;
                             if (nibbleOffset >= FloppyDisk.TRACK_NIBBLE_LENGTH)
@@ -167,9 +156,9 @@ namespace InnoWerks.Computers.Apple
             return result;
         }
 
-        public void Write()
+        public void Write(bool motorEnabled)
         {
-            if (writeMode && driveOn && floppyDisk?.IsWriteProtected == false)
+            if (writeMode == true && motorEnabled == true && floppyDisk?.IsWriteProtected == false)
             {
                 isDirty = true;
 

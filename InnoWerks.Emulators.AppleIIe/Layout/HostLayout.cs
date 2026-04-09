@@ -29,23 +29,35 @@ namespace InnoWerks.Emulators.AppleIIe
 
         public Rectangle CpuTrace { get; set; }
 
-        public static HostLayout ComputeLayout(int windowWidth, int windowHeight)
+        public static HostLayout ComputeLayout(bool showInternals, int windowWidth, int windowHeight)
         {
-            int toolbarBottom = Padding + ToolbarHeight + Padding;
+            if (showInternals == true)
+            {
+                return ComputeLayoutWithDebug(windowWidth, windowHeight);
+            }
+            else
+            {
+                return ComputeLayoutWithoutDebug(windowWidth, windowHeight);
+            }
+        }
 
-            int availableWidth = windowWidth - CpuTraceWidth - Padding * 3;
-            int availableHeight = windowHeight - toolbarBottom - Padding;
+        private static HostLayout ComputeLayoutWithDebug(int windowWidth, int windowHeight)
+        {
+            const int ToolbarBottom = Padding + ToolbarHeight + Padding;
 
-            int scale = Math.Max(
-                1,
-                Math.Min(availableWidth / DisplayCharacteristics.AppleDisplayWidth, availableHeight / DisplayCharacteristics.AppleDisplayHeight)
+            var availableWidth = windowWidth - CpuTraceWidth - Padding * 3;
+            var availableHeight = windowHeight - ToolbarBottom - Padding;
+
+            var scale = Math.Min(
+                (float)availableWidth / DisplayCharacteristics.AppleDisplayWidth,
+                (float)availableHeight / DisplayCharacteristics.AppleDisplayHeight
             );
 
-            int appleRenderWidth = DisplayCharacteristics.AppleDisplayWidth * scale;
-            int appleRenderHeight = DisplayCharacteristics.AppleDisplayHeight * scale;
+            var appleRenderWidth = (int)(DisplayCharacteristics.AppleDisplayWidth * scale);
+            var appleRenderHeight = (int)(DisplayCharacteristics.AppleDisplayHeight * scale);
 
             int blockWidth = (appleRenderWidth - (3 * Padding)) / 4;
-            int blockHeight = windowHeight - toolbarBottom - appleRenderHeight - (2 * Padding);
+            int blockHeight = windowHeight - ToolbarBottom - appleRenderHeight - (2 * Padding);
 
             return new HostLayout
             {
@@ -58,44 +70,77 @@ namespace InnoWerks.Emulators.AppleIIe
 
                 AppleDisplay = new Rectangle(
                     Padding,
-                    toolbarBottom,
+                    ToolbarBottom,
                     appleRenderWidth,
                     appleRenderHeight
                 ),
 
                 CpuTrace = new Rectangle(
                     appleRenderWidth + 2 * Padding,
-                    toolbarBottom,
+                    ToolbarBottom,
                     CpuTraceWidth - Padding,
-                    windowHeight - toolbarBottom - Padding
+                    windowHeight - ToolbarBottom - Padding
                 ),
 
                 Registers = new Rectangle(
                     Padding * 1 + blockWidth * 0,
-                    toolbarBottom + appleRenderHeight + Padding,
+                    ToolbarBottom + appleRenderHeight + Padding,
                     blockWidth,
                     blockHeight
                 ),
 
                 Block1 = new Rectangle(
                     Padding * 2 + blockWidth * 1,
-                    toolbarBottom + appleRenderHeight + Padding,
+                    ToolbarBottom + appleRenderHeight + Padding,
                     blockWidth,
                     blockHeight
                 ),
 
                 Block2 = new Rectangle(
                     Padding * 3 + blockWidth * 2,
-                    toolbarBottom + appleRenderHeight + Padding,
+                    ToolbarBottom + appleRenderHeight + Padding,
                     blockWidth,
                     blockHeight
                 ),
 
                 Block3 = new Rectangle(
                     Padding * 4 + blockWidth * 3,
-                    toolbarBottom + appleRenderHeight + Padding,
+                    ToolbarBottom + appleRenderHeight + Padding,
                     blockWidth,
                     blockHeight
+                ),
+            };
+        }
+
+        private static HostLayout ComputeLayoutWithoutDebug(int windowWidth, int windowHeight)
+        {
+            const int ToolbarBottom = Padding + ToolbarHeight + Padding;
+
+            var availableWidth = windowWidth - Padding * 2;
+            var availableHeight = windowHeight - ToolbarBottom - Padding;
+
+            var scale = Math.Min(
+                (float)availableWidth / DisplayCharacteristics.AppleDisplayWidth,
+                (float)availableHeight / DisplayCharacteristics.AppleDisplayHeight
+            );
+
+            var appleRenderWidth = (int)(DisplayCharacteristics.AppleDisplayWidth * scale);
+            var appleRenderHeight = (int)(DisplayCharacteristics.AppleDisplayHeight * scale);
+
+            return new HostLayout
+            {
+                Toolbar = new Rectangle(
+                    Padding,
+                    Padding,
+                    windowWidth - 2 * Padding,
+                    ToolbarHeight
+                ),
+
+                AppleDisplay = new Rectangle(
+                    (availableWidth - appleRenderWidth) / 2,
+                    ToolbarBottom + (availableHeight - appleRenderHeight) / 2,
+                    appleRenderWidth,
+                    appleRenderHeight
                 ),
             };
         }

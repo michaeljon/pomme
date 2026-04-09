@@ -404,7 +404,7 @@ namespace InnoWerks.Simulators.Tests
             Assert.AreEqual(0x00, cpu.Registers.A);
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow((byte)0x01, (byte)0x01, (byte)0x02, false, false, false)]
         [DataRow((byte)0x01, (byte)0xFF, (byte)0x00, true, true, false)]
         [DataRow((byte)0x7f, (byte)0x01, (byte)0x80, false, false, true)]
@@ -432,7 +432,7 @@ namespace InnoWerks.Simulators.Tests
             Assert.AreEqual(accum, cpu.Registers.A);
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow((byte)0x00, (byte)0x01, (byte)0xff, false, false, false)]
         [DataRow((byte)0x80, (byte)0x01, (byte)0x7f, true, false, true)]
         [DataRow((byte)0x7f, (byte)0xff, (byte)0x80, false, false, true)]
@@ -459,7 +459,7 @@ namespace InnoWerks.Simulators.Tests
             Assert.AreEqual(accum, cpu.Registers.A);
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow((byte)0x3f, (byte)0x40, (byte)0x80, false, false, true)]
         public void SecAdcOverflowFlagTests(byte xx, byte yy, byte accum, bool c, bool z, bool v)
         {
@@ -484,7 +484,7 @@ namespace InnoWerks.Simulators.Tests
             Assert.AreEqual(accum, cpu.Registers.A);
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow((byte)0xc0, (byte)0x40, (byte)0x7f, true, false, true)]
         public void ClcSbcOverflowFlagTests(byte xx, byte yy, byte accum, bool c, bool z, bool v)
         {

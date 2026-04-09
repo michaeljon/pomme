@@ -45,17 +45,21 @@ namespace InnoWerks.Emulators.AppleIIe
         private bool hiresMode;
         private bool dhiresMode;
 
+        private readonly bool showInternals;
+
         private bool disposed;
 
         public Display(
             GraphicsDevice graphicsDevice,
-            Computer computer)
+            Computer computer,
+            bool showInternals)
         {
             ArgumentNullException.ThrowIfNull(graphicsDevice);
             ArgumentNullException.ThrowIfNull(computer);
 
             this.graphicsDevice = graphicsDevice;
             this.computer = computer;
+            this.showInternals = showInternals;
         }
 
         public void LoadContent(Color? monochromeColor, ContentManager contentManager)
@@ -98,7 +102,10 @@ namespace InnoWerks.Emulators.AppleIIe
             currentGraphicsRenderer = loresPage1Renderer;
 
             // debug stuff is always white
-            debugToolsRenderer = new(graphicsDevice, computer, contentManager, Color.White);
+            if (showInternals == true)
+            {
+                debugToolsRenderer = new(graphicsDevice, computer, contentManager, Color.White);
+            }
 
             toolbarRenderer = new ToolbarRenderer(graphicsDevice);
             toolbarRenderer.LoadContent(contentManager);
@@ -141,7 +148,10 @@ namespace InnoWerks.Emulators.AppleIIe
             toolbarRenderer.Draw(spriteBatch, hostLayout);
 
             // draw debug windows onto the surface
-            debugToolsRenderer.Draw(spriteBatch, hostLayout, cpuTraceBuffer, breakpoints);
+            if (showInternals == true)
+            {
+                debugToolsRenderer.Draw(spriteBatch, hostLayout, cpuTraceBuffer, breakpoints);
+            }
 
             spriteBatch.End();
         }

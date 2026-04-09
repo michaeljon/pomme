@@ -171,7 +171,7 @@ namespace InnoWerks.Computers.Apple
 
         public void Reset()
         {
-            for (var slot = 0; slot < slotDevices.Length; slot++)
+            for (var slot = 1; slot < slotDevices.Length; slot++)
             {
                 slotDevices[slot]?.Reset();
             }

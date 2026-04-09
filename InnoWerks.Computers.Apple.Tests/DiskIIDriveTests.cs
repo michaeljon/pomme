@@ -5,15 +5,15 @@ namespace InnoWerks.Computers.Apple.Tests
     [TestClass]
     public class DiskIIDriveTests
     {
-        // ------------------------------------------------------------------ //
+        //
         // Helpers
-        // ------------------------------------------------------------------ //
+        //
 
         private static DiskIIDrive CreateDrive(int number = 0) => new DiskIIDrive(number);
 
-        // ------------------------------------------------------------------ //
+        //
         // ToString
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void ToStringContainsDriveNumber()
@@ -29,84 +29,60 @@ namespace InnoWerks.Computers.Apple.Tests
             StringAssert.Contains(drive.ToString(), "Disk II", System.StringComparison.Ordinal);
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Reset
-        // ------------------------------------------------------------------ //
-
-        [TestMethod]
-        public void ResetTurnsDriveOff()
-        {
-            var drive = CreateDrive();
-            drive.SetOn(true);
-            drive.Reset();
-            Assert.IsFalse(drive.IsOn());
-        }
+        //
 
         [TestMethod]
         public void ResetClearsMagnets()
         {
             var drive = CreateDrive();
-            // Step with register=0x01 (magnet 0, on) sets a magnet bit
-            drive.Step(0x01);
+            drive.Step(0x01, motorEnabled: true);
+            Assert.AreNotEqual(0, drive.magnets, "magnets should be set after step");
+
             drive.Reset();
-            // After reset, with drive off, Step with any register should not move head
-            // (This is a structural test — we verify driveOn=false via IsOn)
-            Assert.IsFalse(drive.IsOn());
-        }
-
-        // ------------------------------------------------------------------ //
-        // SetOn / IsOn
-        // ------------------------------------------------------------------ //
-
-        [TestMethod]
-        public void SetOnTrueEnablesDrive()
-        {
-            var drive = CreateDrive();
-            drive.SetOn(true);
-            Assert.IsTrue(drive.IsOn());
+            Assert.AreEqual(0, drive.magnets, "magnets should be zero after reset");
         }
 
         [TestMethod]
-        public void SetOnFalseDisablesDrive()
+        public void ResetClearsIsDirty()
         {
             var drive = CreateDrive();
-            drive.SetOn(true);
-            drive.SetOn(false);
-            Assert.IsFalse(drive.IsOn());
+            drive.InsertDisk("testdata/dos33.dsk");
+            drive.SetWriteMode();
+            drive.SetLatchValue(0xD5);
+            drive.Write(motorEnabled: true);
+            Assert.IsTrue(drive.isDirty, "isDirty should be set after write");
+
+            drive.Reset();
+            Assert.IsFalse(drive.isDirty, "isDirty should be false after reset");
         }
 
-        [TestMethod]
-        public void DriveIsOffByDefault()
-        {
-            var drive = CreateDrive();
-            Assert.IsFalse(drive.IsOn());
-        }
-
-        // ------------------------------------------------------------------ //
+        //
         // DiskPresent
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void DiskPresentIsFalseWhenNoDiskInserted()
         {
             var drive = CreateDrive();
-            Assert.IsFalse(drive.DiskPresent);
+            Assert.IsFalse(drive.DiskPresent, "no disk should be present on a new drive");
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // IsWriteProtected
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void IsWriteProtectedIsFalseWhenNoDisk()
         {
             var drive = CreateDrive();
-            Assert.IsFalse(drive.IsWriteProtected);
+            Assert.IsFalse(drive.IsWriteProtected, "write-protect should be false without a disk");
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // SetLatchValue
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
         public void SetLatchValueInWriteModeStoresValue()
@@ -114,9 +90,7 @@ namespace InnoWerks.Computers.Apple.Tests
             var drive = CreateDrive();
             drive.SetWriteMode();
             drive.SetLatchValue(0xAB);
-            // We cannot read latch directly, but Write() would use it;
-            // verify no exception and mode is consistent
-            Assert.IsTrue(true); // structural — no direct latch accessor
+            Assert.AreEqual(0xAB, drive.latch, "latch should hold the written value");
         }
 
         [TestMethod]
@@ -124,23 +98,21 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var drive = CreateDrive();
             drive.SetReadMode();
-            // In read mode SetLatchValue stores 0xFF; verify no exception
             drive.SetLatchValue(0xAB);
-            Assert.IsTrue(true); // structural — no direct latch accessor
+            Assert.AreEqual(0xFF, drive.latch, "latch should be 0xFF in read mode");
         }
 
-        // ------------------------------------------------------------------ //
-        // SetReadMode / SetWriteMode
-        // ------------------------------------------------------------------ //
+        //
+        // ReadLatch — read mode
+        //
 
         [TestMethod]
         public void ReadLatchInReadModeWithNoDiskReturnsFF()
         {
             var drive = CreateDrive();
             drive.SetReadMode();
-            // First call: spinCount becomes 1 (> 0), no disk → returns 0xFF
-            var result = drive.ReadLatch();
-            Assert.AreEqual((byte)0xFF, result);
+            var result = drive.ReadLatch(motorEnabled: true);
+            Assert.AreEqual((byte)0xFF, result, "no disk present should return 0xFF");
         }
 
         [TestMethod]
@@ -148,34 +120,26 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var drive = CreateDrive();
             drive.SetReadMode();
-            // spinCount cycles 0..15; to hit spinCount==0 we need 16 additional reads
-            // after the first, to wrap spinCount back to 0. Drive returns 0x7F when count==0.
-            byte lastResult = 0xFF;
-            for (var i = 0; i < 17; i++)
-            {
-                lastResult = drive.ReadLatch();
-            }
-            // After 17 calls: spinCount = 17 & 0x0F = 1, still >0 → 0xFF
-            // After 16 calls: spinCount = 16 & 0x0F = 0, returns 0x7F
-            // We need exactly 16 reads to get spinCount=0
-            drive = CreateDrive();
-            drive.SetReadMode();
+            // 16th call wraps spinCount to 0 -> returns 0x7F
             for (var i = 0; i < 15; i++)
             {
-                drive.ReadLatch();
+                drive.ReadLatch(motorEnabled: true);
             }
-            var result = drive.ReadLatch(); // 16th call: spinCount = (15+1)&0x0F = 0
-            Assert.AreEqual((byte)0x7F, result);
+            var result = drive.ReadLatch(motorEnabled: true);
+            Assert.AreEqual((byte)0x7F, result, "spinCount==0 should return 0x7F");
         }
+
+        //
+        // ReadLatch — write mode
+        //
 
         [TestMethod]
         public void ReadLatchInWriteModeReturns0x80WhenSpinCountNonZero()
         {
             var drive = CreateDrive();
             drive.SetWriteMode();
-            // First call: spinCount=1, >0 → returns 0x80
-            var result = drive.ReadLatch();
-            Assert.AreEqual((byte)0x80, result);
+            var result = drive.ReadLatch(motorEnabled: true);
+            Assert.AreEqual((byte)0x80, result, "write mode with spinCount>0 should return 0x80");
         }
 
         [TestMethod]
@@ -183,88 +147,103 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var drive = CreateDrive();
             drive.SetWriteMode();
-            // 16th call wraps spinCount to 0 → returns 0x7F
             for (var i = 0; i < 15; i++)
             {
-                drive.ReadLatch();
+                drive.ReadLatch(motorEnabled: true);
             }
-            var result = drive.ReadLatch();
-            Assert.AreEqual((byte)0x7F, result);
+            var result = drive.ReadLatch(motorEnabled: true);
+            Assert.AreEqual((byte)0x7F, result, "spinCount==0 should return 0x7F in write mode");
         }
 
-        // ------------------------------------------------------------------ //
-        // Step — drive off, no head movement
-        // ------------------------------------------------------------------ //
+        //
+        // ReadLatch — nibble offset advancement
+        //
 
         [TestMethod]
-        public void StepDoesNotMoveHeadWhenDriveIsOff()
+        public void ReadLatchDoesNotAdvanceNibbleOffsetWhenMotorDisabled()
         {
             var drive = CreateDrive();
-            drive.SetOn(false);
+            drive.InsertDisk("testdata/dos33.dsk");
+            drive.SetReadMode();
 
-            // With drive off, step should not cause any observable change.
-            // We verify no exception is thrown and the method completes.
-            drive.Step(0x01); // magnet 0 on
-            drive.Step(0x03); // magnet 0+1 on
-            drive.Step(0x02); // magnet 0 off, 1 on
-            Assert.IsTrue(true);
+            // Read with motor off — should return same nibble repeatedly
+            var a = drive.ReadLatch(motorEnabled: false);
+            var b = drive.ReadLatch(motorEnabled: false);
+            Assert.AreEqual(a, b, "nibble offset should not advance when motor is disabled");
         }
 
-        // ------------------------------------------------------------------ //
-        // Step — magnet encoding
-        // ------------------------------------------------------------------ //
+        //
+        // Step — motor disabled, no head movement
+        //
+
+        [TestMethod]
+        public void StepDoesNotMoveHeadWhenMotorDisabled()
+        {
+            var drive = CreateDrive();
+            Assert.AreEqual(0, drive.halfTrack, "halfTrack should start at zero");
+
+            // Energize magnets in a pattern that would step forward if motor were on
+            drive.Step(0x01, motorEnabled: false);
+            drive.Step(0x03, motorEnabled: false);
+            drive.Step(0x02, motorEnabled: false);
+            Assert.AreEqual(0, drive.halfTrack, "halfTrack should not change with motor disabled");
+        }
+
+        //
+        // Step — magnet state
+        //
 
         [TestMethod]
         public void StepRegisterBit0OnSetsMagnetForPhase()
         {
-            // register=0x01: magnet = (0x01>>1)&0x3 = 0; bit0=1 → magnet 0 set
-            // register=0x03: magnet = (0x03>>1)&0x3 = 1; bit0=1 → magnet 1 set
-            // register=0x05: magnet = (0x05>>1)&0x3 = 2; bit0=1 → magnet 2 set
-            // register=0x07: magnet = (0x07>>1)&0x3 = 3; bit0=1 → magnet 3 set
-            // These just verify no exception and consistent state
             var drive = CreateDrive();
-            drive.SetOn(true);
-            drive.Step(0x01);
-            drive.Step(0x03);
-            drive.Step(0x05);
-            drive.Step(0x07);
-            Assert.IsTrue(drive.IsOn());
+
+            // register=0x01: magnet = (0x01>>1)&0x3 = 0; bit0=1 -> magnet 0 set
+            drive.Step(0x01, motorEnabled: true);
+            Assert.AreEqual(1, drive.magnets & 0x01, "magnet 0 should be set");
+
+            // register=0x03: magnet = (0x03>>1)&0x3 = 1; bit0=1 -> magnet 1 set
+            drive.Step(0x03, motorEnabled: true);
+            Assert.AreEqual(2, drive.magnets & 0x02, "magnet 1 should be set");
         }
 
         [TestMethod]
         public void StepRegisterBit0OffClearsMagnetForPhase()
         {
             var drive = CreateDrive();
-            drive.SetOn(true);
-            // Set magnet 0, then clear magnet 0
-            drive.Step(0x01); // magnet 0 on
-            drive.Step(0x00); // magnet 0 off (register>>1 & 3 = 0, bit0=0)
-            Assert.IsTrue(drive.IsOn());
+
+            // Set magnet 0
+            drive.Step(0x01, motorEnabled: true);
+            Assert.AreEqual(1, drive.magnets & 0x01, "magnet 0 should be set");
+
+            // Clear magnet 0 (register=0x00: magnet 0, bit0=0)
+            drive.Step(0x00, motorEnabled: true);
+            Assert.AreEqual(0, drive.magnets & 0x01, "magnet 0 should be cleared");
         }
 
-        // ------------------------------------------------------------------ //
+        //
         // Write — no-op when conditions not met
-        // ------------------------------------------------------------------ //
+        //
 
         [TestMethod]
-        public void WriteDoesNothingWhenDriveIsOff()
+        public void WriteDoesNothingWhenMotorDisabled()
         {
             var drive = CreateDrive();
+            drive.InsertDisk("testdata/dos33.dsk");
             drive.SetWriteMode();
-            drive.SetOn(false);
-            // No disk, drive off — Write() should be a no-op
-            drive.Write();
-            Assert.IsTrue(true);
+            drive.SetLatchValue(0xD5);
+            drive.Write(motorEnabled: false);
+            Assert.IsFalse(drive.isDirty, "isDirty should remain false when motor is disabled");
         }
 
         [TestMethod]
         public void WriteDoesNothingInReadMode()
         {
             var drive = CreateDrive();
+            drive.InsertDisk("testdata/dos33.dsk");
             drive.SetReadMode();
-            drive.SetOn(true);
-            drive.Write();
-            Assert.IsTrue(true);
+            drive.Write(motorEnabled: true);
+            Assert.IsFalse(drive.isDirty, "isDirty should remain false in read mode");
         }
 
         [TestMethod]
@@ -272,10 +251,20 @@ namespace InnoWerks.Computers.Apple.Tests
         {
             var drive = CreateDrive();
             drive.SetWriteMode();
-            drive.SetOn(true);
-            // No disk present → Write() is a no-op (null conditional on floppyDisk)
-            drive.Write();
-            Assert.IsFalse(drive.DiskPresent);
+            drive.Write(motorEnabled: true);
+            Assert.IsFalse(drive.isDirty, "isDirty should remain false without a disk");
+        }
+
+        //
+        // MotorOff
+        //
+
+        [TestMethod]
+        public void MotorOffDoesNotThrowWithNoDisk()
+        {
+            var drive = CreateDrive();
+            drive.MotorOff();
+            Assert.IsFalse(drive.isDirty, "isDirty should be false after MotorOff with no disk");
         }
     }
 }

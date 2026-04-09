@@ -80,7 +80,7 @@ namespace InnoWerks.Computers.Apple
             return pixels;
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("Black", (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0b0000)]
         [DataRow("Magenta", (byte)0x08, (byte)0x11, (byte)0x22, (byte)0x44, (byte)0b0001)]
         [DataRow("Brown", (byte)0x44, (byte)0x08, (byte)0x11, (byte)0x22, (byte)0b0010)]
@@ -111,7 +111,7 @@ namespace InnoWerks.Computers.Apple
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("Black", (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0b0000)]
         [DataRow("Magenta", (byte)0x08, (byte)0x11, (byte)0x22, (byte)0x44, (byte)0b0001)]
         [DataRow("Brown", (byte)0x44, (byte)0x08, (byte)0x11, (byte)0x22, (byte)0b0010)]

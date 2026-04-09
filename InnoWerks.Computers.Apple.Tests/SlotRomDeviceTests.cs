@@ -348,7 +348,7 @@ namespace InnoWerks.Computers.Apple.Tests
         public void SlotGreaterThanSevenThrows()
         {
             var computer = CreateComputer();
-            Assert.ThrowsException<ArgumentOutOfRangeException>(() =>
+            Assert.ThrowsExactly<ArgumentOutOfRangeException>(() =>
                 new StubSlotDevice(8, computer));
         }
 

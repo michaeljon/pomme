@@ -251,15 +251,17 @@ namespace InnoWerks.Computers.Apple.Tests
         [TestMethod]
         public void DiskPlainLength_Is143360()
         {
-            Assert.AreEqual(143360, FloppyDisk.DISK_PLAIN_LENGTH);
-            Assert.AreEqual(35 * 16 * 256, FloppyDisk.DISK_PLAIN_LENGTH);
+            var diskPlainLength = FloppyDisk.DISK_PLAIN_LENGTH;
+            Assert.AreEqual(143360, diskPlainLength, "DISK_PLAIN_LENGTH should be 143360");
+            Assert.AreEqual(35 * 16 * 256, diskPlainLength, "DISK_PLAIN_LENGTH should be 35 tracks * 16 sectors * 256 bytes");
         }
 
         [TestMethod]
         public void DiskNibbleLength_IsTrackCountTimesTrackNibbleLength()
         {
+            var diskNibbleLength = FloppyDisk.DISK_NIBBLE_LENGTH;
             Assert.AreEqual(FloppyDisk.TRACK_COUNT * FloppyDisk.TRACK_NIBBLE_LENGTH,
-                            FloppyDisk.DISK_NIBBLE_LENGTH);
+                            diskNibbleLength, "DISK_NIBBLE_LENGTH should be TRACK_COUNT * TRACK_NIBBLE_LENGTH");
         }
     }
 }

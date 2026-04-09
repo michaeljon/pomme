@@ -10,7 +10,8 @@ namespace InnoWerks.Computers.Apple
         private readonly DiskIIDrive drive1 = new(1);
         private readonly DiskIIDrive drive2 = new(2);
 
-        DiskIIDrive currentDrive;
+        private DiskIIDrive currentDrive;
+        private bool motorEnabled;
 
         /// <summary>
         /// Optional callback invoked when drive state changes (motor on/off,
@@ -45,19 +46,22 @@ namespace InnoWerks.Computers.Apple
                 case 0x6:
                 case 0x7:
                     // step the head
-                    // SimDebugger.Info($"DoIo{ioType} DiskII Step(${address:X1}, {value:X2})\n");
-                    currentDrive.Step(address);
+                    currentDrive.Step(address, motorEnabled);
                     break;
 
                 case 0x8:
-                    // drive off
-                    currentDrive.SetOn(false);
-                    NotifyStateChanged();
+                    // motor off
+                    if (motorEnabled == true)
+                    {
+                        currentDrive.MotorOff();
+                        motorEnabled = false;
+                        NotifyStateChanged();
+                    }
                     break;
 
                 case 0x9:
-                    // drive on
-                    currentDrive.SetOn(true);
+                    // motor on
+                    motorEnabled = true;
                     NotifyStateChanged();
                     break;
 
@@ -73,8 +77,8 @@ namespace InnoWerks.Computers.Apple
 
                 case 0xC:
                     // read/write latch
-                    currentDrive.Write();
-                    return currentDrive.ReadLatch();
+                    currentDrive.Write(motorEnabled);
+                    return currentDrive.ReadLatch(motorEnabled);
 
                 case 0xD:
                     // set latch
@@ -83,11 +87,10 @@ namespace InnoWerks.Computers.Apple
                     {
                         currentDrive.SetLatchValue(value);
                     }
-                    return currentDrive.ReadLatch();
+                    return currentDrive.ReadLatch(motorEnabled);
 
                 case 0xE:
                     // read mode
-                    // SimDebugger.Info($"DoIo{ioType} DiskII Rmode(${address:X1}, {value:X2})\n");
                     currentDrive.SetReadMode();
                     if (currentDrive.DiskPresent && currentDrive.IsWriteProtected)
                     {
@@ -100,14 +103,12 @@ namespace InnoWerks.Computers.Apple
 
                 case 0xF:
                     // write mode
-                    // SimDebugger.Info($"DoIo{ioType} DiskII Wmode(${address:X1}, {value:X2})\n");
                     currentDrive.SetWriteMode();
-                    // set latch
                     if (ioType == MemoryAccessType.Write)
                     {
                         currentDrive.SetLatchValue(value);
                     }
-                    return currentDrive.ReadLatch();
+                    return currentDrive.ReadLatch(motorEnabled);
             }
 
             return 0xFF;
@@ -120,7 +121,14 @@ namespace InnoWerks.Computers.Apple
             drive1.Reset();
             drive2.Reset();
 
+            motorEnabled = false;
             currentDrive = drive1;
+        }
+
+        public bool IsMotorOn(int drive)
+        {
+            var driveObj = drive == 0 ? drive1 : drive2;
+            return motorEnabled == true && currentDrive == driveObj;
         }
 
         public DiskIIDrive GetDrive(int drive)

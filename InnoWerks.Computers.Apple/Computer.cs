@@ -172,14 +172,14 @@ namespace InnoWerks.Computers.Apple
             Memory.LoadProgramToRam(objectCode, origin);
         }
 
-        public void Reset()
+        public void Reset(bool coldBoot = false)
         {
             foreach (var (softSwitch, value) in MachineState.State)
             {
                 MachineState.State[softSwitch] = false;
             }
 
-            if (SlotDevices[1] != null)
+            if (SlotDevices[1] != null && (SlotDevices[1] is EmptySlotDevice) == false)
             {
                 KeylatchHandler.ReportKeyboardLatchAll = false;
             }
@@ -189,14 +189,17 @@ namespace InnoWerks.Computers.Apple
                 interceptDevice?.Reset();
             }
 
-            foreach (var slotDevice in SlotDevices)
-            {
-                slotDevice?.Reset();
-            }
-
             Bus.Reset();
 
             Memory.Remap();
+
+            if (coldBoot == true)
+            {
+                // Invalidate the power-up byte so the monitor firmware performs a
+                // cold boot instead of a warm reset. The firmware compares $3F4
+                // against ($3F3 EOR $A5); when they don't match it cold-boots.
+                Bus.Write(0x03F4, 0x00);
+            }
 
             Processor.Reset();
         }
