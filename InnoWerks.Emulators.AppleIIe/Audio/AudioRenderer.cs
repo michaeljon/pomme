@@ -19,22 +19,27 @@ namespace InnoWerks.Emulators.AppleIIe
         private float[] floatBuffer = new float[2048];
         private byte[] byteBuffer = new byte[4096];
 
+        //
         // State tracking
+        //
         private List<SpeakerToggle> pendingToggles = new();
         private ulong totalSamplesGenerated;
         private float currentSpeakerLevel = -1.0f; // The level at the end of the last frame
 
+        //
         // DSP State
+        //
         private float smoothedValue;
         private float capacitorCharge;
 
+        //
         // Mockingboard PSG clocking accumulator (fractional cycle tracking)
+        //
         private double mockingboardClockAccumulator;
 
         public AudioRenderer()
         {
             instance = new DynamicSoundEffectInstance(SampleRate, AudioChannels.Mono);
-
             instance.Play();
         }
 
@@ -54,7 +59,7 @@ namespace InnoWerks.Emulators.AppleIIe
         {
             ArgumentNullException.ThrowIfNull(source);
 
-            double expectedTime = (double)totalSamplesGenerated * Computer.CyclesPerSecond / SampleRate;
+            var expectedTime = totalSamplesGenerated * Computer.CyclesPerSecond / SampleRate;
             if (currentCpuCycle < expectedTime - 1000) // 1000 cycle tolerance
             {
                 totalSamplesGenerated = 0;
@@ -64,16 +69,18 @@ namespace InnoWerks.Emulators.AppleIIe
             }
 
             // 1. Calculate needed samples
-            double totalAudioSeconds = currentCpuCycle / Computer.CyclesPerSecond;
-            ulong targetSampleCount = (ulong)(totalAudioSeconds * SampleRate);
-            ulong samplesToGenerate = targetSampleCount - totalSamplesGenerated;
+            var totalAudioSeconds = currentCpuCycle / Computer.CyclesPerSecond;
+            var targetSampleCount = (ulong)(totalAudioSeconds * SampleRate);
+            var samplesToGenerate = targetSampleCount - totalSamplesGenerated;
 
             if (samplesToGenerate <= 0) return;
 
             // Resize buffer if needed
             if (samplesToGenerate > (ulong)floatBuffer.Length) floatBuffer = new float[samplesToGenerate + 100];
 
+            //
             // 2. Harvest Toggles
+            //
             while (source.TryDequeue(out var t))
             {
                 if (t.CycleTimestamp <= currentCpuCycle)
@@ -82,22 +89,24 @@ namespace InnoWerks.Emulators.AppleIIe
                 }
             }
 
-            // 3. RENDER LOOP
-            int processedToggleCount = 0;
+            //
+            // 3. Render loop
+            //
+            var processedToggleCount = 0;
 
             for (ulong i = 0; i < samplesToGenerate; i++)
             {
-                ulong sampleIndex = totalSamplesGenerated + i + 1UL;
+                var sampleIndex = totalSamplesGenerated + i + 1UL;
 
                 // High-Precision Timing
-                double sampleEndCycle = (sampleIndex * Computer.CyclesPerSecond) / SampleRate;
-                double sampleStartCycle = ((sampleIndex - 1) * Computer.CyclesPerSecond) / SampleRate;
+                var sampleEndCycle = sampleIndex * Computer.CyclesPerSecond / SampleRate;
+                var sampleStartCycle = (sampleIndex - 1) * Computer.CyclesPerSecond / SampleRate;
 
-                double currentCycle = sampleStartCycle;
-                float energySum = 0.0f;
+                var currentCycle = sampleStartCycle;
+                var energySum = 0.0f;
 
-                // Process Toggles
-                int scanIndex = processedToggleCount;
+                // Process toggles
+                var scanIndex = processedToggleCount;
                 while (scanIndex < pendingToggles.Count)
                 {
                     var toggle = pendingToggles[scanIndex];
@@ -107,7 +116,7 @@ namespace InnoWerks.Emulators.AppleIIe
 
                     // If toggle is in the past (missed it last frame?), duration is 0.
                     // This prevents "negative energy" glitches.
-                    double duration = Math.Max(0, toggle.CycleTimestamp - currentCycle);
+                    var duration = Math.Max(0, toggle.CycleTimestamp - currentCycle);
 
                     energySum += (float)(duration * currentSpeakerLevel);
 
@@ -121,20 +130,22 @@ namespace InnoWerks.Emulators.AppleIIe
                 }
 
                 // Fill remainder of sample
-                double remaining = Math.Max(0, sampleEndCycle - currentCycle);
+                var remaining = Math.Max(0, sampleEndCycle - currentCycle);
                 energySum += (float)(remaining * currentSpeakerLevel);
 
                 // Average
-                float sampleValue = energySum / (float)(sampleEndCycle - sampleStartCycle);
+                var sampleValue = energySum / (float)(sampleEndCycle - sampleStartCycle);
 
-                // --- Mockingboard mixing ---
+                //
+                // Mockingboard mixing
                 // Clock the PSGs the correct number of times for this sample period
                 // and mix the result with the speaker signal
-                float mockingboardSample = 0f;
+                //
+                var mockingboardSample = 0f;
                 if (mockingboard != null)
                 {
                     mockingboardClockAccumulator += CyclesPerSample;
-                    int ticks = (int)mockingboardClockAccumulator;
+                    var ticks = (int)mockingboardClockAccumulator;
                     mockingboardClockAccumulator -= ticks;
 
                     // clock the PSGs and take the last sample
@@ -144,24 +155,29 @@ namespace InnoWerks.Emulators.AppleIIe
                     }
                 }
 
-                // --- DSP CHAIN ---
+                //
+                // DSP chain
+                //
+
                 // 1. Low Pass (Smoothing) - speaker only
                 smoothedValue += (sampleValue - smoothedValue) * 0.50f;
 
                 // 2. High Pass (DC Blocker) - speaker only
                 capacitorCharge = (smoothedValue * 0.005f) + (capacitorCharge * 0.995f);
-                float speakerSample = smoothedValue - capacitorCharge;
+                var speakerSample = smoothedValue - capacitorCharge;
 
                 // 3. Silence Snap
                 // If the signal is extremely quiet, snap to 0 to prevent "floating bit" buzzing
                 if (Math.Abs(speakerSample) < 0.001f) speakerSample = 0;
 
                 // 4. Mix speaker + mockingboard, volume & clamp
-                float finalSample = (speakerSample * 0.25f) + (mockingboardSample * 0.75f);
+                var finalSample = (speakerSample * 0.25f) + (mockingboardSample * 0.75f);
                 floatBuffer[i] = Math.Clamp(finalSample, -1.0f, 1.0f);
             }
 
-            // 4. Cleanup & Submit
+            //
+            // 4. Cleanup & submit
+            //
             if (processedToggleCount > 0)
             {
                 pendingToggles.RemoveRange(0, processedToggleCount);
@@ -177,10 +193,10 @@ namespace InnoWerks.Emulators.AppleIIe
             if (byteBuffer.Length < count * 2)
                 byteBuffer = new byte[count * 2];
 
-            int byteIndex = 0;
-            for (int i = 0; i < count; i++)
+            var byteIndex = 0;
+            for (var i = 0; i < count; i++)
             {
-                short pcm = (short)(Math.Clamp(floatBuffer[i], -1.0f, 1.0f) * 32767);
+                var pcm = (short)(Math.Clamp(floatBuffer[i], -1.0f, 1.0f) * 32767);
                 byteBuffer[byteIndex++] = (byte)(pcm & 0xFF);
                 byteBuffer[byteIndex++] = (byte)((pcm >> 8) & 0xFF);
             }
